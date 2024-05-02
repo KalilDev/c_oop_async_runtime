@@ -1,0 +1,18 @@
+# ninja log v5
+3	130	1714512091277688875	CMakeFiles/c_oop.dir/src/String.c.o	6cb3db82a9995d85
+7	115	1714513522396469047	CMakeFiles/c_oop.dir/src/Interface.c.o	603807bfb90b6bed
+1	129	1714513522408469496	CMakeFiles/c_oop.dir/src/Object.c.o	1c328a738e038ab7
+5	117	1714513522396469047	CMakeFiles/c_oop.dir/src/Iterator.c.o	c7bc9e2c2240a657
+5	129	1714512091273687649	CMakeFiles/c_oop.dir/src/primitive/Integer.c.o	8b00309d7e08b37f
+9	40	1714440547828728669	CMakeFiles/c_oop.dir/src/primitive/Number.c.o	a339e1ad03e49974
+1	76	1714512165991394017	CMakeFiles/c_oop.dir/src/primitive/StringRef.c.o	6c317fa476310ff
+12	131	1714513522412469646	CMakeFiles/c_oop.dir/src/primitive/Double.c.o	2ca91d24305f1cbc
+0	207	1714526085334768141	build.ninja	623df70db7227eb9
+11	130	1714513522408469496	CMakeFiles/c_oop.dir/src/primitive/Bool.c.o	48013b930e0abf09
+3	132	1714513522416469796	CMakeFiles/c_oop.dir/src/ListIterator.c.o	b6a623bf8b03b8c5
+77	249	1714512166159342875	libc_oop.a	26426bbac8eadf8c
+1	100	1714512189989865657	CMakeFiles/oop_example.dir/main.c.o	8bba2525b5dc081b
+8	130	1714513522404469346	CMakeFiles/c_oop.dir/src/Closeable.c.o	8c9c16f67a2a3e9
+6	130	1714513522408469496	CMakeFiles/c_oop.dir/src/Iterable.c.o	1b8faacd0faccdb6
+4	141	1714513522428470246	CMakeFiles/c_oop.dir/src/List.c.o	4e324cc16b6da11c
+101	165	1714512190053855373	oop_example	659d97725f4bd1c1

@@ -1,0 +1,1 @@
+#define DOWNCAST(var, class) *((class*) (&var))
