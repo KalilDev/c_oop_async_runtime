@@ -2,10 +2,17 @@
 #include "oop.h"
 #include <stdlib.h>
 #include <stdbool.h>
+#define WITH_RTTI
+#include "rtti.h"
 
 #define Self Object
 
 START_CLASS
+#ifdef WITH_RTTI
+#define Object_rtti_class_name Object
+#define Object_rtti_inheritance_chain "Object"
+#define Object_rtti_interface_table ""
+#endif
 
 FORWARD_DECL_CLASS(String)
 
@@ -27,8 +34,10 @@ FORWARD_DECL_CLASS(String)
     METHOD(void, delete_any_ptr, void* pointer)                       \
     METHOD(bool, isNull, Object object)
 
-#define ENUMERATE_OBJECT_ATTRIBUTES(ATTRIBUTE) \
+#define ENUMERATE_OBJECT_ATTRIBUTES(ATTRIBUTE)
 
+#define ENUMERATE_OBJECT_STATIC_ATTRIBUTES(ATTRIBUTE) \
+    ATTRIBUTE(const Object, null)
 
 #define ENUMERATE_OBJECT_CONSTRUCTORS(CONSTRUCTOR) \
     /* returns the hash code of the object */       \
@@ -37,27 +46,25 @@ FORWARD_DECL_CLASS(String)
 ENUMERATE_OBJECT_METHODS(DECLARE_SELF_METHOD)
 
 typedef struct {
+    #ifdef WITH_RTTI
+    runtime_type_information_t runtime_type_information;
+    #endif
     ENUMERATE_OBJECT_METHODS(DEFINE_SELF_VIRTUAL_METHOD)
 } Object_vtable_t;
 
 typedef struct {
-
+    ENUMERATE_OBJECT_ATTRIBUTES(DEFINE_ATTRIBUTE)
 } Object_data;
 
-// An fat pointer to an object
-typedef struct Object {
-    const Object_vtable_t* vtable;
-    Object_data* data;
-} Object;
+DECLARE_SELF_FAT_POINTER()
 
-const Object_vtable_t* Object_vtable();
+DECLARE_SELF_VTABLE()
 
 
 ENUMERATE_OBJECT_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD)
 
 ENUMERATE_OBJECT_CONSTRUCTORS(DECLARE_SELF_CONSTRUCTOR)
 
-extern const Object Object_null;
-
+ENUMERATE_OBJECT_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
 
 END_CLASS

@@ -40,7 +40,10 @@
     DECLARE_ABSTRACT_CONSTRUCTOR(Self, name __VA_OPT__(,) __VA_ARGS__)
 
 
-#define DEFINE_VIRTUAL_METHOD(class, method) METHOD_SIGNATURE_TYPE_NAME(class, method) method;
+#define DEFINE_ATTRIBUTE(type, attribute) type attribute;
+#define DEFINE_STATIC_ATTRIBUTE(class, type, attribute) extern DEFINE_ATTRIBUTE(type, CONCAT(CONCAT(class, _), attribute))
+#define DEFINE_STATIC_SELF_ATTRIBUTE(type, attribute) DEFINE_STATIC_ATTRIBUTE(Self, type, attribute)
+#define DEFINE_VIRTUAL_METHOD(class, method) DEFINE_ATTRIBUTE(METHOD_SIGNATURE_TYPE_NAME(class, method), method)
 #define DEFINE_SELF_VIRTUAL_METHOD(return_type, method, ...) DEFINE_VIRTUAL_METHOD(Self, method)
 #define FORWARD_DECL_CLASS(class) struct class; \
 typedef struct class class;
@@ -87,3 +90,15 @@ typedef struct class { \
 } class;
 
 #define DECLARE_SELF_METHOD(return_type, method, ...) DECLARE_METHOD(return_type, Self, Self, method, __VA_ARGS__)
+
+
+#define DECLARE_SELF_FAT_POINTER() \
+/* An fat pointer to an Object */ \
+typedef struct Self { \
+    const CONCAT(Self, _vtable_t)* vtable; \
+    CONCAT(Self, _data)* data; \
+} Self;
+
+
+#define DECLARE_SELF_VTABLE() \
+    const CONCAT(Self, _vtable_t)* CONCAT(Self, _vtable)();
