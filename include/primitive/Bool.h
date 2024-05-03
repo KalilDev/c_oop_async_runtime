@@ -1,27 +1,38 @@
 #pragma once
-#include "../oop.h"
+#include "oop.h"
 #include <stdlib.h>
-#include "../Object.h"
+
+#define Super Object
+#define Self Bool
+
+START_CLASS
+
+#define ENUMERATE_BOOL_CONSTRUCTORS(CONSTRUCTOR) \
+    CONSTRUCTOR(box, bool b)
+
+#define ENUMERATE_BOOL_GETTERS(GETTER) \
+    GETTER(bool, unbox)
+
 
 #define ENUMERATE_BOOL_METHODS(METHOD) \
-    METHOD(unbox)
+    METHOD(String, toStringFixed)
 
-struct Bool;
+DEFINE_SELF_PRIMITIVE_CLASS(
+        NO_IMPLEMENTS,
+        ENUMERATE_BOOL_METHODS,
+        bool,
+        ENUMERATE_BOOL_CONSTRUCTORS,
+        NO_STATIC_METHODS,
+        NO_STATIC_ATTRIBUTES,
+        ENUMERATE_BOOL_GETTERS
+)
 
-_DECLARE_METHOD(Bool, unbox, bool, (struct Bool))
-
-#define METHOD(method) DEFINE_VIRTUAL_METHOD(Bool, method)
-
-DECLARE_PRIMITIVE_CLASS(Bool, Object, {
-ENUMERATE_BOOL_METHODS(METHOD)
-}, bool)
-
-#undef METHOD
-
-const Bool_vtable_t* Bool_vtable();
-
-const Bool True;
-const Bool False;
+extern const Bool True;
+extern const Bool False;
 
 DECLARE_SUPER_CAST(Bool, Object)
-Bool Bool_box(bool);
+
+END_CLASS
+#undef Super
+#undef Self
+

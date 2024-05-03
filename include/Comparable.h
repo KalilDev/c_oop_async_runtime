@@ -4,24 +4,22 @@
 #include "Interface.h"
 #include "Object.h"
 
-#define Self Iterable
+#define Self Comparable
 
 START_CLASS
 
-FORWARD_DECL_CLASS(Iterator)
-
-#define ENUMERATE_ITERABLE_METHODS(METHOD) \
-    METHOD(Iterator, iterator)
+#define ENUMERATE_COMPARABLE_METHODS(METHOD) \
+    METHOD(void, compareTo, Object other)
 
 DEFINE_SELF_INTERFACE(
         Object,
-        ENUMERATE_ITERABLE_METHODS,
+        ENUMERATE_COMPARABLE_METHODS,
         NO_STATIC_METHODS,
         NO_STATIC_ATTRIBUTES
 )
 
-DECLARE_SUPER_CAST(Iterable, Interface)
-DECLARE_OBJECT_CAST(Iterable, Object)
+DECLARE_SUPER_CAST(Comparable, Interface)
+DECLARE_OBJECT_CAST(Comparable, Object)
 
 END_CLASS
 #undef Super

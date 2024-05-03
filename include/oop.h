@@ -11,6 +11,8 @@
 
 #define _DECLARE_ABSTRACT_CONSTRUCTOR_METHOD(class, name, class_type, ...) \
         void class ## $ ## name (class_type this __VA_OPT__(,) __VA_ARGS__);
+#define _DECLARE_PRIMITIVE_CONSTRUCTOR_METHOD(class, name, class_type, ...) \
+        class class ## $ ## name (__VA_ARGS__);
 
 #define _DECLARE_CONSTRUCTOR_METHOD(class, name, class_type, ...) \
         class_type class ## $ ## make_ ## name (__VA_ARGS__); \
@@ -32,6 +34,8 @@
     _DECLARE_CONSTRUCTOR_METHOD(class, name, Self, __VA_ARGS__)
 #define DECLARE_ABSTRACT_CONSTRUCTOR(class, name, ...) \
     _DECLARE_ABSTRACT_CONSTRUCTOR_METHOD(class, name, Self, __VA_ARGS__)
+#define DECLARE_PRIMITIVE_CONSTRUCTOR(class, name, ...) \
+    _DECLARE_PRIMITIVE_CONSTRUCTOR_METHOD(class, name, __VA_ARGS__)
 
 #define DECLARE_SELF_CONSTRUCTOR(name, ...) \
     DECLARE_CONSTRUCTOR(Self, name __VA_OPT__(,) __VA_ARGS__)
@@ -39,12 +43,16 @@
 #define DECLARE_SELF_ABSTRACT_CONSTRUCTOR(name, ...) \
     DECLARE_ABSTRACT_CONSTRUCTOR(Self, name __VA_OPT__(,) __VA_ARGS__)
 
+#define DECLARE_SELF_PRIMITIVE_CONSTRUCTOR(name, ...) \
+    DECLARE_PRIMITIVE_CONSTRUCTOR(Self, name __VA_OPT__(,) __VA_ARGS__)
+
 
 #define DEFINE_ATTRIBUTE(type, attribute) type attribute;
 #define DEFINE_STATIC_ATTRIBUTE(class, type, attribute) extern DEFINE_ATTRIBUTE(type, CONCAT(CONCAT(class, _), attribute))
 #define DEFINE_STATIC_SELF_ATTRIBUTE(type, attribute) DEFINE_STATIC_ATTRIBUTE(Self, type, attribute)
 #define DEFINE_VIRTUAL_METHOD(class, method) DEFINE_ATTRIBUTE(METHOD_SIGNATURE_TYPE_NAME(class, method), method)
 #define DEFINE_SELF_VIRTUAL_METHOD(return_type, method, ...) DEFINE_VIRTUAL_METHOD(Self, method)
+#define DEFINE_IMPLEMENT(class) DEFINE_ATTRIBUTE(CONCAT(class, _vtable_t), CONCAT(class, _vtable))
 #define FORWARD_DECL_CLASS(class) struct class; \
 typedef struct class class;
 
@@ -74,23 +82,33 @@ typedef struct class { \
     class ## _data* data;\
 } class;
 
-#define DECLARE_PRIMITIVE_CLASS(class, Super, methods, type) \
-    _Static_assert(sizeof(type) <= sizeof(void*), "Invalid primitive type, it needs to fit in a pointer");                                                                    \
-    typedef struct { \
-        Super ## _vtable_t super; \
-        struct methods; \
-    } class ## _vtable_t;                          \
-\
+#define DECLARE_PRIMITIVE_FAT_POINTER(class, type) \
+_Static_assert(sizeof(type) <= sizeof(void*), "Invalid primitive type, it needs to fit in a pointer"); \
 typedef struct class { \
-    const class ## _vtable_t* vtable; \
+    const CONCAT(class, _vtable_t)* vtable; \
     union {                                                  \
         type data;                                                     \
         void* _align;                                                         \
     }; \
 } class;
 
-#define DECLARE_SELF_METHOD(return_type, method, ...) DECLARE_METHOD(return_type, Self, Self, method, __VA_ARGS__)
+//#define DECLARE_PRIMITIVE_CLASS(class, Super, methods, type) \
+//    _Static_assert(sizeof(type) <= sizeof(void*), "Invalid primitive type, it needs to fit in a pointer");                                                                    \
+//    typedef struct { \
+//        Super ## _vtable_t super; \
+//        struct methods; \
+//    } class ## _vtable_                                                                    \                                                   t;                          \
+//\
+//typedef struct class { \
+//    const class ## _vtable_t* vtable; \
+//    union {                                                  \
+//        type data;                                                     \
+//        void* _align;                                                         \
+//    }; \
+//} class;
 
+#define DECLARE_SELF_METHOD(return_type, method, ...) DECLARE_METHOD(return_type, Self, Self, method, __VA_ARGS__)
+#define DECLARE_SELF_GETTER(type, attribute) DECLARE_SELF_METHOD(type, attribute)
 
 #define DECLARE_SELF_FAT_POINTER() \
 /* An fat pointer to an Object */ \
@@ -100,5 +118,90 @@ typedef struct Self { \
 } Self;
 
 
-#define DECLARE_SELF_VTABLE() \
+#define DECLARE_SELF_VTABLE_GETTER() \
     const CONCAT(Self, _vtable_t)* CONCAT(Self, _vtable)();
+
+#define DEFINE_SELF_VTABLE(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS) \
+typedef struct CONCAT(Self, _vtable_t) { \
+    CONCAT(Super, _vtable_t) super; \
+    ENUMERATE_IMPLEMENENTS(DEFINE_IMPLEMENT) \
+    ENUMERATE_METHODS(DEFINE_SELF_VIRTUAL_METHOD) \
+} CONCAT(Self, _vtable_t);
+
+#define DEFINE_SELF_DATA(ENUMERATE_ATTRIBUTES) \
+typedef struct CONCAT(Self, _data) { \
+    ENUMERATE_ATTRIBUTES(DEFINE_ATTRIBUTE) \
+} CONCAT(Self, _data);
+
+
+#define NO_IMPLEMENTS(IMPLEMENTS)
+#define NO_STATIC_METHODS(METHOD)
+#define NO_ATTRIBUTES(ATTRIBUTE)
+#define NO_STATIC_ATTRIBUTES(ATTRIBUTE)
+#define NO_METHODS(METHOD)
+#define NO_GETTERS(ATTRIBUTE)
+
+
+#define DEFINE_SELF_ABSTRACT(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS, ENUMERATE_ATTRIBUTES, ENUMERATE_CONSTRUCTORS, ENUMERATE_STATIC_METHODS, ENUMERATE_STATIC_ATTRIBUTES, ENUMERATE_GETTERS) \
+ENUMERATE_METHODS(DECLARE_SELF_METHOD) \
+DEFINE_SELF_VTABLE(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS) \
+DEFINE_SELF_DATA(ENUMERATE_ATTRIBUTES) \
+DECLARE_SELF_FAT_POINTER() \
+DECLARE_SELF_VTABLE_GETTER()                                                                                                                                                   \
+ENUMERATE_GETTERS(DECLARE_SELF_GETTER) \
+ENUMERATE_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD) \
+ENUMERATE_CONSTRUCTORS(DECLARE_SELF_CONSTRUCTOR) \
+ENUMERATE_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
+
+#define DECLARE_SELF_PRIMITIVE_FAT_POINTER(primitiveType) DECLARE_PRIMITIVE_FAT_POINTER(Self, primitiveType)
+
+#define DEFINE_SELF_PRIMITIVE_CLASS(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS, primitiveType, ENUMERATE_CONSTRUCTORS, ENUMERATE_STATIC_METHODS, ENUMERATE_STATIC_ATTRIBUTES, ENUMERATE_GETTERS) \
+ENUMERATE_METHODS(DECLARE_SELF_METHOD) \
+DEFINE_SELF_VTABLE(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS) \
+DECLARE_SELF_PRIMITIVE_FAT_POINTER(primitiveType) \
+DECLARE_SELF_VTABLE_GETTER() \
+ENUMERATE_GETTERS(DECLARE_SELF_GETTER) \
+ENUMERATE_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD) \
+ENUMERATE_CONSTRUCTORS(DECLARE_SELF_PRIMITIVE_CONSTRUCTOR) \
+ENUMERATE_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
+
+#define DEFINE_SELF_CLASS(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS, ENUMERATE_ATTRIBUTES, ENUMERATE_CONSTRUCTORS, ENUMERATE_STATIC_METHODS, ENUMERATE_STATIC_ATTRIBUTES, ENUMERATE_GETTERS) \
+ENUMERATE_METHODS(DECLARE_SELF_METHOD) \
+DEFINE_SELF_VTABLE(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS) \
+DEFINE_SELF_DATA(ENUMERATE_ATTRIBUTES) \
+DECLARE_SELF_FAT_POINTER() \
+DECLARE_SELF_VTABLE_GETTER() \
+ENUMERATE_GETTERS(DECLARE_SELF_GETTER) \
+ENUMERATE_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD) \
+ENUMERATE_CONSTRUCTORS(DECLARE_SELF_ABSTRACT_CONSTRUCTOR) \
+ENUMERATE_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
+
+#define OBJECT_VTABLE_TAG 0xBABACA0000BABACA
+
+// Interface
+
+#define IMPLEMENTS(interface) \
+    interface ## _vtable_t interface ## _vtable;
+
+#define DEFINE_SELF_INTERFACE_VTABLE(On, ENUMERATE_METHODS) \
+typedef struct CONCAT(Self, _vtable_t) { \
+    Interface_vtable_t _interface; \
+    ENUMERATE_METHODS(DEFINE_SELF_VIRTUAL_METHOD) \
+} CONCAT(Self, _vtable_t);
+
+#define DECLARE_SELF_INTERFACE_FAT_POINTER(On) \
+typedef struct Self { \
+    const CONCAT(Self, _vtable_t)* vtable; \
+    On ## _data* data;\
+} Self;
+
+
+#define DECLARE_INTERFACE_CAST(class, interface) DECLARE_UPCAST(class, interface)
+#define DECLARE_OBJECT_CAST(interface, class) DECLARE_UPCAST(interface, class)
+#define DEFINE_SELF_INTERFACE(On, ENUMERATE_METHODS, ENUMERATE_STATIC_METHODS, ENUMERATE_STATIC_ATTRIBUTES) \
+ENUMERATE_METHODS(DECLARE_SELF_METHOD) \
+DEFINE_SELF_INTERFACE_VTABLE(On, ENUMERATE_METHODS) \
+DECLARE_SELF_INTERFACE_FAT_POINTER(On) \
+DECLARE_SELF_VTABLE_GETTER() \
+ENUMERATE_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD) \
+ENUMERATE_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)

@@ -1,21 +1,26 @@
 #pragma once
 #include "oop.h"
+#include <stdlib.h>
 #include "Interface.h"
+#include "Object.h"
 
-struct Closeable;
+#define Self Closeable
+
+START_CLASS
 
 #define ENUMERATE_CLOSEABLE_METHODS(METHOD) \
-    METHOD(close)
+    METHOD(void, close)
 
-_DECLARE_METHOD(Closeable, close, void, (struct Closeable))
+DEFINE_SELF_INTERFACE(
+        Object,
+        ENUMERATE_CLOSEABLE_METHODS,
+        NO_STATIC_METHODS,
+        NO_STATIC_ATTRIBUTES
+)
 
-#define METHOD(method) DEFINE_VIRTUAL_METHOD(Closeable, method)
-
-DECLARE_INTERFACE(Closeable, Interface, Object, {
-    ENUMERATE_CLOSEABLE_METHODS(METHOD)
-})
-
-#undef METHOD
-
-const Closeable_vtable_t* Iterable_vtable();
 DECLARE_SUPER_CAST(Closeable, Interface)
+DECLARE_OBJECT_CAST(Closeable, Object)
+
+END_CLASS
+#undef Super
+#undef Self

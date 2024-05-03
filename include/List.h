@@ -1,42 +1,57 @@
 #pragma once
-#include "oop.h"
-#include <stdlib.h>
 #include "Object.h"
+#include "oop.h"
 #include "Iterable.h"
-#include "Interface.h"
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+#define WITH_RTTI
+#include "rtti.h"
 
+#define Super Object
+#define Self List
+
+START_CLASS
+
+FORWARD_DECL_CLASS(String)
+
+#define PARAMS_INVOCATION_List_add element
+#define PARAMS_INVOCATION_List_ensure capacity
+#define PARAMS_INVOCATION_List_at i
 #define ENUMERATE_LIST_METHODS(METHOD) \
-    METHOD(add) \
-    METHOD(ensure) \
-    METHOD(at)
+    METHOD(void, add, Object element) \
+    METHOD(void, ensure, size_t capacity) \
+    METHOD(Object, at, size_t i)
+
+#define ENUMERATE_LIST_GETTERS(ATTRIBUTE) \
+    ATTRIBUTE(size_t, length)
 
 #define ENUMERATE_LIST_ATTRIBUTES(ATTRIBUTE) \
+    ATTRIBUTE(size_t, length)                 \
+    ATTRIBUTE(size_t, capacity)                     \
+    ATTRIBUTE(Object*, elements)
 
-struct List;
+#define ENUMERATE_LIST_CONSTRUCTORS(CONSTRUCTOR) \
+    CONSTRUCTOR(new)
 
-_DECLARE_METHOD(List, add, void, (struct List, Object))
-_DECLARE_METHOD(List, ensure, void, (struct List, size_t))
-_DECLARE_METHOD(List, at, Object, (struct List, size_t))
-
-#define METHOD(method) DEFINE_VIRTUAL_METHOD(List, method)
-
-DECLARE_CLASS(List, Object, {
+#define ENUMERATE_LIST_IMPLEMENTS(IMPLEMENTS) \
     IMPLEMENTS(Iterable)
-    ENUMERATE_LIST_METHODS(METHOD)
-}, {
-    size_t length;
-    size_t capacity;
-    Object* elements;
-})
 
-#undef METHOD
-
-const List_vtable_t* List_vtable();
-
+DEFINE_SELF_CLASS(
+        ENUMERATE_LIST_IMPLEMENTS,
+        ENUMERATE_LIST_METHODS,
+        ENUMERATE_LIST_ATTRIBUTES,
+        ENUMERATE_LIST_CONSTRUCTORS,
+        NO_STATIC_METHODS,
+        NO_STATIC_ATTRIBUTES,
+        ENUMERATE_LIST_GETTERS
+)
 DECLARE_OBJECT_CAST(Iterable, List)
 DECLARE_INTERFACE_CAST(List, Iterable)
 
 DECLARE_SUPER_CAST(List, Object)
 
-List List_new();
-size_t List_length(List this);
+END_CLASS
+
+#undef Self
+#undef Super

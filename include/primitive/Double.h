@@ -4,34 +4,48 @@
 #include "../Object.h"
 #include "Number.h"
 
+#pragma once
+#include "oop.h"
+#include <stdlib.h>
+
+#define Super Number
+#define Self Double
+
+START_CLASS
+
+FORWARD_DECL_CLASS(String)
+
+#define ENUMERATE_DOUBLE_CONSTRUCTORS(CONSTRUCTOR) \
+    CONSTRUCTOR(box_f, float f)                       \
+    CONSTRUCTOR(box_d, double d)
+
+#define ENUMERATE_DOUBLE_GETTERS(GETTER) \
+    GETTER(float, unbox_f)                 \
+    GETTER(double, unbox_d)
+
+
 #define ENUMERATE_DOUBLE_METHODS(METHOD) \
-    METHOD(unbox_d)                          \
-    METHOD(unbox_f)
+    METHOD(String, toStringFixed)
 
-#define ENUMERATE_DOUBLE_ATTRIBUTES(ATTRIBUTE) \
-
-struct Double;
-
-_DECLARE_METHOD(Double, unbox_f, float, (struct Double))
-_DECLARE_METHOD(Double, unbox_d, double, (struct Double))
-
-#define METHOD(method) DEFINE_VIRTUAL_METHOD(Double, method)
-
-DECLARE_PRIMITIVE_CLASS(Double, Number, {
-    ENUMERATE_DOUBLE_METHODS(METHOD)
-}, double)
-
-#undef METHOD
-
-const Double_vtable_t* Double_vtable();
+DEFINE_SELF_PRIMITIVE_CLASS(
+        NO_IMPLEMENTS,
+        ENUMERATE_DOUBLE_METHODS,
+        double,
+        ENUMERATE_DOUBLE_CONSTRUCTORS,
+        NO_STATIC_METHODS,
+        NO_STATIC_ATTRIBUTES,
+        ENUMERATE_DOUBLE_GETTERS
+)
 
 DECLARE_SUPER_CAST(Double, Number)
 DECLARE_UPCAST(Double, Object)
-Double Double_box_f(float);
-Double Double_box_d(double);
 
-#define _NotAnDouble(x) Object_null
-#define Double_box(x) _Generic((x), \
-    double: Double_box_d,           \
-    float: Double_box_f,             \
-    default: _NotAnDouble,)
+#define Double$box(x) _Generic((x), \
+    float: Double$box_f(x),           \
+    double: Double$box_d(x),           \
+    default: DOWNCAST(Object_null, Double))
+
+END_CLASS
+#undef Super
+#undef Self
+

@@ -1,22 +1,48 @@
 #pragma once
-#include "../oop.h"
+#include "Object.h"
+#include "oop.h"
+#include "Comparable.h"
 #include <stdlib.h>
-#include "../Object.h"
+#include <stdbool.h>
+#define WITH_RTTI
+#include "rtti.h"
+
+#define Super Object
+#define Self Number
+
+START_CLASS
+
+FORWARD_DECL_CLASS(Double)
+FORWARD_DECL_CLASS(Integer)
 
 #define ENUMERATE_NUMBER_METHODS(METHOD) \
-    METHOD(toRadixString)
+    /* Gets the absolute value for this number */       \
+    METHOD(Number, abs)               \
+    /* Clamps an number */                                     \
+    METHOD(Number, clamp, Number lower, Number upper) \
+    METHOD(Double, toDouble) \
+    METHOD(Integer, toInteger)
 
-struct Number;
-struct String;
-_DECLARE_METHOD(Number, toRadixString, struct String, (struct Number))
+// no constructors because it is an primitive
+#define ENUMERATE_NUMBER_CONSTRUCTORS(CONSTRUCTOR)
 
-#define METHOD(method) DEFINE_VIRTUAL_METHOD(Number, method)
+#define ENUMERATE_NUMBER_IMPLEMENTS(IMPLEMENTS) \
+    IMPLEMENTS(Comparable)
 
-DECLARE_CLASS(Number, Object, {
-ENUMERATE_NUMBER_METHODS(METHOD)\
-}, NO_DATA)
 
-#undef METHOD
+DEFINE_SELF_ABSTRACT(
+        ENUMERATE_NUMBER_IMPLEMENTS,
+        ENUMERATE_NUMBER_METHODS,
+        NO_ATTRIBUTES,
+        ENUMERATE_NUMBER_CONSTRUCTORS,
+        NO_STATIC_METHODS,
+        NO_STATIC_ATTRIBUTES,
+        NO_GETTERS
+)
 
-const Number_vtable_t* Number_vtable();
 DECLARE_SUPER_CAST(Number, Object)
+
+END_CLASS
+
+#undef Self
+#undef Super

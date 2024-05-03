@@ -1,19 +1,28 @@
 #pragma once
 #include "oop.h"
 #include <stdlib.h>
-#include "Object.h"
-#include "Iterable.h"
-#include "primitive/Integer.h"
-#include "Interface.h"
-#include "String.h"
 
-DECLARE_PRIMITIVE_CLASS(StringRef, String, NO_METHODS, const char*)
+#define Super String
+#define Self StringRef
 
-const StringRef_vtable_t* StringRef_vtable();
+START_CLASS
+
+#define ENUMERATE_STRING_REF_CONSTRUCTORS(CONSTRUCTOR) \
+    CONSTRUCTOR(wrap, const char*)
+
+DEFINE_SELF_PRIMITIVE_CLASS(
+        NO_IMPLEMENTS,
+        NO_METHODS,
+        const char*,
+        ENUMERATE_STRING_REF_CONSTRUCTORS,
+        NO_STATIC_METHODS,
+        NO_STATIC_ATTRIBUTES,
+        NO_GETTERS
+)
 
 DECLARE_SUPER_CAST(StringRef, String)
 DECLARE_UPCAST(StringRef, Object)
 
-StringRef StringRef_alloc();
-void StringRef_construct(StringRef, const char* ref);
-StringRef StringRef_new(const char* ref);
+END_CLASS
+#undef Super
+#undef Self

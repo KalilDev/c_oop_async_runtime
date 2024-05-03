@@ -1,20 +1,35 @@
 #pragma once
 #include "oop.h"
-#include <stdlib.h>
-#include "Object.h"
 #include "Iterator.h"
-#include "List.h"
+#include <stdlib.h>
 
-struct ListIterator;
+#define Super Iterator
+#define Self ListIterator
 
-DECLARE_CLASS(ListIterator, Iterator, NO_METHODS, {
-    List list;
-    long long i;
-})
+START_CLASS
 
+FORWARD_DECL_CLASS(Iterator)
 
-const ListIterator_vtable_t* ListIterator_vtable();
+#define ENUMERATE_LIST_ITERATOR_ATTRIBUTES(ATTRIBUTE) \
+    ATTRIBUTE(List, list)            \
+    ATTRIBUTE(long long, i)
+
+#define ENUMERATE_LIST_ITERATOR_CONSTRUCTORS(CONSTRUCTOR) \
+    CONSTRUCTOR(new, List list)
+
+DEFINE_SELF_CLASS(
+        NO_IMPLEMENTS,
+        NO_METHODS,
+        ENUMERATE_LIST_ITERATOR_ATTRIBUTES,
+        ENUMERATE_LIST_ITERATOR_CONSTRUCTORS,
+        NO_STATIC_METHODS,
+        NO_STATIC_ATTRIBUTES,
+        NO_GETTERS
+)
 
 DECLARE_SUPER_CAST(ListIterator, Iterator)
 DECLARE_UPCAST(ListIterator, Object)
-ListIterator ListIterator_new(List list);
+
+END_CLASS
+#undef Super
+#undef Self

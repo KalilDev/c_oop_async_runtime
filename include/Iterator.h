@@ -1,26 +1,41 @@
 #pragma once
+#include "Object.h"
 #include "oop.h"
 #include <stdlib.h>
-#include "Object.h"
+#include <stdbool.h>
+#define WITH_RTTI
+#include "rtti.h"
+
+#define Super Object
+#define Self Iterator
+
+START_CLASS
+
+
+FORWARD_DECL_CLASS(String)
 
 #define ENUMERATE_ITERATOR_METHODS(METHOD) \
-    METHOD(moveNext) \
-    METHOD(current)
+    /* Moves an single step in the iteration */       \
+    METHOD(bool, moveNext)               \
+    /* Retrieves the current object */                                     \
+    METHOD(Object, current)
 
-#define ENUMERATE_INT_ITERABLE_ATTRIBUTES(ATTRIBUTE) \
+#define ENUMERATE_ITERATOR_CONSTRUCTORS(CONSTRUCTOR) \
+    CONSTRUCTOR(new)
 
-struct Iterator;
+DEFINE_SELF_ABSTRACT(
+        NO_IMPLEMENTS,
+        ENUMERATE_ITERATOR_METHODS,
+        NO_ATTRIBUTES,
+        ENUMERATE_ITERATOR_CONSTRUCTORS,
+        NO_STATIC_METHODS,
+        NO_STATIC_ATTRIBUTES,
+        NO_GETTERS
+)
 
-_DECLARE_METHOD(Iterator, moveNext, bool, (struct Iterator))
-_DECLARE_METHOD(Iterator, current, Object, (struct Iterator))
-
-#define METHOD(method) DEFINE_VIRTUAL_METHOD(Iterator, method)
-
-DECLARE_CLASS(Iterator, Object, {
-    ENUMERATE_ITERATOR_METHODS(METHOD)
-}, NO_DATA)
-
-#undef METHOD
-
-const Iterator_vtable_t* Iterator_vtable();
 DECLARE_SUPER_CAST(Iterator, Object)
+
+END_CLASS
+
+#undef Self
+#undef Super

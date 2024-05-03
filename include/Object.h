@@ -8,11 +8,6 @@
 #define Self Object
 
 START_CLASS
-#ifdef WITH_RTTI
-#define Object_rtti_class_name Object
-#define Object_rtti_inheritance_chain "Object"
-#define Object_rtti_interface_table ""
-#endif
 
 FORWARD_DECL_CLASS(String)
 
@@ -46,8 +41,9 @@ FORWARD_DECL_CLASS(String)
 ENUMERATE_OBJECT_METHODS(DECLARE_SELF_METHOD)
 
 typedef struct {
+    size_t object_vtable_tag;
     #ifdef WITH_RTTI
-    runtime_type_information_t runtime_type_information;
+    const runtime_type_information_t runtime_type_information;
     #endif
     ENUMERATE_OBJECT_METHODS(DEFINE_SELF_VIRTUAL_METHOD)
 } Object_vtable_t;
@@ -58,7 +54,7 @@ typedef struct {
 
 DECLARE_SELF_FAT_POINTER()
 
-DECLARE_SELF_VTABLE()
+DECLARE_SELF_VTABLE_GETTER()
 
 
 ENUMERATE_OBJECT_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD)
@@ -67,4 +63,13 @@ ENUMERATE_OBJECT_CONSTRUCTORS(DECLARE_SELF_CONSTRUCTOR)
 
 ENUMERATE_OBJECT_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
 
+#ifdef WITH_RTTI
+const runtime_type_information_t* Object_runtimeTypeInformation(Object object);
+#endif
+
+
+// The var parameters are the interfaces implemented
+void initVtable(Object_vtable_t * selfVtable, Object_vtable_t *superVtable, size_t superVtableSize, const char* class_name, size_t implemented_interface_count, ...);
+
 END_CLASS
+#undef Self
