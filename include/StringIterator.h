@@ -14,6 +14,7 @@ START_CLASS
     ATTRIBUTE(size_t, i)                                \
     ATTRIBUTE(bool, started)
 
+#define PARAMS_INVOCATION_StringIterator$new string
 #define ENUMERATE_STRING_ITERATOR_CONSTRUCTORS(CONSTRUCTOR) \
     CONSTRUCTOR(new, String string)
 

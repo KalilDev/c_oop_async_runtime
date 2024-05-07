@@ -7,6 +7,7 @@
 START_CLASS
 
 typedef struct {
+    size_t interface_vtable_tag;
     size_t object_vtable_offset;
 } Interface_vtable_t;
 
@@ -17,6 +18,10 @@ typedef struct Interface {
 } Interface;
 
 DECLARE_SELF_VTABLE_GETTER()
+
+void initInterfaceVtable(Interface_vtable_t * selfVtable, const Interface_vtable_t *superVtable, size_t superVtableSize);
+
+void initImplementedInterfaceVtable(Interface_vtable_t * implementedVtable, const Interface_vtable_t *baseVtable, size_t implementedVtableSize, size_t offset);
 
 DECLARE_OBJECT_CAST(Interface, Object)
 END_CLASS

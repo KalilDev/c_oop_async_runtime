@@ -5,10 +5,18 @@
 #include "stddef.h"
 #include "oop.h"
 #include "string.h"
-#include <strings.h>
-#define Super() Object_vtable()
+#include "Iterator.h"
+#include "StringIterator.h"
+#include "StringBuffer.h"
+#include "primitive/StringRef.h"
+#include <assert.h>
 
-const String_vtable_t* String_vtable();
+#define Super() Object_vtable()
+#define Self String
+
+ENUMERATE_STRING_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
+IMPLEMENT_OPERATOR_NEW()
+
 //
 //METHOD_IMPL(String, add, void, (String this, Object e), (this, e)) {
 //    size_t *length = &this.data->length;
@@ -37,45 +45,45 @@ const String_vtable_t* String_vtable();
 //    this.data->capacity = new_capacity;
 //}
 
-METHOD_IMPL(String, at, Integer, (String this, size_t i), (this, i)) {
-    size_t length = this.data->length;
+IMPLEMENT_SELF_METHOD(Integer, at, size_t i) {
+    size_t length = String_length(this);
     if (i >= length) {
-        return DOWNCAST(Object_null, Integer);
+        return DOWNCAST(null, Integer);
     }
-    char* c_string = this.data->c_string;
-    return Integer_box(c_string[i]);
+    const char* c_string = String_cStringView(this);
+    return Integer$box(c_string[i]);
 }
 
-METHOD_IMPL(String, length, size_t, (String this), (this)) {
+IMPLEMENT_SELF_METHOD(size_t, length) {
     return this.data->length;
 }
 
-METHOD_IMPL(String, cStringView, const char*, (String this), (this)) {
+IMPLEMENT_SELF_METHOD(const char*, cStringView) {
     return this.data->c_string;
 }
 
 
-METHOD_IMPL(String, concat, String, (String this, String other), (this, other)) {
+IMPLEMENT_SELF_METHOD(String, concat, String other) {
     const char* a = String_cStringView(this);
     size_t aLen = String_length(this);
     const char* b = String_cStringView(other);
     size_t bLen = String_length(other);
     if (aLen == 0) {
-        return String_new(b);
+        return String$make_new(b);
     }
     if (bLen == 0) {
-        return String_new(a);
+        return String$make_new(a);
     }
     char *res = malloc(aLen + bLen + 1);
     memcpy(res, a, aLen);
     memcpy(res + aLen, b, bLen);
     res[aLen+bLen] = '\0';
-    return String_own_len(res, aLen + bLen);
+    return String$make_own_len(res, aLen + bLen);
 }
 
-OVERRIDE_IMPL(void , String, delete, Object) {
+IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     String self = DOWNCAST(this, String);
-    char* c_string = self.data->c_string;
+    char* c_string = (char*)self.data->c_string;
     if (c_string == NULL) {
         Super()->delete(this);
         return;
@@ -85,84 +93,206 @@ OVERRIDE_IMPL(void , String, delete, Object) {
     free(c_string);
     Super()->delete(this);
 }
-//
-//Iterator _String_iterator(Iterable this) {
-//    String self = Iterable_as_String(this);
-//    return StringIterator_as_Iterator(StringIterator_new(self));
-//}
 
-static String_vtable_t _String_vtable = {0};
+IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
+    String self = DOWNCAST(this, String);
 
-const String_vtable_t* String_vtable() {
-    if (_String_vtable.at == NULL) {
-        // String
-        _String_vtable.at = _String_at;
-        _String_vtable.cStringView = _String_cStringView;
-        _String_vtable.length = _String_length;
-        _String_vtable.concat = _String_concat;
-//        // Iterable
-//        _String_vtable.Iterable_vtable.super.vtable_offset = offsetof(String_vtable_t, Iterable_vtable);
-//        _String_vtable.Iterable_vtable.iterator = _String_iterator;
-        // Object
-        memmove(&_String_vtable.super, Super(), sizeof(*Super()));
-        _String_vtable.super.delete = _String_delete;
-    }
-    return &_String_vtable;
+    return String$make_new_len(self.data->c_string, self.data->length);
 }
 
-//OBJECT_CAST_IMPL(Iterable, String)
-//INTERFACE_CAST_IMPL(String, Iterable, Object)
+IMPLEMENT_OVERRIDE_METHOD(Iterator, Iterable, iterator) {
+    String self = Iterable_as_String(this);
+    StringIterator iter = StringIterator$make_new(self);
+    return StringIterator_as_Iterator(iter);
+}
+
+IMPLEMENT_SELF_VTABLE() {
+    // Init the vtable
+    size_t iterable_vtable_offset = offsetof(String_vtable_t, Iterable_vtable);
+    initVtable(
+            (Object_vtable_t*)vtable,
+            (Object_vtable_t*)Super(),
+            sizeof(*Super()),
+            STR(Self),
+            1,
+            "Iterable",
+            iterable_vtable_offset
+    );
+
+    // String
+    vtable->at = _String_at_impl;
+    vtable->cStringView = _String_cStringView_impl;
+    vtable->length = _String_length_impl;
+    vtable->concat = _String_concat_impl;
+    // Iterable
+    initImplementedInterfaceVtable(
+    (Interface_vtable_t*)&vtable->Iterable_vtable,
+    (Interface_vtable_t*)Iterable_vtable(),
+    sizeof(*Iterable_vtable()),
+    offsetof(String_vtable_t, Iterable_vtable)
+    );
+    vtable->Iterable_vtable.iterator = _String_iterator_impl;
+    // Object
+    Object_vtable_t *object_vtable = (Object_vtable_t*)vtable;
+    object_vtable->delete = _String_delete_impl;
+    object_vtable->toString = _String_toString_impl;
+}
+
+OBJECT_CAST_IMPL(Iterable, String)
+INTERFACE_CAST_IMPL(String, Iterable, Object)
 
 SUPER_CAST_IMPL(String, Object)
 
-String String_alloc() {
-    String ptr = {
-            .vtable = String_vtable(),
-            .data = Object_allocate(sizeof(String_data))
-    };
-    if (ptr.data == NULL) {
-        return DOWNCAST(Object_null, String);
-    }
-    return ptr;
+
+IMPLEMENT_CONSTRUCTOR(new, const char* str) {
+    this.data->length = strlen(str);
+    this.data->c_string = strdup(str);
 }
 
-void String_construct(String this, const char* ref) {
-    this.data->length = strlen(ref);
-    this.data->c_string = strdup(ref);
-}
-void String_construct_own(String this, char* cString) {
-    String_construct_own_len(this, cString, strlen(cString));
-}
-void String_construct_own_len(String this, char* cString, size_t len) {
+
+IMPLEMENT_CONSTRUCTOR(new_len, const char* str, size_t len) {
+    assert(len == strlen(str));
     this.data->length = len;
-    this.data->c_string = cString;
+    this.data->c_string = strndup(str, len);
 }
 
-String String_new(const char* ref) {
-    String this = String_alloc();
-    if (Object_isNull(String_as_Object(this))) {
-        return this;
-    }
-    String_construct(this, ref);
-    return this;
+IMPLEMENT_CONSTRUCTOR(own, char* ownStr) {
+    this.data->length = strlen(ownStr);
+    this.data->c_string = ownStr;
 }
 
-String String_own(char* cString) {
-    String this = String_alloc();
-    if (Object_isNull(String_as_Object(this))) {
-        return this;
-    }
-    String_construct_own(this, cString);
-    return this;
+IMPLEMENT_CONSTRUCTOR(own_len, char* ownStr, size_t len) {
+    this.data->length = len;
+    this.data->c_string = ownStr;
 }
-String String_own_len(char* cString, size_t len) {
-    String this = String_alloc();
+
+typedef enum FormatStringState {
+    S_READING_CHAR,
+    S_READING_ESCAPED_CHAR,
+    S_BRACKET_OPEN
+} FormatStringState;
+
+typedef enum FormatStringCharacterType {
+    T_ESCAPE,
+    T_BRACKET_OPEN,
+    T_BRACKET_CLOSE,
+    T_REGULAR
+} FormatStringCharacterType;
+
+FormatStringCharacterType _characterType(char c) {
+    switch (c) {
+        case '\\':
+            return T_ESCAPE;
+        case '{':
+            return T_BRACKET_OPEN;
+        case '}':
+            return T_BRACKET_CLOSE;
+        default:
+            return T_REGULAR;
+    }
+}
+void _String_format(StringBuffer buffer, const char* string, size_t len, va_list args) {
+    FormatStringState state = S_READING_CHAR;
+    for (size_t i = 0; i < len; i++) {
+        char c =  string[i];
+        FormatStringCharacterType type = _characterType(c);
+        switch (state) {
+            case S_READING_CHAR: {
+                switch (type) {
+                    case T_ESCAPE:
+                        goto transition_to_escape;
+                    case T_BRACKET_OPEN:
+                        goto transition_to_bracket_open;
+                    case T_BRACKET_CLOSE:
+                    case T_REGULAR:
+                        StringBuffer_writeCharCode(buffer, c);
+                        goto no_transition;
+                }
+            }
+            case S_READING_ESCAPED_CHAR:
+                StringBuffer_writeCharCode(buffer, c);
+                goto transition_to_regular;
+            case S_BRACKET_OPEN:
+                switch (type) {
+                    case T_ESCAPE:
+                        StringBuffer_writeCharCode(buffer, '{');
+                        goto transition_to_escape;
+                    case T_BRACKET_OPEN:
+                        StringBuffer_writeCharCode(buffer, '{');
+                        goto no_transition;
+                    case T_BRACKET_CLOSE: {
+                        Object arg = va_arg(args, Object);
+                        StringBuffer_write(buffer, arg);
+                        goto transition_to_regular;
+                    }
+                    case T_REGULAR:
+                        StringBuffer_writeCharCode(buffer, '{');
+                        StringBuffer_writeCharCode(buffer, c);
+                        goto transition_to_regular;
+                }
+        }
+
+        transition_to_escape:
+        state = S_READING_ESCAPED_CHAR;
+        goto no_transition;
+
+        transition_to_bracket_open:
+        state = S_BRACKET_OPEN;
+        goto no_transition;
+
+        transition_to_regular:
+        state = S_READING_CHAR;
+        goto no_transition;
+
+        no_transition:
+        continue;
+    }
+}
+
+
+String String_format(String this, ...) {
     if (Object_isNull(String_as_Object(this))) {
         return this;
     }
-    String_construct_own_len(this, cString, len);
-    return this;
+    if (String_length(this) == 0) {
+        return this;
+    }
+
+    StringBuffer buffer = StringBuffer$make_new();
+    size_t len = String_length(this);
+    const char *string = String_cStringView(this);
+
+    va_list args;
+    va_start(args, this);
+    _String_format(buffer, string, len, args);
+    va_end(args);
+
+    String out = StringBuffer_releaseToString(buffer);
+    Object_delete(StringBuffer_as_Object(buffer));
+    return out;
+}
+
+String String_format_c(const char* str, ...) {
+    if (str == NULL) {
+        return DOWNCAST(null, String);
+    }
+    size_t len = strlen(str);
+    if (len == 0) {
+        return StringRef_as_String(StringRef$wrap(str));
+    }
+
+    StringBuffer buffer = StringBuffer$make_new();
+
+    va_list args;
+    va_start(args, str);
+    _String_format(buffer, str, len, args);
+    va_end(args);
+
+    String out = StringBuffer_releaseToString(buffer);
+    Object_delete(StringBuffer_as_Object(buffer));
+    return out;
 }
 
 
 #undef Super
+#undef Self

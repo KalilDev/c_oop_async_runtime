@@ -43,7 +43,7 @@ DECLARE_UPCAST(Double, Object)
 #define Double$box(x) _Generic((x), \
     float: Double$box_f(x),           \
     double: Double$box_d(x),           \
-    default: DOWNCAST(Object_null, Double))
+    default: DOWNCAST(null, Double))
 
 END_CLASS
 #undef Super

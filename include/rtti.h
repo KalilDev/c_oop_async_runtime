@@ -1,4 +1,8 @@
 #pragma once
+
+#include "oop.h"
+#include <stdarg.h>
+#include <stdbool.h>
 #ifdef WITH_RTTI
 
 #define _INHERITANCE_CHAIN_SEPARATOR ';'
@@ -9,10 +13,8 @@
 #define ______STR(e) #e
 #define _____STR(e) ______STR(e)
 #define ____STR(e) _____STR(e)
-#define ____STR(e) ____STR(e)
 #define ___STR(e) ____STR(e)
 #define __STR(e) ___STR(e)
-#define __STR(e) __STR(e)
 #define _STR(e) __STR(e)
 #define STR(e) _STR(e)
 #define APPEND_INTERFACE(interface_table, interface, offset) interface_table  #interface _INTERFACE_TABLE_ENTRY_SEPARATOR STR(offset) _INTERFACE_TABLE_SEPARATOR

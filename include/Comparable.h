@@ -8,8 +8,9 @@
 
 START_CLASS
 
+#define PARAMS_INVOCATION_Comparable_compareTo other
 #define ENUMERATE_COMPARABLE_METHODS(METHOD) \
-    METHOD(void, compareTo, Object other)
+    METHOD(int, compareTo, Object other)
 
 DEFINE_SELF_INTERFACE(
         Object,

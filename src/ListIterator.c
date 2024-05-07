@@ -4,10 +4,12 @@
 #include "oop.h"
 #include "string.h"
 #include "stdbool.h"
-
+#include <assert.h>
+#define Self ListIterator
 #define Super() Object_vtable()
+IMPLEMENT_OPERATOR_NEW()
 
-bool _ListIterator_moveNext(Iterator this) {
+IMPLEMENT_OVERRIDE_METHOD(bool, Iterator, moveNext) {
     ListIterator self = DOWNCAST(this, ListIterator);
     long long *i = &self.data->i;
     if (*i >= (long long)List_length(self.data->list) - 1) {
@@ -16,37 +18,32 @@ bool _ListIterator_moveNext(Iterator this) {
     *i += 1;
     return true;
 }
-
-Object _ListIterator_current(Iterator this) {
+IMPLEMENT_OVERRIDE_METHOD(Object, Iterator, current) {
     ListIterator self = DOWNCAST(this, ListIterator);
     return List_at(self.data->list, self.data->i);
 }
 
-static ListIterator_vtable_t _ListIterator_vtable = {0};
-
-const ListIterator_vtable_t* ListIterator_vtable() {
-    if (_ListIterator_vtable.super.current == NULL) {
-        memmove(&_ListIterator_vtable.super, Super(), sizeof(*Super()));
-        // init the vtable
-        _ListIterator_vtable.super.current = _ListIterator_current;
-        _ListIterator_vtable.super.moveNext = _ListIterator_moveNext;
-    }
-    return &_ListIterator_vtable;
+IMPLEMENT_SELF_VTABLE() {
+    initVtable(
+    (Object_vtable_t*)vtable,
+    (Object_vtable_t*)Super(),
+    sizeof(*Super()),
+    STR(Self),
+    0
+    );
+    // init the vtable
+    vtable->super.current = _ListIterator_current_impl;
+    vtable->super.moveNext = _ListIterator_moveNext_impl;
 }
+
 
 SUPER_CAST_IMPL(ListIterator, Iterator)
 UPCAST_IMPL(ListIterator, Object)
-ListIterator ListIterator_new(List list) {
-    ListIterator obj = {
-            .vtable = ListIterator_vtable(),
-            .data = Object_allocate(sizeof(ListIterator_data)),
-    };
-    if (obj.data == NULL) {
-        return obj;
-    }
-    obj.data->i = -1ll;
-    obj.data->list = list;
-    return obj;
+
+
+IMPLEMENT_CONSTRUCTOR(new, List list) {
+    this.data->i = -1ll;
+    this.data->list = list;
 }
 
 #undef Super

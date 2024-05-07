@@ -24,13 +24,22 @@ FORWARD_DECL_CLASS(Integer)
     ATTRIBUTE(const char*, c_string)            \
     ATTRIBUTE(size_t, length)
 
+#define PARAMS_INVOCATION_String$new str
+#define PARAMS_INVOCATION_String$new_len str, len
+#define PARAMS_INVOCATION_String$own ownStr
+#define PARAMS_INVOCATION_String$own_len ownStr, len
 #define ENUMERATE_STRING_CONSTRUCTORS(CONSTRUCTOR) \
-    CONSTRUCTOR(new)                          \
-    CONSTRUCTOR(own)                    \
-    CONSTRUCTOR(own_len)
+    CONSTRUCTOR(new, const char* str)                          \
+    CONSTRUCTOR(new_len, const char* str, size_t len)                          \
+    CONSTRUCTOR(own, char* ownStr)                    \
+    CONSTRUCTOR(own_len, char* ownStr, size_t len)
+
+#define ENUMERATE_STRING_IMPLEMENTS(IMPLEMENTS) \
+    IMPLEMENTS(Iterable)
+
 
 DEFINE_SELF_CLASS(
-        NO_IMPLEMENTS,
+        ENUMERATE_STRING_IMPLEMENTS,
         ENUMERATE_STRING_METHODS,
         ENUMERATE_STRING_ATTRIBUTES,
         ENUMERATE_STRING_CONSTRUCTORS,
@@ -39,8 +48,11 @@ DEFINE_SELF_CLASS(
         NO_GETTERS
 )
 
-//DECLARE_OBJECT_CAST(Iterable, String)
-//DECLARE_INTERFACE_CAST(String, Iterable)
+String String_format(String this, ...);
+String String_format_c(const char* str, ...);
+
+DECLARE_OBJECT_CAST(Iterable, String)
+DECLARE_INTERFACE_CAST(String, Iterable)
 
 DECLARE_SUPER_CAST(String, Object)
 

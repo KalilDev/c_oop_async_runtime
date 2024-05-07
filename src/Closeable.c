@@ -1,11 +1,21 @@
 #include "Closeable.h"
 #include "oop.h"
+#include <assert.h>
 
-static const Closeable_vtable_t _Closeable_vtable = {0};
 
-const Closeable_vtable_t* Closeable_vtable() {
-    return &_Closeable_vtable;
-}
+#define Self Closeable
 
 SUPER_INTERFACE_CAST_IMPL(Closeable, Interface)
-VIRTUAL_METHOD_IMPL(Closeable, close, void, (Closeable this), (this))
+OBJECT_CAST_IMPL(Closeable, Object)
+
+ENUMERATE_CLOSEABLE_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
+
+IMPLEMENT_SELF_VTABLE() {
+    initInterfaceVtable(
+            (Interface_vtable_t*)vtable,
+            (Interface_vtable_t*)Interface_vtable(),
+            sizeof(*Interface_vtable())
+    );
+}
+
+#undef Self

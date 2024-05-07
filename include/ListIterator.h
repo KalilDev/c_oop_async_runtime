@@ -14,6 +14,7 @@ FORWARD_DECL_CLASS(Iterator)
     ATTRIBUTE(List, list)            \
     ATTRIBUTE(long long, i)
 
+#define PARAMS_INVOCATION_ListIterator$new list
 #define ENUMERATE_LIST_ITERATOR_CONSTRUCTORS(CONSTRUCTOR) \
     CONSTRUCTOR(new, List list)
 

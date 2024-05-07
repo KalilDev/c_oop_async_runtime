@@ -15,10 +15,12 @@ START_CLASS
 
 FORWARD_DECL_CLASS(String)
 
+#define PARAMS_INVOCATION_List_join sep
 #define PARAMS_INVOCATION_List_add element
 #define PARAMS_INVOCATION_List_ensure capacity
 #define PARAMS_INVOCATION_List_at i
 #define ENUMERATE_LIST_METHODS(METHOD) \
+    METHOD(String, join, String sep)                           \
     METHOD(void, add, Object element) \
     METHOD(void, ensure, size_t capacity) \
     METHOD(Object, at, size_t i)

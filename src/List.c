@@ -5,12 +5,30 @@
 #include "stddef.h"
 #include "oop.h"
 #include "string.h"
+#include "StringBuffer.h"
 #include <strings.h>
+#include <assert.h>
+#include "String.h"
+#include "primitive/StringRef.h"
+
 #define Super() Object_vtable()
+#define Self List
+IMPLEMENT_OPERATOR_NEW()
 
-const List_vtable_t* List_vtable();
+ENUMERATE_LIST_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
+IMPLEMENT_SELF_METHOD(String, join, String sep) {
+    StringBuffer buf = StringBuffer$make_new();
+    Object sepObj = String_as_Object(sep);
+    if (Object_isNull(sepObj)) {
+        sep = StringRef_as_String(StringRef$wrap(", "));
+    }
+    StringBuffer_writeAll(buf, this, sep);
 
-METHOD_IMPL(List, add, void, (List this, Object e), (this, e)) {
+    String res = StringBuffer_releaseToString(buf);
+    Object_delete(StringBuffer_as_Object(buf));
+    return res;
+}
+IMPLEMENT_SELF_METHOD(void, add, Object e) {
     size_t *length = &this.data->length;
     List_ensure(this, *length + 1);
     Object* elements = this.data->elements;
@@ -18,7 +36,8 @@ METHOD_IMPL(List, add, void, (List this, Object e), (this, e)) {
     memcpy(elements + *length, &e, sizeof(Object));
     *length += 1;
 }
-METHOD_IMPL(List, ensure, void, (List this, size_t min_capacity), (this, min_capacity)) {
+
+IMPLEMENT_SELF_METHOD(void, ensure, size_t min_capacity) {
     size_t capacity = this.data->capacity;
     if (capacity >= min_capacity) {
         return;
@@ -37,16 +56,16 @@ METHOD_IMPL(List, ensure, void, (List this, size_t min_capacity), (this, min_cap
     this.data->capacity = new_capacity;
 }
 
-METHOD_IMPL(List, at, Object, (List this, size_t i), (this, i)) {
+IMPLEMENT_SELF_METHOD(Object, at, size_t i) {
     size_t length = this.data->length;
     if (i >= length) {
-        return Object_null;
+        return null;
     }
     Object* elements = this.data->elements;
     return elements[i];
 }
 
-OVERRIDE_IMPL(void , List, delete, Object) {
+IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     List self = DOWNCAST(this, List);
     size_t capacity = self.data->capacity;
     size_t length = self.data->length;
@@ -68,27 +87,36 @@ OVERRIDE_IMPL(void , List, delete, Object) {
     Super()->delete(this);
 }
 
-Iterator _List_iterator(Iterable this) {
+IMPLEMENT_OVERRIDE_METHOD(Iterator, Iterable, iterator) {
     List self = Iterable_as_List(this);
-    return ListIterator_as_Iterator(ListIterator_new(self));
+    return ListIterator_as_Iterator(ListIterator$make_new(self));
 }
 
-static List_vtable_t _List_vtable = {0};
-
-const List_vtable_t* List_vtable() {
-    if (_List_vtable.add == NULL) {
-        // List
-        _List_vtable.add = _List_add;
-        _List_vtable.ensure = _List_ensure;
-        _List_vtable.at = _List_at;
-        // Iterable
-        _List_vtable.Iterable_vtable.super.vtable_offset = offsetof(List_vtable_t, Iterable_vtable);
-        _List_vtable.Iterable_vtable.iterator = _List_iterator;
-        // Object
-        memmove(&_List_vtable.super, Super(), sizeof(*Super()));
-        _List_vtable.super.delete = _List_delete;
-    }
-    return &_List_vtable;
+IMPLEMENT_SELF_VTABLE() {
+    initVtable(
+        (Object_vtable_t*)vtable,
+        (Object_vtable_t*)Super(),
+        sizeof(*Super()),
+        STR(Self),
+        1,
+        "Iterable", offsetof(List_vtable_t , Iterable_vtable));
+    // List
+    vtable->add = _List_add_impl;
+    vtable->ensure = _List_ensure_impl;
+    vtable->at = _List_at_impl;
+    vtable->join = _List_join_impl;
+    // Iterable
+    Iterable_vtable_t *iterable_vtable = &vtable->Iterable_vtable;
+    initImplementedInterfaceVtable(
+        (Interface_vtable_t*)iterable_vtable,
+        (Interface_vtable_t*)Iterable_vtable(),
+        sizeof(*Iterable_vtable()),
+        offsetof(List_vtable_t, Iterable_vtable)
+    );
+    iterable_vtable->iterator = _List_iterator_impl;
+    // Object
+    Object_vtable_t *object_vtable = (Object_vtable_t*)vtable;
+    object_vtable->delete = _List_delete_impl;
 }
 
 OBJECT_CAST_IMPL(Iterable, List)
@@ -96,16 +124,13 @@ INTERFACE_CAST_IMPL(List, Iterable, Object)
 
 SUPER_CAST_IMPL(List, Object)
 
-List List_new() {
-    List ptr = {
-            .vtable = List_vtable(),
-            .data = Object_allocate(sizeof(List_data))
-    };
-    return ptr;
+IMPLEMENT_CONSTRUCTOR(new) {
+
 }
 
-size_t List_length(List this) {
+IMPLEMENT_SELF_GETTER(size_t, length) {
     return this.data->length;
 }
 
 #undef Super
+#undef Self

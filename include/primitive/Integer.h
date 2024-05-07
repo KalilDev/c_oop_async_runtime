@@ -49,7 +49,7 @@ DECLARE_UPCAST(Integer, Object)
     char: Integer$box_c(x),           \
     long: Integer$box_l(x),          \
     long long: Integer$box_ll(x),             \
-    default: DOWNCAST(Object_null, Integer))
+    default: DOWNCAST(null, Integer))
 
 END_CLASS
 #undef Super

@@ -15,6 +15,7 @@ START_CLASS
 FORWARD_DECL_CLASS(Double)
 FORWARD_DECL_CLASS(Integer)
 
+#define PARAMS_INVOCATION_Number_clamp lower, upper
 #define ENUMERATE_NUMBER_METHODS(METHOD) \
     /* Gets the absolute value for this number */       \
     METHOD(Number, abs)               \

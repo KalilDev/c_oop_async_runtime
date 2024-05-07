@@ -2,6 +2,9 @@
 #define CONCAT(A, B) CONCAT_(A, B)
 
 #define SUPER_CAST_IMPL(class, Super) Super class ## _as_ ## Super(class this) { \
+    if (Object_isNull(UPCAST(this, Object))) {                                   \
+        return DOWNCAST(null, Super);                                                                             \
+    }                                                                             \
     Super super = {                                                               \
         .vtable = &this.vtable->super,                                 \
         .data = &this.data->super                                       \
@@ -11,7 +14,7 @@
 
 #define SUPER_INTERFACE_CAST_IMPL(class, Super) Super class ## _as_ ## Super(class this) { \
     Super super = {                                                               \
-        .vtable = &this.vtable->super,                                 \
+        .vtable = (CONCAT(Super, _vtable_t)*)&this.vtable,                                 \
         .data = this.data                                      \
     };                                                                            \
     return super;                                                                     \
@@ -19,7 +22,7 @@
 
 #define SUPER_INTERFACE_CAST_IMPL_(class, Super, Class) Super class ## _as_ ## Super(class this) { \
     Super super = {                                                               \
-        .vtable = &this.vtable->super,                                 \
+        .vtable = (CONCAT(Super, _vtable_t)*)&this.vtable,                                 \
         .data = (Class ## _data*)this.data                                      \
     };                                                                            \
     return super;                                                                     \
@@ -30,7 +33,7 @@
 #define PRIMITIVE_SUPER_CAST_IMPL(class, Super) Super class ## _as_ ## Super(class this) { \
     Super super = {                                                               \
         .vtable = &this.vtable->super,                                 \
-        .data = NULL                                       \
+        .data = *(CONCAT(Super, _data)**)(&this.data)                                       \
     };                                                                            \
     return super;                                                                     \
 }
@@ -59,10 +62,11 @@
     VIRTUAL_METHOD_IMPL(class, method, return_type, signature, params)             \
     return_type _ ## class ## _ ## method signature
 
-#define DOWNCAST(var, class) *((class*) (&var))
+#define DOWNCAST(var, class) (*((class*) (&var)))
+#define UPCAST(var, class) (*((class*) (&var)))
 
 #define OBJECT_CAST_IMPL(interface, class) class interface ## _as_ ## class(interface this) { \
-    size_t vtable_offset = ((Interface_vtable_t*)this.vtable)->vtable_offset;                                                                                          \
+    size_t vtable_offset = ((Interface_vtable_t*)this.vtable)->object_vtable_offset;                                                                                          \
     class other = {                                                               \
         .vtable = (class ## _vtable_t*)(((char *)this.vtable) - vtable_offset),                                 \
         .data = (class ## _data*)this.data                                       \
@@ -81,6 +85,9 @@
 
 
 // ok
+#define _CONSTRUCTOR_METHOD_INVOCATION(class, method, ...) CONCAT(CONCAT(class, $), method)(this __VA_OPT__(,) __VA_OPT__(CONCAT(CONCAT(CONCAT(CONCAT(PARAMS_INVOCATION, _), class), $), method)))
+
+// ok
 #define _VIRTUAL_METHOD_INVOCATION(class, method, ...) this.vtable->method(this __VA_OPT__(,) __VA_OPT__(PARAMS_INVOCATION ## _ ## class ## _ ## method))
 // ok
 #define VIRTUAL_METHOD_IMPLEMENTATION(return_type, class, method, ...) \
@@ -95,14 +102,57 @@ return_type CONCAT(CONCAT(class, _), method)(class this __VA_OPT__(,) __VA_ARGS_
 // ok
 #define IMPLEMENT_METHOD(return_type, class, Self, method, ...) return_type CONCAT(_, CONCAT(CONCAT(CONCAT(class, _), method), _impl))(Self this __VA_OPT__(,) __VA_ARGS__)
 // ok
+#define IMPLEMENT_GETTER(return_type, class, getter) return_type CONCAT(CONCAT(class, _), getter)(class this)
+// ok
+#define IMPLEMENT_SELF_GETTER(return_type, getter) IMPLEMENT_GETTER(return_type, Self, getter)
+// ok
 #define IMPLEMENT_OVERRIDE_METHOD(return_type, class, method, ...) IMPLEMENT_METHOD(return_type, Self, class, method __VA_OPT__(,) __VA_ARGS__)
 // ok
 #define IMPLEMENT_SELF_METHOD(return_type, method, ...) IMPLEMENT_METHOD(return_type, Self, Self, method __VA_OPT__(,) __VA_ARGS__)
 
+// ok
+#define IMPLEMENT_SELF_VTABLE() \
+    /* forward decl */                            \
+    static void CONCAT(_make_, CONCAT(Self, _vtable))(CONCAT(Self, _vtable_t)*vtable); \
+    static CONCAT(CONCAT(Self, _vtable), _t) CONCAT(_, CONCAT(Self, _vtable)) = {0}; \
+    const CONCAT(Self, _vtable_t)* CONCAT(Self, _vtable)() {                    \
+        CONCAT(CONCAT(Self, _vtable), _t) *vtable = &CONCAT(_, CONCAT(Self, _vtable)); \
+        if (((Object_vtable_t*)vtable)->object_vtable_tag != OBJECT_VTABLE_TAG) {      \
+            /* The vtable was not initialized yet */                          \
+            /* initialize it*/                    \
+            CONCAT(_make_, CONCAT(Self, _vtable))(vtable);                     \
+            /* it must have been initialized correctly */                     \
+            assert(((Object_vtable_t*)vtable)->object_vtable_tag == OBJECT_VTABLE_TAG);                        \
+        }                       \
+        return vtable;                            \
+    }\
+    static void CONCAT(_make_, CONCAT(Self, _vtable))(CONCAT(Self, _vtable_t)*vtable)
+
+
+// ok
+#define IMPLEMENT_SELF_INTERFACE_VTABLE() \
+    /* forward decl */                            \
+    static void CONCAT(_make_, CONCAT(Self, _vtable))(CONCAT(Self, _vtable_t)*vtable); \
+    static CONCAT(CONCAT(Self, _vtable), _t) CONCAT(_, CONCAT(Self, _vtable)) = {0}; \
+    const CONCAT(Self, _vtable_t)* CONCAT(Self, _vtable)() {                    \
+        CONCAT(CONCAT(Self, _vtable), _t) *vtable = &CONCAT(_, CONCAT(Self, _vtable)); \
+        if (((Interface_vtable_t*)vtable)->interface_vtable_tag != INTERFACE_VTABLE_TAG) {      \
+            /* The vtable was not initialized yet */                          \
+            /* initialize it*/                    \
+            CONCAT(_make_, CONCAT(Self, _vtable))(vtable);                     \
+            /* it must have been initialized correctly */                     \
+            assert(((Interface_vtable_t*)vtable)->interface_vtable_tag == INTERFACE_VTABLE_TAG);                        \
+        }                       \
+        return vtable;                            \
+    }\
+    static void CONCAT(_make_, CONCAT(Self, _vtable))(CONCAT(Self, _vtable_t)*vtable)
+
+
+
 #define IMPLEMENT_OPERATOR_NEW() Self CONCAT(Self, _operator_new)() { \
     CONCAT(Self, _data)* data = (CONCAT(Self, _data)*)Object_allocate_memory(sizeof(CONCAT(Self, _data))); \
     if (data == NULL) {                                          \
-        return DOWNCAST(Object_null, Self);                                      \
+        return DOWNCAST(null, Self);                                      \
     }                                                             \
     Self this = {                                                \
         .vtable = CONCAT(Self, _vtable)(),                       \
@@ -113,16 +163,21 @@ return_type CONCAT(CONCAT(class, _), method)(class this __VA_OPT__(,) __VA_ARGS_
 
 #define IMPLEMENT_ABSTRACT_CONSTRUCTOR(name, ...) void CONCAT(CONCAT(Self, $), name) (Self this __VA_OPT__(,) __VA_ARGS__)
 
+// ok
 #define IMPLEMENT_CONSTRUCTOR(name, ...) \
         Self CONCAT(CONCAT(CONCAT(Self, $), make_), name)(__VA_ARGS__) { \
             Self this = CONCAT(Self, _operator_new)();                         \
             if (Object_isNull(CONCAT(Self, _as_Object)(this))) {               \
                 return this;\
             }                            \
-            CONCAT(CONCAT(Self, $), name)(this __VA_OPT__(,) __VA_ARGS__);\
+            _CONSTRUCTOR_METHOD_INVOCATION(Self, name __VA_OPT__(,) __VA_ARGS__);\
             return this;\
         } \
         IMPLEMENT_ABSTRACT_CONSTRUCTOR(name __VA_OPT__(,) __VA_ARGS__)
+
+#define IMPLEMENT_PRIMITIVE_CONSTRUCTOR(name, ...) \
+        Self CONCAT(CONCAT(Self, $), name)(__VA_ARGS__)
+
 
 
 #define DECLARE_METHOD(return_type, class, class_type, method, ...) \

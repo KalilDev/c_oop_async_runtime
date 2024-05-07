@@ -20,7 +20,7 @@ FORWARD_DECL_CLASS(String)
     /* frees all the object's resources and then frees it  */                                     \
     METHOD(void, delete)                       \
     /* returns the string representation of an object */                                     \
-    METHOD(struct String, toString)
+    METHOD(String, toString)
 
 #define ENUMERATE_OBJECT_STATIC_METHODS(METHOD) \
     METHOD(void*, allocate_memory, size_t size)              \
@@ -32,7 +32,7 @@ FORWARD_DECL_CLASS(String)
 #define ENUMERATE_OBJECT_ATTRIBUTES(ATTRIBUTE)
 
 #define ENUMERATE_OBJECT_STATIC_ATTRIBUTES(ATTRIBUTE) \
-    ATTRIBUTE(const Object, null)
+
 
 #define ENUMERATE_OBJECT_CONSTRUCTORS(CONSTRUCTOR) \
     /* returns the hash code of the object */       \
@@ -67,6 +67,7 @@ ENUMERATE_OBJECT_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
 const runtime_type_information_t* Object_runtimeTypeInformation(Object object);
 #endif
 
+extern const Object null;
 
 // The var parameters are the interfaces implemented
 void initVtable(Object_vtable_t * selfVtable, Object_vtable_t *superVtable, size_t superVtableSize, const char* class_name, size_t implemented_interface_count, ...);

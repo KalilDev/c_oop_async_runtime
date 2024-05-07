@@ -1,13 +1,22 @@
 #include "Iterable.h"
+#include "Iterator.h"
 #include "oop.h"
+#include <assert.h>
 
-static const Iterable_vtable_t _Iterable_vtable = {0};
 
-const Iterable_vtable_t* Iterable_vtable() {
-    return &_Iterable_vtable;
-}
+#define Self Iterable
 
 SUPER_INTERFACE_CAST_IMPL(Iterable, Interface)
 OBJECT_CAST_IMPL(Iterable, Object)
 
-VIRTUAL_METHOD_IMPL(Iterable, iterator, Iterator, (Iterable this), (this))
+ENUMERATE_ITERABLE_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
+
+IMPLEMENT_SELF_INTERFACE_VTABLE() {
+    initInterfaceVtable(
+        (Interface_vtable_t*)vtable,
+        Interface_vtable(),
+        sizeof(*Interface_vtable())
+    );
+}
+
+#undef Self

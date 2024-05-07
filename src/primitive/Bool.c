@@ -1,37 +1,59 @@
-#include <stdlib.h>
-
-#include "../oop.h"
 #include "Object.h"
+#include "String.h"
+#include "primitive/StringRef.h"
 #include "primitive/Bool.h"
+#include "../oop.h"
+#include "stddef.h"
+#include "../oop.h"
 
-METHOD_IMPL(Bool, unbox, bool, (Bool this), (this)) {
+#define Self Bool
+#define Super() Object_vtable()
+
+IMPLEMENT_SELF_GETTER(bool, unbox) {
     return this.data;
 }
 
-void _Bool_delete(Object this) {
-    return;
+IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
+
 }
 
-bool _Bool_equals(Object this, Object other) {
+IMPLEMENT_OVERRIDE_METHOD(bool, Object, equals, Object other) {
     Bool a = DOWNCAST(this, Bool);
-    Bool b = DOWNCAST(this, Bool);
-    return Bool_unbox(a) == Bool_unbox(b);
+    // is bool
+    if (other.vtable != Bool_vtable()) {
+    return false;
+    }
+    Bool b = DOWNCAST(other, Bool);
+    return a.data == b.data;
 }
-
-long _Bool_getHashCode(Object this) {
+IMPLEMENT_OVERRIDE_METHOD(long, Object, getHashCode) {
     Bool self = DOWNCAST(this, Bool);
     return self.data;
+}
+static const char* _TrueString = "true";
+static const char* _FalseString = "false";
+IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
+    Bool self = DOWNCAST(this, Bool);
+    if (this.data) {
+        return StringRef_as_String(StringRef$wrap(_TrueString));
+    }
+    return StringRef_as_String(StringRef$wrap(_FalseString));
 }
 
 
 static const Bool_vtable_t _Bool_vtable = {
-        // Object
         .super = {
-                .delete = _Bool_delete,
-                .equals = _Bool_equals,
-                .getHashCode = _Bool_getHashCode,
-        },
-        .unbox = _Bool_unbox
+                .object_vtable_tag = OBJECT_VTABLE_TAG,
+                .runtime_type_information = {
+                        .class_name = "Bool",
+                        .interface_table = NULL,
+                        .inheritance_chain = "Object;Bool"
+                },
+                .toString = _Bool_toString_impl,
+                .getHashCode = _Bool_getHashCode_impl,
+                .equals = _Bool_equals_impl,
+                .delete = _Bool_delete_impl
+        }
 };
 
 const Bool_vtable_t* Bool_vtable() {
@@ -42,13 +64,22 @@ const Bool True =  {
         .vtable = &_Bool_vtable,
         .data = true
 };
-const Bool False;
+const Bool False =  {
+        .vtable = &_Bool_vtable,
+        .data = false
+};
 
-PRIMITIVE_SUPER_CAST_IMPL(Bool, Object)
-Bool Bool_box(bool unboxed) {
-    Bool box = {
+
+PRIMITIVE_UPCAST_IMPL(Bool, Object)
+
+// TODO: revisit this
+IMPLEMENT_PRIMITIVE_CONSTRUCTOR(box, bool unboxed) {
+    Bool this = {
             .vtable = Bool_vtable(),
             .data = unboxed
     };
-    return box;
+    return this;
 }
+
+#undef Super
+#undef Self
