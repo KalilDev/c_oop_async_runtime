@@ -11,6 +11,10 @@
 #define Super Number
 #define Self Integer
 
+#define ENUMERATE_INTEGER_PARENTS(PARENT) \
+    ENUMERATE_NUMBER_PARENTS(PARENT)                                     \
+    PARENT(Number)
+
 START_CLASS
 
 FORWARD_DECL_CLASS(String)
@@ -32,6 +36,7 @@ FORWARD_DECL_CLASS(String)
     METHOD(String, toRadixString, unsigned char radix)
 
 DEFINE_SELF_PRIMITIVE_CLASS(
+        ENUMERATE_INTEGER_PARENTS,
         NO_IMPLEMENTS,
         ENUMERATE_INTEGER_METHODS,
         long long,

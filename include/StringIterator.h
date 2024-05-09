@@ -8,6 +8,10 @@
 #define Super Iterator
 #define Self StringIterator
 
+#define ENUMERATE_STRING_ITERATOR_PARENTS(PARENT) \
+    ENUMERATE_ITERATOR_PARENTS(PARENT)                                     \
+    PARENT(Iterator)
+
 START_CLASS
 
 #define ENUMERATE_STRING_ITERATOR_ATTRIBUTES(ATTRIBUTE) \
@@ -20,6 +24,7 @@ START_CLASS
     CONSTRUCTOR(new, String string)
 
 DEFINE_SELF_CLASS(
+        ENUMERATE_STRING_ITERATOR_PARENTS,
         NO_IMPLEMENTS,
         NO_METHODS,
         ENUMERATE_STRING_ITERATOR_ATTRIBUTES,

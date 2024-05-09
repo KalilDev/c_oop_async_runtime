@@ -11,6 +11,10 @@
 #define Super Number
 #define Self Double
 
+#define ENUMERATE_DOUBLE_PARENTS(PARENT) \
+    ENUMERATE_NUMBER_PARENTS(PARENT)                                     \
+    PARENT(Number)
+
 START_CLASS
 
 FORWARD_DECL_CLASS(String)
@@ -28,6 +32,7 @@ FORWARD_DECL_CLASS(String)
     METHOD(String, toStringFixed)
 
 DEFINE_SELF_PRIMITIVE_CLASS(
+        ENUMERATE_DOUBLE_PARENTS,
         NO_IMPLEMENTS,
         ENUMERATE_DOUBLE_METHODS,
         double,

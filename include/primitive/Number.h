@@ -10,6 +10,10 @@
 #define Super Object
 #define Self Number
 
+#define ENUMERATE_NUMBER_PARENTS(PARENT) \
+    ENUMERATE_OBJECT_PARENTS(PARENT)                                     \
+    PARENT(Object)
+
 START_CLASS
 
 FORWARD_DECL_CLASS(Double)
@@ -32,6 +36,7 @@ FORWARD_DECL_CLASS(Integer)
 
 
 DEFINE_SELF_ABSTRACT(
+        ENUMERATE_NUMBER_PARENTS,
         ENUMERATE_NUMBER_IMPLEMENTS,
         ENUMERATE_NUMBER_METHODS,
         NO_ATTRIBUTES,

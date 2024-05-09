@@ -12,10 +12,14 @@
 #include "List.h"
 #include "ByteBuffer.h"
 #include "UInt8List.h"
+#include "Exception.h"
+#include "IOException.h"
+#include "primitive/StringRef.h"
 #include <Closeable.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #define Super() Object_vtable()
 #define Self RandomAccessFile
@@ -26,16 +30,33 @@ ENUMERATE_RANDOM_ACCESS_FILE_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
 IMPLEMENT_SELF_METHOD(void, flush) {
     fflush(this.data->file);
 }
+#define S1(x) #x
+#define S2(x) S1(x)
+#define LOCATION __FILE__ ":" S2(__LINE__)
 
-IMPLEMENT_SELF_METHOD(size_t, length)           {
+#define THROWS Exception* __exception__
+#define THROWS_PARAM_INVOCATION __exception__
+#define THROW(e, ...) \
+    *__exception__ = (e).asException; \
+    Throwable_addStackFrame(UPCAST(*__exception__, Throwable), StringRef$wrap(LOCATION));                  \
+    return __VA_ARGS__;\
+
+IMPLEMENT_SELF_METHOD(size_t, length, THROWS)           {
     struct stat st;
-    fstat (fileno(this.data->file), &st);
+    int res = fstat (fileno(this.data->file), &st);
+    if (res != 0) {
+        THROW(IOException$make_new(res), 0)
+    }
     size_t size = st.st_size;
     return size;
 }
 
-IMPLEMENT_SELF_METHOD(void, lock)           {
+IMPLEMENT_SELF_METHOD(void, lock, THROWS)           {
+    errno = 0;
     flockfile(this.data->file);
+    if (errno != 0) {
+        THROW(Exception$make_new(StringRef_as_String(StringRef$wrap(strerror(errno)))))
+    }
 }
 IMPLEMENT_SELF_METHOD(bool, tryLock)           {
     return ftrylockfile(this.data->file) == 0;

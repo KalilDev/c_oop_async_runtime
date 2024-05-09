@@ -7,10 +7,15 @@
 
 START_CLASS
 
+#define ENUMERATE_STRING_REF_PARENTS(PARENT) \
+    ENUMERATE_STRING_PARENTS(PARENT)                                     \
+    PARENT(String)
+
 #define ENUMERATE_STRING_REF_CONSTRUCTORS(CONSTRUCTOR) \
     CONSTRUCTOR(wrap, const char* ref)
 
 DEFINE_SELF_PRIMITIVE_CLASS(
+        ENUMERATE_STRING_REF_PARENTS,
         NO_IMPLEMENTS,
         NO_METHODS,
         const char*,

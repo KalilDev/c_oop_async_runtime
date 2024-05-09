@@ -9,6 +9,10 @@
 #define Super Object
 #define Self String
 
+#define ENUMERATE_STRING_PARENTS(PARENT) \
+    ENUMERATE_OBJECT_PARENTS(PARENT)                                     \
+    PARENT(Object)
+
 START_CLASS
 
 FORWARD_DECL_CLASS(String)
@@ -40,6 +44,7 @@ FORWARD_DECL_CLASS(Integer)
 
 
 DEFINE_SELF_CLASS(
+        ENUMERATE_STRING_PARENTS,
         ENUMERATE_STRING_IMPLEMENTS,
         ENUMERATE_STRING_METHODS,
         ENUMERATE_STRING_ATTRIBUTES,

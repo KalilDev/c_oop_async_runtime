@@ -63,7 +63,9 @@ typedef union class class;
 #define DECLARE_SUPER_CAST(class, Super) Super class ## _as_ ## Super(class this);
 #define DECLARE_UPCAST(class, Other) Other class ## _as_ ## Other(class this);
 
-#define DECLARE_PRIMITIVE_FAT_POINTER(class, type) \
+#define _DECLARE_PARENT_CAST(Parent) Parent CONCAT(as, Parent);
+
+#define DECLARE_PRIMITIVE_FAT_POINTER(class, type, ENUMERATE_PARENTS) \
 _Static_assert(sizeof(type) <= sizeof(void*), "Invalid primitive type, it needs to fit in a pointer"); \
 typedef union class { \
     struct {                                              \
@@ -73,7 +75,7 @@ typedef union class { \
             void* _align;                                                         \
         };                                             \
     };                                             \
-    Object asObject;                               \
+    ENUMERATE_PARENTS(_DECLARE_PARENT_CAST)                                                                  \
     any asAny;\
 } class;
 
@@ -95,7 +97,7 @@ typedef union class { \
 #define DECLARE_SELF_METHOD(return_type, method, ...) DECLARE_METHOD(return_type, Self, Self, method, __VA_ARGS__)
 #define DECLARE_SELF_GETTER(type, attribute) DECLARE_SELF_METHOD(type, attribute)
 
-#define DECLARE_SELF_FAT_POINTER() \
+#define DECLARE_SELF_FAT_POINTER(ENUMERATE_PARENTS) \
 /* An fat pointer to an Object */ \
 typedef union Self { \
     struct {                       \
@@ -103,7 +105,7 @@ typedef union Self { \
         CONCAT(Self, _data)* data; \
     };                             \
     any asAny;                     \
-    Object asObject;\
+    ENUMERATE_PARENTS(_DECLARE_PARENT_CAST)                                                                  \
 } Self;
 
 
@@ -132,23 +134,23 @@ typedef struct CONCAT(Self, _data) {                  \
 #define NO_GETTERS(ATTRIBUTE)
 
 
-#define DEFINE_SELF_ABSTRACT(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS, ENUMERATE_ATTRIBUTES, ENUMERATE_CONSTRUCTORS, ENUMERATE_STATIC_METHODS, ENUMERATE_STATIC_ATTRIBUTES, ENUMERATE_GETTERS) \
+#define DEFINE_SELF_ABSTRACT(ENUMERATE_PARENTS, ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS, ENUMERATE_ATTRIBUTES, ENUMERATE_CONSTRUCTORS, ENUMERATE_STATIC_METHODS, ENUMERATE_STATIC_ATTRIBUTES, ENUMERATE_GETTERS) \
 ENUMERATE_METHODS(DECLARE_SELF_METHOD) \
 DEFINE_SELF_VTABLE(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS) \
 DEFINE_SELF_DATA(Super, ENUMERATE_ATTRIBUTES) \
-DECLARE_SELF_FAT_POINTER() \
+DECLARE_SELF_FAT_POINTER(ENUMERATE_PARENTS) \
 DECLARE_SELF_VTABLE_GETTER()                                                                                                                                                   \
 ENUMERATE_GETTERS(DECLARE_SELF_GETTER) \
 ENUMERATE_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD) \
 ENUMERATE_CONSTRUCTORS(DECLARE_SELF_ABSTRACT_CONSTRUCTOR) \
 ENUMERATE_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
 
-#define DECLARE_SELF_PRIMITIVE_FAT_POINTER(primitiveType) DECLARE_PRIMITIVE_FAT_POINTER(Self, primitiveType)
+#define DECLARE_SELF_PRIMITIVE_FAT_POINTER(primitiveType, ENUMERATE_PARENTS) DECLARE_PRIMITIVE_FAT_POINTER(Self, primitiveType, ENUMERATE_PARENTS)
 
-#define DEFINE_SELF_PRIMITIVE_CLASS(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS, primitiveType, ENUMERATE_CONSTRUCTORS, ENUMERATE_STATIC_METHODS, ENUMERATE_STATIC_ATTRIBUTES, ENUMERATE_GETTERS) \
+#define DEFINE_SELF_PRIMITIVE_CLASS(ENUMERATE_PARENTS, ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS, primitiveType, ENUMERATE_CONSTRUCTORS, ENUMERATE_STATIC_METHODS, ENUMERATE_STATIC_ATTRIBUTES, ENUMERATE_GETTERS) \
 ENUMERATE_METHODS(DECLARE_SELF_METHOD) \
 DEFINE_SELF_VTABLE(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS) \
-DECLARE_SELF_PRIMITIVE_FAT_POINTER(primitiveType) \
+DECLARE_SELF_PRIMITIVE_FAT_POINTER(primitiveType, ENUMERATE_PARENTS) \
 DECLARE_SELF_VTABLE_GETTER() \
 ENUMERATE_GETTERS(DECLARE_SELF_GETTER) \
 ENUMERATE_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD) \
@@ -158,11 +160,11 @@ ENUMERATE_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
 #define DECLARE_SELF_OPERATOR_NEW() \
     Self CONCAT(Self, _operator_new)();
 
-#define DEFINE_SELF_CLASS(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS, ENUMERATE_ATTRIBUTES, ENUMERATE_CONSTRUCTORS, ENUMERATE_STATIC_METHODS, ENUMERATE_STATIC_ATTRIBUTES, ENUMERATE_GETTERS) \
+#define DEFINE_SELF_CLASS(ENUMERATE_PARENTS, ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS, ENUMERATE_ATTRIBUTES, ENUMERATE_CONSTRUCTORS, ENUMERATE_STATIC_METHODS, ENUMERATE_STATIC_ATTRIBUTES, ENUMERATE_GETTERS) \
 ENUMERATE_METHODS(DECLARE_SELF_METHOD) \
 DEFINE_SELF_VTABLE(ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS) \
 DEFINE_SELF_DATA(Super, ENUMERATE_ATTRIBUTES) \
-DECLARE_SELF_FAT_POINTER() \
+DECLARE_SELF_FAT_POINTER(ENUMERATE_PARENTS) \
 DECLARE_SELF_VTABLE_GETTER()                                                                                                                                                                 \
 DECLARE_SELF_OPERATOR_NEW()                                                                                                                                                                                              \
 ENUMERATE_GETTERS(DECLARE_SELF_GETTER) \

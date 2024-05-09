@@ -17,6 +17,10 @@
 
 START_CLASS
 
+#define ENUMERATE_FILE_PARENTS(PARENT) \
+    ENUMERATE_FILE_SYSTEM_ENTITY_PARENTS(PARENT)                                     \
+    PARENT(FileSystemEntity)
+
 typedef enum FileMode {
     FileMode$append,
     FileMode$read,
@@ -49,6 +53,7 @@ FORWARD_DECL_CLASS(Directory)
     CONSTRUCTOR(new, String path)
 
 DEFINE_SELF_CLASS(
+        ENUMERATE_FILE_PARENTS,
         NO_IMPLEMENTS,
         ENUMERATE_FILE_METHODS,
         ENUMERATE_FILE_ATTRIBUTES,

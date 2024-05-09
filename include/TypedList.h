@@ -13,6 +13,10 @@
 #define Super List
 #define Self TypedList
 
+#define ENUMERATE_TYPED_LIST_PARENTS(PARENT) \
+    ENUMERATE_LIST_PARENTS(PARENT)                                     \
+    PARENT(List)
+
 START_CLASS
 
 FORWARD_DECL_CLASS(UInt8List)
@@ -33,6 +37,7 @@ FORWARD_DECL_CLASS(UInt8List)
     ATTRIBUTE(size_t, bufferSize)
     
 DEFINE_SELF_ABSTRACT(
+        ENUMERATE_TYPED_LIST_PARENTS,
         NO_IMPLEMENTS,
         ENUMERATE_TYPED_LIST_METHODS,
         ENUMERATE_TYPED_LIST_ATTRIBUTES,

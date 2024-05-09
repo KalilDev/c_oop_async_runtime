@@ -7,6 +7,10 @@
 
 START_CLASS
 
+#define ENUMERATE_BOOL_PARENTS(PARENT) \
+    ENUMERATE_OBJECT_PARENTS(PARENT)                                     \
+    PARENT(Object)
+
 #define ENUMERATE_BOOL_CONSTRUCTORS(CONSTRUCTOR) \
     CONSTRUCTOR(box, bool b)
 
@@ -18,6 +22,7 @@ START_CLASS
     METHOD(String, toStringFixed)
 
 DEFINE_SELF_PRIMITIVE_CLASS(
+        ENUMERATE_BOOL_PARENTS,
         NO_IMPLEMENTS,
         ENUMERATE_BOOL_METHODS,
         bool,

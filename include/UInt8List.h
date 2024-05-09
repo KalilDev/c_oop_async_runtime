@@ -14,6 +14,10 @@
 #define Super TypedList
 #define Self UInt8List
 
+#define ENUMERATE_UINT8_LIST_PARENTS(PARENT) \
+    ENUMERATE_TYPED_LIST_PARENTS(PARENT)                                     \
+    PARENT(TypedList)
+
 START_CLASS
 
 FORWARD_DECL_CLASS(UInt8List)
@@ -26,8 +30,9 @@ FORWARD_DECL_CLASS(UInt8List)
 #define ENUMERATE_UINT8_LIST_GETTERS(ATTRIBUTE) \
     ATTRIBUTE(unsigned char*, list)                       \
     ATTRIBUTE(size_t, length)
-    
+
 DEFINE_SELF_CLASS(
+        ENUMERATE_UINT8_LIST_PARENTS,
         NO_IMPLEMENTS,
         NO_METHODS,
         NO_ATTRIBUTES,

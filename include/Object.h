@@ -10,8 +10,9 @@
 
 START_CLASS
 
-FORWARD_DECL_CLASS(String)
+#define ENUMERATE_OBJECT_PARENTS(PARENT) \
 
+FORWARD_DECL_CLASS(String)
 #define PARAMS_INVOCATION_Object_equals other
 #define ENUMERATE_OBJECT_METHODS(METHOD) \
     /* returns the hash code of the object */       \
