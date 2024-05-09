@@ -5,6 +5,7 @@
 #include "String.h"
 #include "oop.h"
 #include "primitive/StringRef.h"
+#include "primitive/Integer.h"
 
 #define Self Object
 
@@ -31,24 +32,30 @@ static String _Null_toString_impl(Object this ) {
     return StringRef_as_String(StringRef$wrap(_NullString));
 }
 
-
-static const Object_vtable_t _Null_vtable = {
-        .object_vtable_tag = OBJECT_VTABLE_TAG,
+typedef struct Null_vtable_t {
+   Object_vtable_t super;
+   void (*empty[1024])();
+} Null_vtable_t;
+static const Null_vtable_t _Null_vtable = {
+        .super = {
+            .object_vtable_tag = OBJECT_VTABLE_TAG,
 #ifdef WITH_RTTI
-        .runtime_type_information = {
-                .class_name = "Null",
-                .interface_table = NULL,
-                .inheritance_chain = "Null"
-        },
+            .runtime_type_information = {
+                    .class_name = "Null",
+                    .interface_table = NULL,
+                    .inheritance_chain = "Null"
+            },
 #endif
-        .toString = _Null_toString_impl,
-        .getHashCode = _Null_getHashCode_impl,
-        .equals = _Null_equals_impl,
-        .delete = _Null_delete_impl
+            .toString = _Null_toString_impl,
+            .getHashCode = _Null_getHashCode_impl,
+            .equals = _Null_equals_impl,
+            .delete = _Null_delete_impl
+        },
+        .empty = {0}
 };
 
 const Object null =  {
-        .vtable = &_Null_vtable,
+        .vtable = &_Null_vtable.super,
         .data = NULL
 };
 
@@ -69,14 +76,16 @@ IMPLEMENT_SELF_METHOD(String, toString ) {
     class_name = object_rtti->class_name;
 #endif
     long hashCode = Object_getHashCode(this);
+    Integer hash = Integer$box(hashCode);
     char* string = NULL;
     size_t len = strlen(class_name);
+    String className = StringRef_as_String(StringRef$wrap(class_name));
 // #
     len += 1;
 
     // \0
     len += 1;
-    return DOWNCAST(null, String);
+    return String_format_c("{}#{}", className, Integer_toRadixString(hash, 16));
 }
 
 IMPLEMENT_STATIC_METHOD(void*, allocate_memory, size_t size) {
@@ -120,6 +129,7 @@ static const Object_vtable_t _Object_vtable = {
         .getHashCode = _Object_getHashCode_impl,
         .equals = _Object_equals_impl,
         .delete = _Object_delete_impl,
+        .toString = _Object_toString_impl
 };
 
 

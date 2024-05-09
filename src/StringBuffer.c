@@ -117,6 +117,23 @@ IMPLEMENT_SELF_METHOD(void, writeCString, const char* cstring) {
     this.data->length += cstringLen;
 }
 
+
+IMPLEMENT_SELF_METHOD(void, writeBuffer, const char* buffer, size_t size) {
+    if (buffer == NULL) {
+        return;
+    }
+    if (size == 0) {
+        return;
+    }
+    size_t selfLen = this.data->length;
+    StringBuffer_ensure(this, selfLen + size);
+    char* selfString = this.data->c_string;
+    size_t capacity = this.data->capacity;
+    memcpy(selfString + selfLen, buffer, size);
+    this.data->length += size;
+    selfString[this.data->length] = '\0';
+}
+
 IMPLEMENT_SELF_METHOD(void, writeLn, Object obj) {
     StringBuffer_write(this, obj);
     StringBuffer_writeCharCode(this, '\n');
@@ -177,6 +194,7 @@ IMPLEMENT_SELF_VTABLE() {
     vtable->writeAll = _StringBuffer_writeAll_impl;
     vtable->writeCharCode = _StringBuffer_writeCharCode_impl;
     vtable->writeCString = _StringBuffer_writeCString_impl;
+    vtable->writeBuffer = _StringBuffer_writeBuffer_impl;
     vtable->writeLn = _StringBuffer_writeLn_impl;
     // Object
     Object_vtable_t *object_vtable = (Object_vtable_t*)vtable;

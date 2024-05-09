@@ -27,9 +27,9 @@ FORWARD_DECL_CLASS(String)
     GETTER(long long, unbox_ll)                 \
     GETTER(char, unbox_c)
 
-
+#define PARAMS_INVOCATION_Integer_toRadixString radix
 #define ENUMERATE_INTEGER_METHODS(METHOD) \
-    METHOD(String, toRadixString)
+    METHOD(String, toRadixString, unsigned char radix)
 
 DEFINE_SELF_PRIMITIVE_CLASS(
         NO_IMPLEMENTS,

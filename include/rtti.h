@@ -27,7 +27,7 @@ typedef struct runtime_type_information_t {
 
 FORWARD_DECL_CLASS(Object)
 FORWARD_DECL_CLASS(Interface)
-FORWARD_DECL_CLASS(any)
+struct any; typedef struct any any;
 bool Object_isObjectTypeAssignable(Object object, const char* class_name);
 bool Object_isInterfaceTypeAssignable(Object object, const char* interface_name);
 bool Object_isExactType(Object object, const char* class_name);

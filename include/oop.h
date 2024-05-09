@@ -53,8 +53,8 @@
 #define DEFINE_VIRTUAL_METHOD(class, method) DEFINE_ATTRIBUTE(METHOD_SIGNATURE_TYPE_NAME(class, method), method)
 #define DEFINE_SELF_VIRTUAL_METHOD(return_type, method, ...) DEFINE_VIRTUAL_METHOD(Self, method)
 #define DEFINE_IMPLEMENT(class) DEFINE_ATTRIBUTE(CONCAT(class, _vtable_t), CONCAT(class, _vtable))
-#define FORWARD_DECL_CLASS(class) struct class; \
-typedef struct class class;
+#define FORWARD_DECL_CLASS(class) union class; \
+typedef union class class;
 
 #define START_CLASS FORWARD_DECL_CLASS(Self)
 
@@ -63,33 +63,18 @@ typedef struct class class;
 #define DECLARE_SUPER_CAST(class, Super) Super class ## _as_ ## Super(class this);
 #define DECLARE_UPCAST(class, Other) Other class ## _as_ ## Other(class this);
 
-#define NO_DATA {}
-#define NO_METHODS {}
-#define DECLARE_CLASS(class, Super, methods, data_body) \
-    typedef struct { \
-        Super ## _vtable_t super; \
-        struct methods; \
-    } class ## _vtable_t;                          \
-                                                   \
-typedef struct { \
-    Super ## _data super;                          \
-    struct data_body;                                                  \
-} class ## _data;\
-\
-\
-typedef struct class { \
-    const class ## _vtable_t* vtable; \
-    class ## _data* data;\
-} class;
-
 #define DECLARE_PRIMITIVE_FAT_POINTER(class, type) \
 _Static_assert(sizeof(type) <= sizeof(void*), "Invalid primitive type, it needs to fit in a pointer"); \
-typedef struct class { \
-    const CONCAT(class, _vtable_t)* vtable; \
-    union {                                                  \
-        type data;                                                     \
-        void* _align;                                                         \
-    }; \
+typedef union class { \
+    struct {                                              \
+        const CONCAT(class, _vtable_t)* vtable; \
+        union {                                                  \
+            type data;                                                     \
+            void* _align;                                                         \
+        };                                             \
+    };                                             \
+    Object asObject;                               \
+    any asAny;\
 } class;
 
 //#define DECLARE_PRIMITIVE_CLASS(class, Super, methods, type) \
@@ -112,9 +97,13 @@ typedef struct class { \
 
 #define DECLARE_SELF_FAT_POINTER() \
 /* An fat pointer to an Object */ \
-typedef struct Self { \
-    const CONCAT(Self, _vtable_t)* vtable; \
-    CONCAT(Self, _data)* data; \
+typedef union Self { \
+    struct {                       \
+        const CONCAT(Self, _vtable_t)* vtable; \
+        CONCAT(Self, _data)* data; \
+    };                             \
+    any asAny;                     \
+    Object asObject;\
 } Self;
 
 
@@ -196,9 +185,14 @@ typedef struct CONCAT(Self, _vtable_t) { \
 } CONCAT(Self, _vtable_t);
 
 #define DECLARE_SELF_INTERFACE_FAT_POINTER(On) \
-typedef struct Self { \
-    const CONCAT(Self, _vtable_t)* vtable; \
-    On ## _data* data;\
+/* An fat pointer to an Object */ \
+typedef union Self { \
+    struct {                       \
+        const CONCAT(Self, _vtable_t)* vtable; \
+        On ## _data* data;\
+    };                             \
+    any asAny;                     \
+    Interface asInterface;\
 } Self;
 
 

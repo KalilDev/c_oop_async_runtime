@@ -19,34 +19,33 @@ FORWARD_DECL_CLASS(String)
 #define PARAMS_INVOCATION_List_add element
 #define PARAMS_INVOCATION_List_ensure capacity
 #define PARAMS_INVOCATION_List_at i
+#define PARAMS_INVOCATION_List_setAt i, obj
+#define PARAMS_INVOCATION_List_setLength newLength
 #define ENUMERATE_LIST_METHODS(METHOD) \
     METHOD(String, join, String sep)                           \
     METHOD(void, add, Object element) \
-    METHOD(void, ensure, size_t capacity) \
-    METHOD(Object, at, size_t i)
-
-#define ENUMERATE_LIST_GETTERS(ATTRIBUTE) \
-    ATTRIBUTE(size_t, length)
-
-#define ENUMERATE_LIST_ATTRIBUTES(ATTRIBUTE) \
-    ATTRIBUTE(size_t, length)                 \
-    ATTRIBUTE(size_t, capacity)                     \
-    ATTRIBUTE(Object*, elements)
+    METHOD(Object, at, size_t i) \
+    METHOD(void, setAt, size_t i, Object obj)                  \
+    METHOD(size_t, length) \
+    METHOD(void, setLength, size_t newLength)
 
 #define ENUMERATE_LIST_CONSTRUCTORS(CONSTRUCTOR) \
     CONSTRUCTOR(new)
 
+#define ENUMERATE_LIST_STATIC_METHODS(METHOD) \
+    METHOD(List, new)
+
 #define ENUMERATE_LIST_IMPLEMENTS(IMPLEMENTS) \
     IMPLEMENTS(Iterable)
 
-DEFINE_SELF_CLASS(
+DEFINE_SELF_ABSTRACT(
         ENUMERATE_LIST_IMPLEMENTS,
         ENUMERATE_LIST_METHODS,
-        ENUMERATE_LIST_ATTRIBUTES,
+        NO_ATTRIBUTES,
         ENUMERATE_LIST_CONSTRUCTORS,
-        NO_STATIC_METHODS,
+        ENUMERATE_LIST_STATIC_METHODS,
         NO_STATIC_ATTRIBUTES,
-        ENUMERATE_LIST_GETTERS
+        NO_GETTERS
 )
 DECLARE_OBJECT_CAST(Iterable, List)
 DECLARE_INTERFACE_CAST(List, Iterable)

@@ -4,6 +4,7 @@
 #include "Object.h"
 #include "Iterable.h"
 #include "Interface.h"
+#include "any.h"
 
 #define Super Object
 #define Self StringBuffer
@@ -18,6 +19,7 @@ FORWARD_DECL_CLASS(List)
 #define PARAMS_INVOCATION_StringBuffer_writeCharCode code
 #define PARAMS_INVOCATION_StringBuffer_writeCString cstring
 #define PARAMS_INVOCATION_StringBuffer_writeLn obj
+#define PARAMS_INVOCATION_StringBuffer_writeBuffer buffer, size
 #define ENUMERATE_STRING_BUFFER_METHODS(METHOD) \
     METHOD(void, ensure, size_t capacity) \
     METHOD(void, clear)                           \
@@ -25,7 +27,8 @@ FORWARD_DECL_CLASS(List)
     METHOD(void, write, Object obj)                       \
     METHOD(void, writeAll, List list, String separator)                       \
     METHOD(void, writeCharCode, char code)    \
-    METHOD(void, writeCString, const char*cstring) \
+    METHOD(void, writeCString, const char*cstring)\
+    METHOD(void, writeBuffer, const char*buffer, size_t size) \
     METHOD(void, writeLn, Object obj)
 
 #define ENUMERATE_STRING_BUFFER_ATTRIBUTES(ATTRIBUTE) \

@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #define WITH_RTTI
 #include "rtti.h"
+#include "any.h"
 
 #define Self Object
 
@@ -52,7 +53,13 @@ typedef struct {
     ENUMERATE_OBJECT_ATTRIBUTES(DEFINE_ATTRIBUTE)
 } Object_data;
 
-DECLARE_SELF_FAT_POINTER()
+typedef union Object {
+    struct {
+        const Object_vtable_t* vtable;
+        Object_data* data;
+    };
+    any asAny;
+} Object;
 
 DECLARE_SELF_VTABLE_GETTER()
 

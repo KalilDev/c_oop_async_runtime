@@ -3,6 +3,7 @@
 #include "Iterator.h"
 #include "String.h"
 #include <stdlib.h>
+#include "any.h"
 
 #define Super Iterator
 #define Self StringIterator

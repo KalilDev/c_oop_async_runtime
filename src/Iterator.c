@@ -1,5 +1,6 @@
 #include "Iterator.h"
 #include "oop.h"
+#include <assert.h>
 
 #define Self Iterator
 SUPER_CAST_IMPL(Iterator, Object)

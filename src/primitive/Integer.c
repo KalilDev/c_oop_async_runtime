@@ -105,6 +105,35 @@ IMPLEMENT_OVERRIDE_METHOD(int, Comparable, compareTo, Object other) {
     }
     return -1;
 }
+// Calculate the number of digits needed to represent an integer in an arbitrary base
+size_t num_digits(long long value, unsigned int radix) {
+    return (value == 0) ? 1 : (size_t)(log((double)value) / log((double)radix)) + 1;
+}
+IMPLEMENT_SELF_METHOD(String, toRadixString, unsigned char radix) {
+    assert(radix <= 'z' - 'a' + 10);
+    long long value = this.data;
+    size_t num_digits_needed = num_digits(value, radix);
+    char* buffer = (char*)malloc(num_digits_needed + 1); // Allocate buffer (+1 for null terminator)
+    size_t index = num_digits_needed; // Start filling the buffer from the end
+
+    // Convert the integer to string in the specified base
+    do {
+        char remainder = (char)(value % radix);
+        char strChar;
+        if (remainder < 10) {
+            strChar = (char)('0' + remainder);
+        } else {
+            strChar = (char)('A' + remainder);
+        }
+        buffer[--index] = strChar;
+        value /= radix;
+    } while (value != 0);
+
+    // Null-terminate the string
+    buffer[num_digits_needed] = '\0';
+
+    return String$make_own(buffer);
+}
 
 IMPLEMENT_SELF_VTABLE() {
     // Init the vtable
@@ -115,7 +144,8 @@ IMPLEMENT_SELF_VTABLE() {
             STR(Self),
             0
     );
-
+    // Integer
+    vtable->toRadixString = _Integer_toRadixString_impl;
     // Number
     Number_vtable_t *number_vtable = (Number_vtable_t *)vtable;
     number_vtable->abs = _Integer_abs_impl;

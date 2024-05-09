@@ -74,11 +74,10 @@ PRIMITIVE_UPCAST_IMPL(Bool, Object)
 
 // TODO: revisit this
 IMPLEMENT_PRIMITIVE_CONSTRUCTOR(box, bool unboxed) {
-    Bool this = {
-            .vtable = Bool_vtable(),
-            .data = unboxed
-    };
-    return this;
+    if (unboxed) {
+        return True;
+    }
+    return False;
 }
 
 #undef Super

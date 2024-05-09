@@ -12,9 +12,12 @@ typedef struct {
 } Interface_vtable_t;
 
 // An fat pointer to an interface
-typedef struct Interface {
-    const Interface_vtable_t* vtable;
-    Object_data* data;
+typedef union Interface {
+    struct {
+        const Interface_vtable_t* vtable;
+        Object_data* data;
+    };
+    any asAny;
 } Interface;
 
 DECLARE_SELF_VTABLE_GETTER()
