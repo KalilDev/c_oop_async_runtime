@@ -6,10 +6,10 @@
         Iterator iterator = Iterable_iterator(iterable);                                 \
     while (Iterator_moveNext(iterator)) { \
         Object __ ## var = Iterator_current(iterator);                                   \
-         type var = DOWNCAST(__ ## var, type);                                \
+         type var = CONCAT(type, $$fromObject)(__ ## var);                                \
             {                               \
                 block;                                \
             }\
         }                                   \
-    Object_delete(Iterator_as_Object(iterator));                                        \
+    Object_delete(iterator.asObject);                                        \
     }

@@ -8,7 +8,7 @@
 #define Self ListIterator
 #define Super() Object_vtable()
 IMPLEMENT_OPERATOR_NEW()
-
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_LIST_ITERATOR_PARENTS)
 IMPLEMENT_OVERRIDE_METHOD(bool, Iterator, moveNext) {
     ListIterator self = DOWNCAST(this, ListIterator);
     long long *i = &self.data->i;
@@ -35,10 +35,6 @@ IMPLEMENT_SELF_VTABLE() {
     vtable->super.current = _ListIterator_current_impl;
     vtable->super.moveNext = _ListIterator_moveNext_impl;
 }
-
-
-SUPER_CAST_IMPL(ListIterator, Iterator)
-UPCAST_IMPL(ListIterator, Object)
 
 
 IMPLEMENT_CONSTRUCTOR(new, List list) {

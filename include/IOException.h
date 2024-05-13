@@ -37,10 +37,6 @@ DEFINE_SELF_CLASS(
         NO_GETTERS
 )
 
-DECLARE_SUPER_CAST(IOException, Exception)
-DECLARE_UPCAST(IOException, Throwable)
-DECLARE_UPCAST(IOException, Object)
-
 END_CLASS
 
 #undef Self

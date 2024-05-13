@@ -4,6 +4,8 @@
 #include "File.h"
 #include "Directory.h"
 #include "RandomAccessFile.h"
+#include "primitive/StringRef.h"
+#include "IOException.h"
 #include <assert.h>
 
 #include <sys/sendfile.h>
@@ -15,16 +17,26 @@
 
 #define Self File
 #define Super() FileSystemEntity_vtable()
-SUPER_CAST_IMPL(File, FileSystemEntity)
-UPCAST_IMPL(File, Object)
 
 ENUMERATE_FILE_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_FILE_PARENTS)
 
-IMPLEMENT_SELF_METHOD(String, readStringSync)     {
-    RandomAccessFile raf = File_openSync(this, FileMode$read);
-    size_t len = RandomAccessFile_length(raf);
-    String s = RandomAccessFile_readString(raf, len);
-    Object_delete(RandomAccessFile_as_Object(raf));
+IMPLEMENT_SELF_METHOD(String, readStringSync, THROWS)     {
+    RandomAccessFile raf = File_openSync(this, FileMode$read, EXCEPTION);
+    if (HAS_EXCEPTION) {
+        RETHROW(DOWNCAST(null, String))
+    }
+    size_t len = RandomAccessFile_length(raf, EXCEPTION);
+    if (HAS_EXCEPTION) {
+        Object_delete(raf.asObject);
+        RETHROW(DOWNCAST(null, String))
+    }
+    String s = RandomAccessFile_readString(raf, len, EXCEPTION);
+    if (HAS_EXCEPTION) {
+        Object_delete(raf.asObject);
+        RETHROW(DOWNCAST(null, String))
+    }
+    Object_delete(raf.asObject);
     return s;
 }
 IMPLEMENT_SELF_METHOD(Directory, parent)          {
@@ -35,46 +47,70 @@ IMPLEMENT_SELF_METHOD(Directory, parent)          {
     String dirPath = String$make_own(dirpath);
     return Directory$make_new(dirPath);
 }
-IMPLEMENT_SELF_METHOD(void, copy, String newPath) {
+IMPLEMENT_SELF_METHOD(void, copy, String newPath, THROWS) {
     String path = this.data->super.path;
     const char* pathCstring = String_cStringView(path);
     int source_fd = open(pathCstring, O_RDONLY);
+    if (source_fd < 0) {
+        THROW(IOException$make_fromErrno())
+    }
     struct stat stat;
-    fstat(source_fd, &stat);
+    int stat_res = fstat(source_fd, &stat);
+    if (stat_res < 0) {
+        close(source_fd);
+        THROW(IOException$make_fromErrno())
+    }
     size_t size = stat.st_size;
     int target_fd = open(pathCstring, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (target_fd < 0) {
+        close(source_fd);
+        THROW(IOException$make_fromErrno())
+    }
     long offset = 0;
-    size_t outSize = sendfile(target_fd, source_fd, &offset, size);
-    (void)outSize;
+    ssize_t outSize = sendfile(target_fd, source_fd, &offset, size);
+    if (outSize < 0) {
+        close(target_fd);
+        close(source_fd);
+        THROW(IOException$make_fromErrno())
+    }
     close(target_fd);
     close(source_fd);
 
 }
-IMPLEMENT_SELF_METHOD(void, createSync)           {
+IMPLEMENT_SELF_METHOD(void, createSync, THROWS)           {
     String path = this.data->super.path;
     const char* pathCstring = String_cStringView(path);
     int fd = open(pathCstring, O_CREAT | O_TRUNC, 0644);
+    if (fd < 0) {
+        THROW(IOException$make_fromErrno())
+    }
     close(fd);
 }
-IMPLEMENT_SELF_METHOD(void, deleteSync)           {
+IMPLEMENT_SELF_METHOD(void, deleteSync, THROWS)           {
     String path = this.data->super.path;
     const char* pathCstring = String_cStringView(path);
-    unlink(pathCstring);
+    int res = unlink(pathCstring);
+    if (res < 0) {
+        THROW(IOException$make_fromErrno())
+    }
 }
-IMPLEMENT_SELF_METHOD(bool, existsSync)           {
+IMPLEMENT_SELF_METHOD(bool, existsSync, THROWS)           {
     String path = this.data->super.path;
     const char* pathCstring = String_cStringView(path);
     return access(pathCstring, F_OK) != -1;
 }
-IMPLEMENT_SELF_METHOD(size_t, lengthSync)         {
+IMPLEMENT_SELF_METHOD(size_t, lengthSync, THROWS)         {
     String path = this.data->super.path;
     const char* pathCstring = String_cStringView(path);
     struct stat stat_;
-    stat(pathCstring, &stat_);
+    int stat_result = stat(pathCstring, &stat_);
+    if (stat_result < 0) {
+        THROW(IOException$make_fromErrno(), 0)
+    }
     size_t size = stat_.st_size;
     return size;
 }
-IMPLEMENT_SELF_METHOD(RandomAccessFile, openSync, FileMode mode){
+IMPLEMENT_SELF_METHOD(RandomAccessFile, openSync, FileMode mode, THROWS){
     String path = this.data->super.path;
     const char* modes;
     switch (mode) {
@@ -94,16 +130,23 @@ IMPLEMENT_SELF_METHOD(RandomAccessFile, openSync, FileMode mode){
             modes = "a";
             break;
     }
-    return RandomAccessFile$make_open(path, modes);
+    RandomAccessFile raf = RandomAccessFile$make_open(path, modes, EXCEPTION);
+    if (HAS_EXCEPTION) {
+        RETHROW(raf)
+    }
+    return raf;
 }
 
-IMPLEMENT_OVERRIDE_METHOD(FileSystemEntity, FileSystemEntity, absolute) {
+IMPLEMENT_OVERRIDE_METHOD(FileSystemEntity, FileSystemEntity, absolute, THROWS) {
     File self = DOWNCAST(this, File);
     String path = self.data->super.path;
     const char* pathCstring = String_cStringView(path);
     char *absolute_path = realpath(pathCstring, NULL);
+    if (absolute_path == NULL) {
+        THROW(IOException$make_fromErrno(), DOWNCAST(null, FileSystemEntity))
+    }
     String absolutePath = String$make_own(absolute_path);
-    return File_as_FileSystemEntity(File$make_new(absolutePath));
+    return File$make_new(absolutePath).asFileSystemEntity;
 }
 
 IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
@@ -113,7 +156,7 @@ IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
 }
 
 IMPLEMENT_CONSTRUCTOR(new, String path) {
-    FileSystemEntity$new(File_as_FileSystemEntity(this), path);
+    FileSystemEntity$new(this.asFileSystemEntity, path);
 }
 IMPLEMENT_OPERATOR_NEW()
 IMPLEMENT_SELF_VTABLE() {

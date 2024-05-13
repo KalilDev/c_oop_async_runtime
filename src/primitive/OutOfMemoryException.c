@@ -11,8 +11,11 @@
 #define Super() Exception_vtable()
 
 static const char* _ToString = "OutOfMemoryException()";
+
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_OUT_OF_MEMORY_EXCEPTION_PARENTS)
+
 IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
-    return StringRef_as_String(StringRef$wrap(_ToString));
+    return StringRef$wrap(_ToString).asString;
 }
 
 IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
@@ -23,7 +26,7 @@ IMPLEMENT_OVERRIDE_METHOD(void, Throwable, addStackFrame, StringRef stackFrame) 
 }
 IMPLEMENT_OVERRIDE_METHOD(void, Throwable, printStackTrace, FILE *to) {
     OutOfMemoryException self = DOWNCAST(this, OutOfMemoryException);
-    fprintf(to, "0# %s\n", self.data);
+    fprintf(to, "0# %s\n", self.unwrap);
 }
 
 
@@ -53,19 +56,14 @@ const OutOfMemoryException_vtable_t* OutOfMemoryException_vtable() {
 
 const OutOfMemoryException OutOfMemoryException_atUnknownLocation =  {
         .vtable = &_OutOfMemoryException_vtable,
-        .data = "<unknown source location>"
+        .unwrap = "<unknown source location>"
 };
-
-
-PRIMITIVE_UPCAST_IMPL(OutOfMemoryException, Exception)
-PRIMITIVE_UPCAST_IMPL(OutOfMemoryException, Object)
-
 
 // TODO: revisit this
 IMPLEMENT_PRIMITIVE_CONSTRUCTOR(at, const char* location) {
     OutOfMemoryException this = {
         .vtable = OutOfMemoryException_vtable(),
-        .data = location
+        .unwrap = location
     };
     return this;
 }

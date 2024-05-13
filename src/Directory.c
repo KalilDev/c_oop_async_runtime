@@ -8,7 +8,9 @@
 #include "primitive/StringRef.h"
 #include "String.h"
 #include "File.h"
+#include "Throwable.h"
 #include "Link.h"
+#include "IOException.h"
 
 #include <sys/sendfile.h>
 #include <sys/stat.h>
@@ -20,12 +22,10 @@
 
 #define Self Directory
 #define Super() FileSystemEntity_vtable()
-SUPER_CAST_IMPL(Directory, FileSystemEntity)
-UPCAST_IMPL(Directory, Object)
-
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_DIRECTORY_PARENTS)
 ENUMERATE_DIRECTORY_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
 
-IMPLEMENT_SELF_METHOD(List, list)     {
+IMPLEMENT_SELF_METHOD(List, list, THROWS)     {
     List children = List_new();
     String path = this.data->super.path;
     const char* pathCstring = String_cStringView(path);
@@ -41,17 +41,32 @@ IMPLEMENT_SELF_METHOD(List, list)     {
         switch (entry->d_type) {
             case DT_REG: {
                 File f = File$make_new(childPath);
-                List_add(children, File_as_Object(f));
+                List_add(children, f.asObject, EXCEPTION);
+                if (HAS_EXCEPTION) {
+                    closedir(directory);
+                    Object_delete(children.asObject);
+                    RETHROW(DOWNCAST(null, List));
+                }
                 break;
             }
             case DT_DIR: {
                 Directory d = Directory$make_new(childPath);
-                List_add(children, Directory_as_Object(d));
+                List_add(children, d.asObject, EXCEPTION);
+                if (HAS_EXCEPTION) {
+                    closedir(directory);
+                    Object_delete(children.asObject);
+                    RETHROW(DOWNCAST(null, List));
+                }
                 break;
             }
             case DT_LNK:{
                 Link l = Link$make_new(childPath);
-                List_add(children, Link_as_Object(l));
+                List_add(children, l.asObject, EXCEPTION);
+                if (HAS_EXCEPTION) {
+                    closedir(directory);
+                    Object_delete(children.asObject);
+                    RETHROW(DOWNCAST(null, List));
+                }
                 break;
             }
             // Handle other types as needed
@@ -104,14 +119,19 @@ IMPLEMENT_SELF_METHOD(bool, existsSync)           {
     const char* pathCstring = String_cStringView(path);
     return access(pathCstring, F_OK) != -1;
 }
-IMPLEMENT_OVERRIDE_METHOD(FileSystemEntity, FileSystemEntity, absolute) {
+
+IMPLEMENT_OVERRIDE_METHOD(FileSystemEntity, FileSystemEntity, absolute, THROWS) {
     Directory self = DOWNCAST(this, Directory);
     String path = self.data->super.path;
     const char* pathCstring = String_cStringView(path);
     char *absolute_path = realpath(pathCstring, NULL);
+    if (absolute_path == NULL) {
+        THROW(IOException$make_fromErrno(), DOWNCAST(null, FileSystemEntity))
+    }
     String absolutePath = String$make_own(absolute_path);
-    return Directory_as_FileSystemEntity(Directory$make_new(absolutePath));
+    return Directory$make_new(absolutePath).asFileSystemEntity;
 }
+
 IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
     Directory self = DOWNCAST(this, Directory);
     String path = self.data->super.path;
@@ -119,11 +139,11 @@ IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
 }
 
 IMPLEMENT_CONSTRUCTOR(new, String path) {
-    FileSystemEntity$new(Directory_as_FileSystemEntity(this), path);
+    FileSystemEntity$new(this.asFileSystemEntity, path);
 }
 
 IMPLEMENT_STATIC_METHOD(Directory, current) {
-    return Directory$make_new(StringRef_as_String(StringRef$wrap(".")));
+    return Directory$make_new(StringRef$wrap(".").asString);
 }
 
 IMPLEMENT_OPERATOR_NEW()

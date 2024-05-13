@@ -34,9 +34,6 @@ DEFINE_SELF_CLASS(
         NO_GETTERS
 )
 
-DECLARE_SUPER_CAST(StringIterator, Iterator)
-DECLARE_UPCAST(StringIterator, Object)
-
 END_CLASS
 #undef Super
 #undef Self

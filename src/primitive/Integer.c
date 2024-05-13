@@ -16,19 +16,20 @@
 #define Super() Number_vtable()
 
 ENUMERATE_INTEGER_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_INTEGER_PARENTS)
 
 IMPLEMENT_SELF_GETTER(int, unbox_i) {
-    return (int)this.data;
+    return (int)this.unwrap;
 }
 
 IMPLEMENT_SELF_GETTER(long, unbox_l) {
-    return (long)this.data;
+    return (long)this.unwrap;
 }
 IMPLEMENT_SELF_GETTER(long long, unbox_ll) {
-    return (long long)this.data;
+    return (long long)this.unwrap;
 }
 IMPLEMENT_SELF_GETTER(char, unbox_c) {
-    return (char)this.data;
+    return (char)this.unwrap;
 }
 
 
@@ -43,16 +44,16 @@ IMPLEMENT_OVERRIDE_METHOD(bool, Object, equals, Object other) {
         return false;
     }
     Integer b = DOWNCAST(other, Integer);
-    return a.data == b.data;
+    return a.unwrap == b.unwrap;
 }
 IMPLEMENT_OVERRIDE_METHOD(long, Object, getHashCode) {
     Integer self = DOWNCAST(this, Integer);
-    return self.data;
+    return self.unwrap;
 }
 
 IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
     Integer self = DOWNCAST(this, Integer);
-    long num = self.data;
+    long num = self.unwrap;
     size_t length = snprintf(NULL, 0,"%ld", num);
     char *str = malloc(length + 1);
     int res = snprintf(str, length + 1, "%ld", num);
@@ -61,31 +62,31 @@ IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
 
 IMPLEMENT_OVERRIDE_METHOD(Number, Number, abs) {
     Integer self = DOWNCAST(this, Integer);
-    if (self.data == 0) {
+    if (self.unwrap == 0) {
         return this;
     }
-    if (self.data > 0) {
+    if (self.unwrap > 0) {
         return this;
     }
-    return Integer_as_Number(Integer$box(-self.data));
+    return Integer$box(-self.unwrap).asNumber;
 }
 
 IMPLEMENT_OVERRIDE_METHOD(Number, Number, clamp, Number lower, Number upper) {
     Integer self = DOWNCAST(this, Integer);
     Integer l = Number_toInteger(lower);
     Integer u = Number_toInteger(upper);
-    if (self.data > u.data) {
-        return Integer_as_Number(u);
+    if (self.unwrap > u.unwrap) {
+        return u.asNumber;
     }
-    if (self.data < l.data) {
-        return Integer_as_Number(l);
+    if (self.unwrap < l.unwrap) {
+        return l.asNumber;
     }
     return this;
 }
 
 IMPLEMENT_OVERRIDE_METHOD(Double, Number, toDouble) {
     Integer self = DOWNCAST(this, Integer);
-    return Double$box_d((double)self.data);
+    return Double$box_d((double)self.unwrap);
 }
 
 IMPLEMENT_OVERRIDE_METHOD(Integer, Number, toInteger) {
@@ -111,7 +112,7 @@ size_t num_digits(long long value, unsigned int radix) {
 }
 IMPLEMENT_SELF_METHOD(String, toRadixString, unsigned char radix) {
     assert(radix <= 'z' - 'a' + 10);
-    long long value = this.data;
+    long long value = this.unwrap;
     size_t num_digits_needed = num_digits(value, radix);
     char* buffer = (char*)malloc(num_digits_needed + 1); // Allocate buffer (+1 for null terminator)
     size_t index = num_digits_needed; // Start filling the buffer from the end
@@ -163,14 +164,11 @@ IMPLEMENT_SELF_VTABLE() {
     object_vtable->toString = _Integer_toString_impl;
 }
 
-PRIMITIVE_SUPER_CAST_IMPL(Integer, Number)
-PRIMITIVE_UPCAST_IMPL(Integer, Object)
-
 // TODO: revisit this
 IMPLEMENT_PRIMITIVE_CONSTRUCTOR(box_c, char unboxed) {
     Integer this = {
         .vtable = Integer_vtable(),
-        .data = (long)unboxed
+        .unwrap = (long)unboxed
     };
     return this;
 }
@@ -179,7 +177,7 @@ IMPLEMENT_PRIMITIVE_CONSTRUCTOR(box_c, char unboxed) {
 IMPLEMENT_PRIMITIVE_CONSTRUCTOR(box_i, int unboxed) {
     Integer this = {
             .vtable = Integer_vtable(),
-            .data = (long)unboxed
+            .unwrap = (long)unboxed
     };
     return this;
 }
@@ -189,7 +187,7 @@ IMPLEMENT_PRIMITIVE_CONSTRUCTOR(box_i, int unboxed) {
 IMPLEMENT_PRIMITIVE_CONSTRUCTOR(box_l, long unboxed) {
     Integer this = {
             .vtable = Integer_vtable(),
-            .data = (long)unboxed
+            .unwrap = (long)unboxed
     };
     return this;
 }
@@ -198,7 +196,7 @@ IMPLEMENT_PRIMITIVE_CONSTRUCTOR(box_l, long unboxed) {
 IMPLEMENT_PRIMITIVE_CONSTRUCTOR(box_ll, long long unboxed) {
     Integer this = {
             .vtable = Integer_vtable(),
-            .data = (long)unboxed
+            .unwrap = (long)unboxed
     };
     return this;
 }

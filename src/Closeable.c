@@ -2,7 +2,6 @@
 #include "oop.h"
 #include <assert.h>
 
-
 #define Self Closeable
 
 SUPER_INTERFACE_CAST_IMPL(Closeable, Interface)

@@ -15,6 +15,7 @@
 #define Self String
 
 ENUMERATE_STRING_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_STRING_PARENTS)
 IMPLEMENT_OPERATOR_NEW()
 
 //
@@ -103,7 +104,7 @@ IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
 IMPLEMENT_OVERRIDE_METHOD(Iterator, Iterable, iterator) {
     String self = Iterable_as_String(this);
     StringIterator iter = StringIterator$make_new(self);
-    return StringIterator_as_Iterator(iter);
+    return iter.asIterator;
 }
 
 IMPLEMENT_SELF_VTABLE() {
@@ -140,8 +141,6 @@ IMPLEMENT_SELF_VTABLE() {
 
 OBJECT_CAST_IMPL(Iterable, String)
 INTERFACE_CAST_IMPL(String, Iterable, Object)
-
-SUPER_CAST_IMPL(String, Object)
 
 
 IMPLEMENT_CONSTRUCTOR(new, const char* str) {
@@ -251,7 +250,7 @@ void _String_format(StringBuffer buffer, const char* string, size_t len, va_list
 
 
 String String_format(String this, ...) {
-    if (Object_isNull(String_as_Object(this))) {
+    if (Object_isNull(this.asObject)) {
         return this;
     }
     if (String_length(this) == 0) {
@@ -268,7 +267,7 @@ String String_format(String this, ...) {
     va_end(args);
 
     String out = StringBuffer_releaseToString(buffer);
-    Object_delete(StringBuffer_as_Object(buffer));
+    Object_delete(buffer.asObject);
     return out;
 }
 
@@ -278,7 +277,7 @@ String String_format_c(const char* str, ...) {
     }
     size_t len = strlen(str);
     if (len == 0) {
-        return StringRef_as_String(StringRef$wrap(str));
+        return StringRef$wrap(str).asString;
     }
 
     StringBuffer buffer = StringBuffer$make_new();
@@ -289,7 +288,7 @@ String String_format_c(const char* str, ...) {
     va_end(args);
 
     String out = StringBuffer_releaseToString(buffer);
-    Object_delete(StringBuffer_as_Object(buffer));
+    Object_delete(buffer.asObject);
     return out;
 }
 

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef Throwable
+#define Throwable Throwable
+
 #include "Object.h"
 #include "any.h"
 #include "oop.h"
@@ -7,7 +9,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "List.h"
-#include "TypedList.h"
 #define WITH_RTTI
 #include "rtti.h"
 
@@ -45,9 +46,9 @@ DEFINE_SELF_ABSTRACT(
         NO_GETTERS
 )
 
-DECLARE_SUPER_CAST(Throwable, Object)
-
 END_CLASS
 
 #undef Self
 #undef Super
+
+#endif

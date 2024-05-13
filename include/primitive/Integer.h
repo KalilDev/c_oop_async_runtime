@@ -46,9 +46,6 @@ DEFINE_SELF_PRIMITIVE_CLASS(
         ENUMERATE_INTEGER_GETTERS
 )
 
-DECLARE_SUPER_CAST(Integer, Number)
-DECLARE_UPCAST(Integer, Object)
-
 #define Integer$box(x) _Generic((x), \
     int: Integer$box_i(x),           \
     char: Integer$box_c(x),           \

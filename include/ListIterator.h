@@ -33,9 +33,6 @@ DEFINE_SELF_CLASS(
         NO_GETTERS
 )
 
-DECLARE_SUPER_CAST(ListIterator, Iterator)
-DECLARE_UPCAST(ListIterator, Object)
-
 END_CLASS
 #undef Super
 #undef Self

@@ -20,9 +20,6 @@ DEFINE_SELF_INTERFACE(
         NO_STATIC_ATTRIBUTES
 )
 
-DECLARE_SUPER_CAST(Iterable, Interface)
-DECLARE_OBJECT_CAST(Iterable, Object)
-
 END_CLASS
 #undef Super
 #undef Self

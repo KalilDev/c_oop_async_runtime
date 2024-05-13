@@ -12,29 +12,34 @@
 #include "primitive/StringRef.h"
 #include "foreach.h"
 #include "GrowableList.h"
+#include "Throwable.h"
 
 #define Super() Object_vtable()
 #define Self List
 IMPLEMENT_OPERATOR_NEW()
 
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_LIST_PARENTS)
 ENUMERATE_LIST_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
 
-IMPLEMENT_SELF_METHOD(void, add, Object e) {
+IMPLEMENT_SELF_METHOD(void, add, Object e, THROWS) {
     size_t length = List_length(this);
-    List_setLength(this, length + 1);
+    List_setLength(this, length + 1, EXCEPTION);
+    if (HAS_EXCEPTION) {
+        RETHROW()
+    }
     List_setAt(this, length, e);
 }
 
 IMPLEMENT_SELF_METHOD(String, join, String sep) {
     StringBuffer buf = StringBuffer$make_new();
-    Object sepObj = String_as_Object(sep);
+    Object sepObj = sep.asObject;
     if (Object_isNull(sepObj)) {
-        sep = StringRef_as_String(StringRef$wrap(", "));
+        sep = StringRef$wrap(", ").asString;
     }
     StringBuffer_writeAll(buf, this, sep);
 
     String res = StringBuffer_releaseToString(buf);
-    Object_delete(StringBuffer_as_Object(buf));
+    Object_delete(buf.asObject);
     return res;
 }
 
@@ -55,7 +60,7 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
 
 IMPLEMENT_OVERRIDE_METHOD(Iterator, Iterable, iterator) {
     List self = Iterable_as_List(this);
-    return ListIterator_as_Iterator(ListIterator$make_new(self));
+    return ListIterator$make_new(self).asIterator;
 }
 
 IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
@@ -64,11 +69,11 @@ IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
     StringBuffer buf = StringBuffer$make_new();
     StringBuffer_writeCharCode(buf, '[');
 
-    StringBuffer_writeAll(buf, self, StringRef_as_String(StringRef$wrap(", ")));
+    StringBuffer_writeAll(buf, self, StringRef$wrap(", ").asString);
 
     StringBuffer_writeCharCode(buf, ']');
     String res = StringBuffer_releaseToString(buf);
-    Object_delete(StringBuffer_as_Object(buf));
+    Object_delete(buf.asObject);
     return res;
 }
 
@@ -101,14 +106,13 @@ IMPLEMENT_SELF_VTABLE() {
 OBJECT_CAST_IMPL(Iterable, List)
 INTERFACE_CAST_IMPL(List, Iterable, Object)
 
-SUPER_CAST_IMPL(List, Object)
 
 IMPLEMENT_ABSTRACT_CONSTRUCTOR(new) {
 
 }
 
 IMPLEMENT_STATIC_METHOD(List, new) {
-    return GrowableList_as_List(GrowableList$make_new());
+    return GrowableList$make_new().asList;
 }
 
 #undef Super

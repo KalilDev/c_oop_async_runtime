@@ -43,9 +43,6 @@ DEFINE_SELF_CLASS(
         ENUMERATE_LINK_GETTERS
 )
 
-DECLARE_SUPER_CAST(Link, FileSystemEntity)
-DECLARE_UPCAST(Link, Object)
-
 END_CLASS
 
 #undef Self

@@ -20,9 +20,9 @@ START_CLASS
 
 FORWARD_DECL_CLASS(String)
 
-#define PARAMS_INVOCATION_GrowableList_ensure capacity
+#define PARAMS_INVOCATION_GrowableList_ensure capacity, THROWS_PARAM_INVOCATION
 #define ENUMERATE_GROWABLE_LIST_METHODS(METHOD) \
-    METHOD(void, ensure, size_t capacity)
+    METHOD(void, ensure, size_t capacity, THROWS)
 
 #define ENUMERATE_GROWABLE_LIST_ATTRIBUTES(ATTRIBUTE) \
     ATTRIBUTE(size_t, length)                 \
@@ -47,9 +47,6 @@ DEFINE_SELF_CLASS(
         ENUMERATE_GROWABLE_LIST_GETTERS
 )
 DECLARE_OBJECT_CAST(Iterable, GrowableList)
-
-DECLARE_SUPER_CAST(GrowableList, List)
-DECLARE_UPCAST(GrowableList, Object)
 
 END_CLASS
 

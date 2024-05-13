@@ -1,14 +1,7 @@
-#pragma once
-#include "Object.h"
-#include "any.h"
-#include "oop.h"
-#include "Iterable.h"
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stddef.h>
+#ifndef TypedList
+#define TypedList TypedList
+
 #include "List.h"
-#define WITH_RTTI
-#include "rtti.h"
 
 #define Super List
 #define Self TypedList
@@ -35,7 +28,7 @@ FORWARD_DECL_CLASS(UInt8List)
 #define ENUMERATE_TYPED_LIST_GETTERS(ATTRIBUTE) \
     ATTRIBUTE(void*, buffer)                       \
     ATTRIBUTE(size_t, bufferSize)
-    
+
 DEFINE_SELF_ABSTRACT(
         ENUMERATE_TYPED_LIST_PARENTS,
         NO_IMPLEMENTS,
@@ -48,10 +41,9 @@ DEFINE_SELF_ABSTRACT(
 )
 DECLARE_OBJECT_CAST(Iterable, TypedList)
 
-DECLARE_SUPER_CAST(TypedList, List)
-DECLARE_UPCAST(TypedList, Object)
-
 END_CLASS
 
 #undef Self
 #undef Super
+
+#endif

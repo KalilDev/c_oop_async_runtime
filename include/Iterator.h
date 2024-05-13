@@ -15,8 +15,6 @@ START_CLASS
     ENUMERATE_OBJECT_PARENTS(PARENT)                                     \
     PARENT(Object)
 
-FORWARD_DECL_CLASS(String)
-
 #define ENUMERATE_ITERATOR_METHODS(METHOD) \
     /* Moves an single step in the iteration */       \
     METHOD(bool, moveNext)               \
@@ -36,8 +34,6 @@ DEFINE_SELF_ABSTRACT(
         NO_STATIC_ATTRIBUTES,
         NO_GETTERS
 )
-
-DECLARE_SUPER_CAST(Iterator, Object)
 
 END_CLASS
 

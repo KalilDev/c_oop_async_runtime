@@ -1,4 +1,6 @@
-#pragma once
+#ifndef UInt8List
+#define UInt8List UInt8List
+
 #include "Object.h"
 #include "any.h"
 #include "oop.h"
@@ -19,8 +21,9 @@
     PARENT(TypedList)
 
 START_CLASS
-
+#ifndef UINT8_LIST
 FORWARD_DECL_CLASS(UInt8List)
+#endif
 #define PARAMS_INVOCATION_UInt8List$new length
 #define PARAMS_INVOCATION_UInt8List$fromBuffer list, length
 #define ENUMERATE_UINT8_LIST_CONSTRUCTORS(CONSTRUCTOR) \
@@ -43,11 +46,10 @@ DEFINE_SELF_CLASS(
 )
 DECLARE_OBJECT_CAST(Iterable, UInt8List)
 
-DECLARE_SUPER_CAST(UInt8List, TypedList)
-DECLARE_UPCAST(UInt8List, List)
-DECLARE_UPCAST(UInt8List, Object)
 
 END_CLASS
 
 #undef Self
 #undef Super
+
+#endif // UInt8List

@@ -7,14 +7,16 @@
 #include <assert.h>
 #include "String.h"
 #include "GrowableList.h"
-
+#include "Throwable.h"
+#include "primitive/StringRef.h"
 #define Super() List_vtable()
 #define Self GrowableList
 IMPLEMENT_OPERATOR_NEW()
 
 ENUMERATE_GROWABLE_LIST_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_GROWABLE_LIST_PARENTS)
 
-IMPLEMENT_SELF_METHOD(void, ensure, size_t min_capacity) {
+IMPLEMENT_SELF_METHOD(void, ensure, size_t min_capacity, THROWS) {
     size_t capacity = this.data->capacity;
     if (capacity >= min_capacity) {
         return;
@@ -57,14 +59,17 @@ IMPLEMENT_OVERRIDE_METHOD(size_t, List, length) {
     size_t length = self.data->length;
     return length;
 }
-IMPLEMENT_OVERRIDE_METHOD(void, List, setLength, size_t newLength) {
+IMPLEMENT_OVERRIDE_METHOD(void, List, setLength, size_t newLength, THROWS) {
     GrowableList self = DOWNCAST(this, GrowableList);
     size_t length = self.data->length;
     if (newLength == length) {
         return;
     }
     if (newLength > length) {
-        GrowableList_ensure(self, newLength);
+        GrowableList_ensure(self, newLength, EXCEPTION);
+        if (HAS_EXCEPTION) {
+            RETHROW()
+        }
         Object *elements = self.data->elements;
         for (size_t i = length; i < newLength; i++) {
             elements[i] = null;
@@ -111,11 +116,8 @@ IMPLEMENT_SELF_VTABLE() {
 
 OBJECT_CAST_IMPL(Iterable, GrowableList)
 
-SUPER_CAST_IMPL(GrowableList, List)
-UPCAST_IMPL(GrowableList, Object)
-
 IMPLEMENT_CONSTRUCTOR(new) {
-    List$new(GrowableList_as_List(this));
+    List$new(this.asList);
 }
 
 IMPLEMENT_SELF_GETTER(size_t, length) {

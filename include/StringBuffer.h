@@ -59,8 +59,6 @@ DEFINE_SELF_CLASS(
         ENUMERATE_STRING_BUFFER_GETTERS
 )
 
-DECLARE_SUPER_CAST(StringBuffer, Object)
-
 END_CLASS
 #undef Super
 #undef Self

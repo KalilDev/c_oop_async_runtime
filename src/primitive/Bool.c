@@ -9,8 +9,10 @@
 #define Self Bool
 #define Super() Object_vtable()
 
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_BOOL_PARENTS)
+
 IMPLEMENT_SELF_GETTER(bool, unbox) {
-    return this.data;
+    return this.unwrap;
 }
 
 IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
@@ -24,20 +26,20 @@ IMPLEMENT_OVERRIDE_METHOD(bool, Object, equals, Object other) {
     return false;
     }
     Bool b = DOWNCAST(other, Bool);
-    return a.data == b.data;
+    return a.unwrap == b.unwrap;
 }
 IMPLEMENT_OVERRIDE_METHOD(long, Object, getHashCode) {
     Bool self = DOWNCAST(this, Bool);
-    return self.data;
+    return self.unwrap;
 }
 static const char* _TrueString = "true";
 static const char* _FalseString = "false";
 IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
     Bool self = DOWNCAST(this, Bool);
-    if (this.data) {
-        return StringRef_as_String(StringRef$wrap(_TrueString));
+    if (self.unwrap) {
+        return StringRef$wrap(_TrueString).asString;
     }
-    return StringRef_as_String(StringRef$wrap(_FalseString));
+    return StringRef$wrap(_FalseString).asString;
 }
 
 
@@ -62,15 +64,12 @@ const Bool_vtable_t* Bool_vtable() {
 
 const Bool True =  {
         .vtable = &_Bool_vtable,
-        .data = true
+        .unwrap = true
 };
 const Bool False =  {
         .vtable = &_Bool_vtable,
-        .data = false
+        .unwrap = false
 };
-
-
-PRIMITIVE_UPCAST_IMPL(Bool, Object)
 
 // TODO: revisit this
 IMPLEMENT_PRIMITIVE_CONSTRUCTOR(box, bool unboxed) {

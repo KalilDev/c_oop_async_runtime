@@ -1,16 +1,6 @@
 #define CONCAT_(A, B) A ## B
 #define CONCAT(A, B) CONCAT_(A, B)
 
-#define SUPER_CAST_IMPL(class, Super) Super class ## _as_ ## Super(class this) { \
-    if (Object_isNull(UPCAST(this, Object))) {                                   \
-        return DOWNCAST(null, Super);                                                                             \
-    }                                                                             \
-    Super super = {                                                               \
-        .vtable = &this.vtable->super,                                 \
-        .data = &this.data->super                                       \
-    };                                                                            \
-    return super;                                                                     \
-}
 
 #define SUPER_INTERFACE_CAST_IMPL(class, Super) Super class ## _as_ ## Super(class this) { \
     Super super = {                                                               \
@@ -19,7 +9,7 @@
     };                                                                            \
     return super;                                                                     \
 }
-
+#define CRASH_ON_EXCEPTION NULL
 #define SUPER_INTERFACE_CAST_IMPL_(class, Super, Class) Super class ## _as_ ## Super(class this) { \
     Super super = {                                                               \
         .vtable = (CONCAT(Super, _vtable_t)*)&this.vtable,                                 \
@@ -29,29 +19,6 @@
 }
 
 
-
-#define PRIMITIVE_SUPER_CAST_IMPL(class, Super) Super class ## _as_ ## Super(class this) { \
-    Super super = {                                                               \
-        .vtable = &this.vtable->super,                                 \
-        .data = *(CONCAT(Super, _data)**)(&this.data)                                       \
-    };                                                                            \
-    return super;                                                                     \
-}
-#define PRIMITIVE_UPCAST_IMPL(class, Other) Other class ## _as_ ## Other(class this) { \
-    size_t reinterpreted_data = *((size_t*)&this.data);                                                                                   \
-    Other other = {                                                               \
-        .vtable = (Other ## _vtable_t*)this.vtable,                                 \
-        .data = (Other ## _data*)reinterpreted_data                                       \
-    };                                                                            \
-    return other;                                                                     \
-}
-#define UPCAST_IMPL(class, Other) Other class ## _as_ ## Other(class this) { \
-    Other other = {                                                               \
-        .vtable = (Other ## _vtable_t*)this.vtable,                                 \
-        .data = (Other ## _data*)this.data                                       \
-    };                                                                            \
-    return other;                                                                     \
-}
 #define VIRTUAL_METHOD_IMPL(class, method, return_type, signature, params) \
     return_type class ## _ ## method signature {           \
         return this.vtable->method params;                                                       \
@@ -168,7 +135,7 @@ return_type CONCAT(CONCAT(class, _), method)(class this __VA_OPT__(,) __VA_ARGS_
 #define IMPLEMENT_CONSTRUCTOR(name, ...) \
         Self CONCAT(CONCAT(CONCAT(Self, $), make_), name)(__VA_ARGS__) { \
             Self this = CONCAT(Self, _operator_new)();                         \
-            if (Object_isNull(CONCAT(Self, _as_Object)(this))) {               \
+            if (Object_isNull(this.asObject)) {               \
                 return this;\
             }                            \
             _CONSTRUCTOR_METHOD_INVOCATION(Self, name __VA_OPT__(,) __VA_ARGS__);\
@@ -196,3 +163,40 @@ return_type CONCAT(CONCAT(class, _), method)(class this __VA_OPT__(,) __VA_ARGS_
 
 #define DECLARE_SELF_CONSTRUCTOR(name, ...) \
     DECLARE_CONSTRUCTOR(Self, name __VA_OPT__(,) __VA_ARGS__)
+
+#ifdef WITH_RTTI
+#define IS_OBJECT_ASSIGNABLE(obj, class) (Object_isObjectTypeAssignable(obj, STR(class)))
+#else
+#define IS_OBJECT_ASSIGNABLE(obj, class) (1)
+#endif
+
+#define _IMPLEMENT_SELF_DOWNCAST(Parent) \
+    Self CONCAT(CONCAT(Self, $$from), Parent)(Parent parent) { \
+        Self this = {0};                 \
+        if (!IS_OBJECT_ASSIGNABLE(UPCAST(parent, Object), Self)) {     \
+            return DOWNCAST(null, Self);                             \
+        }                                 \
+        this.CONCAT(as, Parent) = parent;\
+        return this;\
+    }
+
+#define IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_PARENTS) \
+    ENUMERATE_PARENTS(_IMPLEMENT_SELF_DOWNCAST)
+
+#define S1(x) #x
+#define S2(x) S1(x)
+#define LOCATION __FILE__ ":" S2(__LINE__)
+
+#define THROW(e, ...) \
+    *__exception__ = e.asThrowable;\
+    Throwable_addStackFrame(*__exception__, StringRef$wrap(LOCATION));                  \
+    return __VA_ARGS__;
+
+
+#define RETHROW(...) \
+    Throwable_addStackFrame(*__exception__, StringRef$wrap(LOCATION));                  \
+    return __VA_ARGS__;
+
+
+#define EXCEPTION __exception__
+#define HAS_EXCEPTION (__exception__ != NULL && !Object_isNull((*__exception__).asObject))

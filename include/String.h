@@ -60,8 +60,6 @@ String String_format_c(const char* str, ...);
 DECLARE_OBJECT_CAST(Iterable, String)
 DECLARE_INTERFACE_CAST(String, Iterable)
 
-DECLARE_SUPER_CAST(String, Object)
-
 END_CLASS
 #undef Super
 #undef Self

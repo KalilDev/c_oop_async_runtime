@@ -7,6 +7,7 @@
 #define Self StringIterator
 #define Super() Object_vtable()
 IMPLEMENT_OPERATOR_NEW()
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_STRING_ITERATOR_PARENTS)
 
 IMPLEMENT_OVERRIDE_METHOD(bool, Iterator, moveNext) {
     StringIterator self = DOWNCAST(this, StringIterator);
@@ -23,7 +24,7 @@ IMPLEMENT_OVERRIDE_METHOD(Object, Iterator, current) {
     StringIterator self = DOWNCAST(this, StringIterator);
     String string = self.data->string;
     Integer charAt = String_at(string, self.data->i);
-    return Integer_as_Object(charAt);
+    return charAt.asObject;
 }
 
 IMPLEMENT_SELF_VTABLE() {
@@ -38,10 +39,6 @@ IMPLEMENT_SELF_VTABLE() {
     vtable->super.current = _StringIterator_current_impl;
     vtable->super.moveNext = _StringIterator_moveNext_impl;
 }
-
-
-SUPER_CAST_IMPL(StringIterator, Iterator)
-UPCAST_IMPL(StringIterator, Object)
 
 IMPLEMENT_CONSTRUCTOR(new, String string) {
     this.data->i = 0;

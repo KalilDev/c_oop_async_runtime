@@ -1,20 +1,17 @@
 #include "Object.h"
-#include "List.h"
-#include "TypedList.h"
-#include "UInt8List.h"
-#include "oop.h"
-#include "stddef.h"
+#include "primitive/StringRef.h"
 #include "oop.h"
 #include <assert.h>
-#include "String.h"
-#include "GrowableList.h"
+#include "Exception.h"
+#include "TypedList.h"
+#include "UInt8List.h"
 
 #define Super() List_vtable()
 #define Self TypedList
 IMPLEMENT_OPERATOR_NEW()
 
 ENUMERATE_TYPED_LIST_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
-
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_TYPED_LIST_PARENTS)
 
 IMPLEMENT_SELF_METHOD(UInt8List, releaseToUInt8list)       {
     UInt8List list = TypedList_asUInt8list(this);
@@ -38,12 +35,12 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     }
 }
 
-IMPLEMENT_OVERRIDE_METHOD(void, List, add, Object e) {
-    // todo: throw
+IMPLEMENT_OVERRIDE_METHOD(void, List, add, Object e, THROWS) {
+    THROW(Exception$make_newCString("Unsupported operation on TypedList"))
 }
 
-IMPLEMENT_OVERRIDE_METHOD(void, List, setLength, size_t newLength) {
-    // todo: throw
+IMPLEMENT_OVERRIDE_METHOD(void, List, setLength, size_t newLength, THROWS) {
+    THROW(Exception$make_newCString("Unsupported operation on TypedList"))
 }
 
 IMPLEMENT_SELF_VTABLE() {
@@ -67,11 +64,8 @@ IMPLEMENT_SELF_VTABLE() {
 
 OBJECT_CAST_IMPL(Iterable, TypedList)
 
-SUPER_CAST_IMPL(TypedList, List)
-UPCAST_IMPL(TypedList, Object)
-
 IMPLEMENT_CONSTRUCTOR(new, void* buffer, size_t bufferSize) {
-    List$new(TypedList_as_List(this));
+    List$new(this.asList);
     this.data->buffer = buffer;
     this.data->bufferSize = bufferSize;
 }

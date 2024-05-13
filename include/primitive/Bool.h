@@ -35,8 +35,6 @@ DEFINE_SELF_PRIMITIVE_CLASS(
 extern const Bool True;
 extern const Bool False;
 
-DECLARE_SUPER_CAST(Bool, Object)
-
 END_CLASS
 #undef Super
 #undef Self

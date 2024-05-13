@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "List.h"
 #include "Throwable.h"
 #define WITH_RTTI
 #include "rtti.h"
@@ -23,8 +22,10 @@ FORWARD_DECL_CLASS(StringRef)
     PARENT(Throwable)
 
 #define PARAMS_INVOCATION_Exception$new message
+#define PARAMS_INVOCATION_Exception$newCString message
 #define ENUMERATE_EXCEPTION_CONSTRUCTORS(CONSTRUCTOR) \
-    CONSTRUCTOR(new, String message)
+    CONSTRUCTOR(new, String message)                  \
+    CONSTRUCTOR(newCString, const char* message)
 
 #define ENUMERATE_EXCEPTION_ATTRIBUTES(ATTRIBUTE) \
     ATTRIBUTE(String, message)
@@ -39,9 +40,6 @@ DEFINE_SELF_CLASS(
         NO_STATIC_ATTRIBUTES,
         NO_GETTERS
 )
-
-DECLARE_SUPER_CAST(Exception, Throwable)
-DECLARE_UPCAST(Exception, Object)
 
 END_CLASS
 

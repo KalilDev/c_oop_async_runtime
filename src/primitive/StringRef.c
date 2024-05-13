@@ -11,21 +11,23 @@
 #define Self StringRef
 #define Super() String_vtable()
 
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_STRING_REF_PARENTS)
+
 IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
 
 }
 
 IMPLEMENT_OVERRIDE_METHOD(size_t, String, length) {
     StringRef self = DOWNCAST(this, StringRef);
-    return strlen(self.data);
+    return strlen(self.unwrap);
 }
 IMPLEMENT_OVERRIDE_METHOD(const char*, String, cStringView) {
     StringRef self = DOWNCAST(this, StringRef);
-    return self.data;
+    return self.unwrap;
 }
 IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
     StringRef self = DOWNCAST(this, StringRef);
-    return StringRef_as_String(self);
+    return self.asString;
 }
 
 IMPLEMENT_SELF_VTABLE() {
@@ -48,9 +50,6 @@ IMPLEMENT_SELF_VTABLE() {
     object_vtable->toString = _StringRef_toString_impl;
 }
 
-PRIMITIVE_SUPER_CAST_IMPL(StringRef, String)
-PRIMITIVE_UPCAST_IMPL(StringRef, Object)
-
 // TODO: revisit this
 IMPLEMENT_PRIMITIVE_CONSTRUCTOR(wrap, const char* ref) {
     if (ref == NULL) {
@@ -58,7 +57,7 @@ IMPLEMENT_PRIMITIVE_CONSTRUCTOR(wrap, const char* ref) {
     }
     StringRef this = {
         .vtable = StringRef_vtable(),
-        .data = ref
+        .unwrap = ref
     };
     return this;
 }

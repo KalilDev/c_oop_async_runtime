@@ -18,9 +18,6 @@ DEFINE_SELF_INTERFACE(
         NO_STATIC_ATTRIBUTES
 )
 
-DECLARE_SUPER_CAST(Closeable, Interface)
-DECLARE_OBJECT_CAST(Closeable, Object)
-
 END_CLASS
 #undef Super
 #undef Self

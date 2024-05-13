@@ -11,6 +11,7 @@
 IMPLEMENT_OPERATOR_NEW()
 
 ENUMERATE_THROWABLE_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_THROWABLE_PARENTS)
 
 IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     Throwable self = DOWNCAST(this, Throwable);
@@ -18,7 +19,7 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     Super()->delete(this);
 }
 IMPLEMENT_SELF_METHOD(void, addStackFrame, StringRef stackFrame) {
-    List_add(this.data->frames, stackFrame.asObject);
+    List_add(this.data->frames, stackFrame.asObject, CRASH_ON_EXCEPTION);
 }
 IMPLEMENT_SELF_METHOD(void, printStackTrace, FILE *to) {
     size_t i = 0;
@@ -41,8 +42,6 @@ IMPLEMENT_SELF_VTABLE() {
     Object_vtable_t *object_vtable = (Object_vtable_t*)vtable;
     object_vtable->delete = _Throwable_delete_impl;
 }
-
-SUPER_CAST_IMPL(Throwable, Object)
 
 IMPLEMENT_ABSTRACT_CONSTRUCTOR(new) {
     this.data->frames = List_new();

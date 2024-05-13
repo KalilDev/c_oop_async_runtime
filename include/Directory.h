@@ -25,8 +25,9 @@ FORWARD_DECL_CLASS(List)
 
 #define PARAMS_INVOCATION_Directory_openSync mode
 #define PARAMS_INVOCATION_Directory_copy newPath
+#define PARAMS_INVOCATION_Directory_list THROWS_PARAM_INVOCATION
 #define ENUMERATE_DIRECTORY_METHODS(METHOD) \
-    METHOD(List, list)     \
+    METHOD(List, list, THROWS)     \
     METHOD(Directory, parent)          \
     METHOD(void, copy, String newPath) \
     METHOD(void, createSync)           \
@@ -54,9 +55,6 @@ DEFINE_SELF_CLASS(
         NO_STATIC_ATTRIBUTES,
         ENUMERATE_DIRECTORY_GETTERS
 )
-
-DECLARE_SUPER_CAST(Directory, FileSystemEntity)
-DECLARE_UPCAST(Directory, Object)
 
 END_CLASS
 

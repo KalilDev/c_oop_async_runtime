@@ -46,8 +46,6 @@ DEFINE_SELF_ABSTRACT(
         NO_GETTERS
 )
 
-DECLARE_SUPER_CAST(Number, Object)
-
 END_CLASS
 
 #undef Self

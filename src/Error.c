@@ -8,6 +8,7 @@
 #define Super() Throwable_vtable()
 #define Self Error
 IMPLEMENT_OPERATOR_NEW()
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_ERROR_PARENTS)
 
 IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     Error self = DOWNCAST(this, Error);
@@ -38,12 +39,13 @@ IMPLEMENT_SELF_VTABLE() {
     object_vtable->toString = _Error_toString_impl;
 }
 
-SUPER_CAST_IMPL(Error, Throwable)
-UPCAST_IMPL(Error, Object)
-
 IMPLEMENT_CONSTRUCTOR(new, String message) {
-    Throwable$new(Error_as_Throwable(this));
+    Throwable$new(this.asThrowable);
     this.data->message = message;
+}
+
+IMPLEMENT_CONSTRUCTOR(newCString, const char* message) {
+    Error$new(this, StringRef$wrap(message).asString);
 }
 
 #undef Super

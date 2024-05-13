@@ -11,9 +11,8 @@
 
 #define Self Link
 #define Super() FileSystemEntity_vtable()
-SUPER_CAST_IMPL(Link, FileSystemEntity)
-UPCAST_IMPL(Link, Object)
 
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_LINK_PARENTS)
 ENUMERATE_LINK_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
 
 //IMPLEMENT_SELF_METHOD(List, list)     {
@@ -24,7 +23,7 @@ IMPLEMENT_OVERRIDE_METHOD(FileSystemEntity, FileSystemEntity, absolute) {
     const char* pathCstring = String_cStringView(path);
     char *absolute_path = realpath(pathCstring, NULL);
     String absolutePath = String$make_own(absolute_path);
-    return Link_as_FileSystemEntity(Link$make_new(absolutePath));
+    return Link$make_new(absolutePath).asFileSystemEntity;
 }
 
 IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
@@ -33,7 +32,7 @@ IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
     return String_format_c("Link({})", path);
 }
 IMPLEMENT_CONSTRUCTOR(new, String path) {
-    FileSystemEntity$new(Link_as_FileSystemEntity(this), path);
+    FileSystemEntity$new(this.asFileSystemEntity, path);
 }
 
 IMPLEMENT_OPERATOR_NEW()

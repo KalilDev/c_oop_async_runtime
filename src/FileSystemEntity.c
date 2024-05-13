@@ -5,9 +5,9 @@
 
 #define Self FileSystemEntity
 #define Super() Object_vtable()
-SUPER_CAST_IMPL(FileSystemEntity, Object)
 
 ENUMERATE_FILE_SYSTEM_ENTITY_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_FILE_SYSTEM_ENTITY_PARENTS)
 
 IMPLEMENT_ABSTRACT_CONSTRUCTOR(new, String path) {
     this.data->path = path;
@@ -15,9 +15,7 @@ IMPLEMENT_ABSTRACT_CONSTRUCTOR(new, String path) {
 
 IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     FileSystemEntity self = DOWNCAST(this, FileSystemEntity);
-    if (!Object_isNull(String_as_Object(self.data->path))) {
-        Object_delete(String_as_Object(self.data->path));
-    }
+    Object_delete(self.data->path.asObject);
     Super()->delete(this);
 }
 

@@ -6,9 +6,40 @@
 #include <string.h>
 #include <malloc.h>
 #include "rtti.h"
+#include "Object.h"
 #include <math.h>
 
 #ifdef WITH_RTTI
+bool _isTerminator(char c) {
+    return c == '\0' || c == ';';
+}
+long _sepIndex(const char* chain) {
+    for (long i = 0; ; i++) {
+        if (chain[i] == '\0') {
+            return -1;
+        }
+        if (chain[i] == ';') {
+            return i;
+        }
+    }
+}
+bool Object_isObjectTypeAssignable(Object obj, const char* class_name) {
+    const char* inheritance_chain = obj.vtable->runtime_type_information.inheritance_chain;
+    size_t chainLength = strlen(inheritance_chain);
+    size_t classLength = strlen(class_name);
+
+    while (chainLength > classLength) {
+        if (strncmp(inheritance_chain, class_name, classLength) == 0 && _isTerminator(inheritance_chain[classLength])) {
+            return true;
+        }
+        long sepIndex = _sepIndex(inheritance_chain);
+        if (sepIndex < 0) {
+            return false;
+        }
+        inheritance_chain += sepIndex + 1;
+        chainLength -= sepIndex + 1;
+    }
+}
 
 void initRtti(runtime_type_information_t* selfRtti, runtime_type_information_t *superRtti, const char* class_name, size_t implemented_interface_count, ...) {
     va_list args;

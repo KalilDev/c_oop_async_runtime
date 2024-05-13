@@ -16,7 +16,7 @@
 IMPLEMENT_OPERATOR_NEW()
 
 ENUMERATE_STRING_BUFFER_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
-
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_STRING_BUFFER_PARENTS)
 
 IMPLEMENT_SELF_METHOD(void, clear) {
     if (this.data->length > 0) {
@@ -48,7 +48,7 @@ IMPLEMENT_SELF_METHOD(void, write, Object obj) {
     // is bool
     if (obj.vtable == Bool_vtable()) {
         Bool b = DOWNCAST(obj, Bool);
-        if (b.data) {
+        if (b.unwrap) {
             StringBuffer_writeCString(this, "true");
             return;
         }
@@ -58,38 +58,27 @@ IMPLEMENT_SELF_METHOD(void, write, Object obj) {
     // general case
     String s = Object_toString(obj);
     StringBuffer_writeCString(this, String_cStringView(s));
-    Object_delete(String_as_Object(s));
+    Object_delete(s.asObject);
 }
 
 IMPLEMENT_SELF_METHOD(void, writeAll, List list, String separator) {
     size_t i = 0;
     size_t length = List_length(list);
-    Object sep = String_as_Object(separator);
+    Object sep = separator.asObject;
 
     StringBuffer_writeCharCode(this, '[');
 
-    {
-        Iterator iterator = Iterable_iterator(List_as_Iterable(list));
-        while (Iterator_moveNext(iterator))
-        {
-            Object __obj = Iterator_current(iterator);
-            Object obj = DOWNCAST(__obj, Object);
-            {
-                {
-                    StringBuffer_write(this, obj);
-                    if (i + 1 != length) {
-                        StringBuffer_write(this, sep);
-                    }
-                    i++;
-                }
-            }
+    foreach(Object, obj, List_as_Iterable(list), {
+        StringBuffer_write(this, obj);
+        if (i + 1 != length) {
+            StringBuffer_write(this, sep);
         }
-        Object_delete(Iterator_as_Object(iterator));
-    }
+        i++;
+    })
 
     StringBuffer_writeCharCode(this, ']');
 }
-
+Object Object$$fromObject(Object this);
 IMPLEMENT_SELF_METHOD(void, writeCharCode, char code) {
     if (code == '\0') {
         return;
@@ -201,8 +190,6 @@ IMPLEMENT_SELF_VTABLE() {
     object_vtable->delete = _StringBuffer_delete_impl;
     object_vtable->toString = _StringBuffer_toString_impl;
 }
-
-SUPER_CAST_IMPL(StringBuffer, Object)
 
 IMPLEMENT_CONSTRUCTOR(new) {
 

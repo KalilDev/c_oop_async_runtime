@@ -56,6 +56,11 @@
 #define FORWARD_DECL_CLASS(class) union class; \
 typedef union class class;
 
+#define FORWARD_DECL_THROWABLE FORWARD_DECL_CLASS(Throwable)
+
+#define THROWS Throwable* __exception__
+#define THROWS_PARAM_INVOCATION __exception__
+
 #define START_CLASS FORWARD_DECL_CLASS(Self)
 
 #define END_CLASS
@@ -71,7 +76,7 @@ typedef union class { \
     struct {                                              \
         const CONCAT(class, _vtable_t)* vtable; \
         union {                                                  \
-            type data;                                                     \
+            type unwrap;                                                     \
             void* _align;                                                         \
         };                                             \
     };                                             \
@@ -133,6 +138,12 @@ typedef struct CONCAT(Self, _data) {                  \
 #define NO_METHODS(METHOD)
 #define NO_GETTERS(ATTRIBUTE)
 
+#define _DEFINE_DELF_DOWNCAST(Parent) \
+    Self CONCAT(CONCAT(Self, $$from), Parent)(Parent parent);
+
+#define DEFINE_SELF_DOWNCASTS(ENUMERATE_PARENTS) \
+    ENUMERATE_PARENTS(_DEFINE_DELF_DOWNCAST)
+
 
 #define DEFINE_SELF_ABSTRACT(ENUMERATE_PARENTS, ENUMERATE_IMPLEMENENTS, ENUMERATE_METHODS, ENUMERATE_ATTRIBUTES, ENUMERATE_CONSTRUCTORS, ENUMERATE_STATIC_METHODS, ENUMERATE_STATIC_ATTRIBUTES, ENUMERATE_GETTERS) \
 ENUMERATE_METHODS(DECLARE_SELF_METHOD) \
@@ -143,6 +154,7 @@ DECLARE_SELF_VTABLE_GETTER()                                                    
 ENUMERATE_GETTERS(DECLARE_SELF_GETTER) \
 ENUMERATE_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD) \
 ENUMERATE_CONSTRUCTORS(DECLARE_SELF_ABSTRACT_CONSTRUCTOR) \
+DEFINE_SELF_DOWNCASTS(ENUMERATE_PARENTS) \
 ENUMERATE_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
 
 #define DECLARE_SELF_PRIMITIVE_FAT_POINTER(primitiveType, ENUMERATE_PARENTS) DECLARE_PRIMITIVE_FAT_POINTER(Self, primitiveType, ENUMERATE_PARENTS)
@@ -154,7 +166,8 @@ DECLARE_SELF_PRIMITIVE_FAT_POINTER(primitiveType, ENUMERATE_PARENTS) \
 DECLARE_SELF_VTABLE_GETTER() \
 ENUMERATE_GETTERS(DECLARE_SELF_GETTER) \
 ENUMERATE_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD) \
-ENUMERATE_CONSTRUCTORS(DECLARE_SELF_PRIMITIVE_CONSTRUCTOR) \
+ENUMERATE_CONSTRUCTORS(DECLARE_SELF_PRIMITIVE_CONSTRUCTOR)                                                                                                                                                         \
+DEFINE_SELF_DOWNCASTS(ENUMERATE_PARENTS) \
 ENUMERATE_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
 
 #define DECLARE_SELF_OPERATOR_NEW() \
@@ -170,6 +183,7 @@ DECLARE_SELF_OPERATOR_NEW()                                                     
 ENUMERATE_GETTERS(DECLARE_SELF_GETTER) \
 ENUMERATE_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD) \
 ENUMERATE_CONSTRUCTORS(DECLARE_SELF_CONSTRUCTOR) \
+DEFINE_SELF_DOWNCASTS(ENUMERATE_PARENTS) \
 ENUMERATE_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
 
 #define OBJECT_VTABLE_TAG 0xBABACA0000BABACA

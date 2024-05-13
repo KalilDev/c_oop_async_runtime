@@ -32,17 +32,23 @@ typedef enum FileMode {
 FORWARD_DECL_CLASS(RandomAccessFile)
 FORWARD_DECL_CLASS(Directory)
 
-#define PARAMS_INVOCATION_File_copy newPath
-#define PARAMS_INVOCATION_File_openSync mode
+FORWARD_DECL_THROWABLE
+#define PARAMS_INVOCATION_File_readStringSync THROWS_PARAM_INVOCATION
+#define PARAMS_INVOCATION_File_copy newPath, THROWS_PARAM_INVOCATION
+#define PARAMS_INVOCATION_File_createSync THROWS_PARAM_INVOCATION
+#define PARAMS_INVOCATION_File_deleteSync THROWS_PARAM_INVOCATION
+#define PARAMS_INVOCATION_File_existsSync THROWS_PARAM_INVOCATION
+#define PARAMS_INVOCATION_File_lengthSync THROWS_PARAM_INVOCATION
+#define PARAMS_INVOCATION_File_openSync mode, THROWS_PARAM_INVOCATION
 #define ENUMERATE_FILE_METHODS(METHOD) \
-    METHOD(String, readStringSync)     \
+    METHOD(String, readStringSync, THROWS)     \
     METHOD(Directory, parent)          \
-    METHOD(void, copy, String newPath) \
-    METHOD(void, createSync)           \
-    METHOD(void, deleteSync)           \
-    METHOD(bool, existsSync)           \
-    METHOD(size_t, lengthSync)         \
-    METHOD(RandomAccessFile, openSync, FileMode mode)
+    METHOD(void, copy, String newPath, THROWS) \
+    METHOD(void, createSync, THROWS)           \
+    METHOD(void, deleteSync, THROWS)           \
+    METHOD(bool, existsSync, THROWS)           \
+    METHOD(size_t, lengthSync, THROWS)         \
+    METHOD(RandomAccessFile, openSync, FileMode mode, THROWS)
 
 #define ENUMERATE_FILE_GETTERS(ATTRIBUTE) \
 
@@ -62,9 +68,6 @@ DEFINE_SELF_CLASS(
         NO_STATIC_ATTRIBUTES,
         ENUMERATE_FILE_GETTERS
 )
-
-DECLARE_SUPER_CAST(File, FileSystemEntity)
-DECLARE_UPCAST(File, Object)
 
 END_CLASS
 

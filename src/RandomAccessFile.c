@@ -25,56 +25,60 @@
 #define Self RandomAccessFile
 
 IMPLEMENT_OPERATOR_NEW()
-
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_RANDOM_ACCESS_FILE_PARENTS)
 ENUMERATE_RANDOM_ACCESS_FILE_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
-IMPLEMENT_SELF_METHOD(void, flush) {
-    fflush(this.data->file);
-}
-#define S1(x) #x
-#define S2(x) S1(x)
-#define LOCATION __FILE__ ":" S2(__LINE__)
 
-#define THROWS Exception* __exception__
-#define THROWS_PARAM_INVOCATION __exception__
-#define THROW(e, ...) \
-    *__exception__ = (e).asException; \
-    Throwable_addStackFrame(UPCAST(*__exception__, Throwable), StringRef$wrap(LOCATION));                  \
-    return __VA_ARGS__;\
+IMPLEMENT_SELF_METHOD(void, flush, THROWS) {
+    int res = fflush(this.data->file);
+    if (res == EOF) {
+        THROW(IOException$make_fromErrno())
+    }
+}
 
 IMPLEMENT_SELF_METHOD(size_t, length, THROWS)           {
     struct stat st;
-    int res = fstat (fileno(this.data->file), &st);
+    int fd = fileno(this.data->file);
+    if (fd < 0) {
+        THROW(IOException$make_fromErrno(), 0);
+    }
+    int res = fstat (fd, &st);
     if (res != 0) {
-        THROW(IOException$make_new(res), 0)
+        THROW(IOException$make_fromErrno(), 0);
     }
     size_t size = st.st_size;
     return size;
 }
 
-IMPLEMENT_SELF_METHOD(void, lock, THROWS)           {
-    errno = 0;
+IMPLEMENT_SELF_METHOD(void, lock)           {
     flockfile(this.data->file);
-    if (errno != 0) {
-        THROW(Exception$make_new(StringRef_as_String(StringRef$wrap(strerror(errno)))))
-    }
 }
 IMPLEMENT_SELF_METHOD(bool, tryLock)           {
     return ftrylockfile(this.data->file) == 0;
 }
-IMPLEMENT_SELF_METHOD(size_t, position)     {
-return  ftell(this.data->file);
+IMPLEMENT_SELF_METHOD(size_t, position, THROWS)     {
+    long res = ftell(this.data->file);
+    if (res < 0) {
+        THROW(IOException$make_fromErrno(), 0);
+    }
+    return res;
 }
-IMPLEMENT_SELF_METHOD(Integer, readByte)     {
+IMPLEMENT_SELF_METHOD(Integer, readByte, THROWS)     {
     int c = fgetc(this.data->file);
+    int error = ferror(this.data->file);
+    if (error != 0) {
+        // we already dealt with the error
+        clearerr(this.data->file);
+        THROW(IOException$make_new(error), DOWNCAST(null, Integer));
+    }
     if(feof(this.data->file)) {
         return DOWNCAST(null, Integer);
     }
     return Integer$box(c);
 }
-IMPLEMENT_SELF_METHOD(size_t, readInto, List buffer, size_t start, Integer end)     {
+IMPLEMENT_SELF_METHOD(size_t, readInto, List buffer, size_t start, Integer end, THROWS)     {
     #define CHUNK 512
     size_t bufferLen = List_length(buffer);
-    size_t end_ = Object_isNull(UPCAST(end, Object)) ? bufferLen : Integer_unbox_ll(end);
+    size_t end_ = Object_isNull(end.asObject) ? bufferLen : end.unwrap;
     size_t bufferWindowSize = end_ - start;
     size_t remaining = bufferWindowSize;
     size_t readingChunkSize = CHUNK;
@@ -83,14 +87,16 @@ IMPLEMENT_SELF_METHOD(size_t, readInto, List buffer, size_t start, Integer end) 
     do {
         readingChunkSize = readingChunkSize > remaining ? remaining : readingChunkSize;
         size_t currentRead = fread(chunk, sizeof(char), readingChunkSize, this.data->file);
-
         // uint8list fast path!
         if (buffer.vtable == UInt8List_vtable()) {
             unsigned char *bb = UInt8List_list(DOWNCAST(buffer, UInt8List));
             memcpy( bb + start + read, chunk, currentRead);
         } else {
             // bad use of setLength!
-            List_setLength(buffer, bufferLen + currentRead);
+            List_setLength(buffer, bufferLen + currentRead, EXCEPTION);
+            if (HAS_EXCEPTION) {
+                RETHROW(read)
+            }
             for (size_t ci = 0; ci<currentRead; ci++) {
                 Integer boxed = Integer$box_c(chunk[ci]);
                 List_setAt(buffer, start + ci + read, UPCAST(boxed, Object));
@@ -100,6 +106,13 @@ IMPLEMENT_SELF_METHOD(size_t, readInto, List buffer, size_t start, Integer end) 
         read += currentRead;
         bufferLen += currentRead;
         remaining -= currentRead;
+
+        int error = ferror(this.data->file);
+        if (error != 0) {
+            // we already dealt with the error
+            clearerr(this.data->file);
+            THROW(IOException$make_new(error), read);
+        }
         if (currentRead != readingChunkSize) {
             return read;
         }
@@ -107,10 +120,13 @@ IMPLEMENT_SELF_METHOD(size_t, readInto, List buffer, size_t start, Integer end) 
     return read;
     #undef CHUNK
 }
-IMPLEMENT_SELF_METHOD(List, read, size_t count)          {
+IMPLEMENT_SELF_METHOD(List, read, size_t count, THROWS)          {
     #define CHUNK 512
     ByteBuffer buffer = ByteBuffer$make_new();
-    ByteBuffer_ensure(buffer, count);
+    ByteBuffer_ensure(buffer, count, EXCEPTION);
+    if (HAS_EXCEPTION) {
+        RETHROW(DOWNCAST(null, List))
+    }
     size_t i = 0;
 
     size_t remaining = count;
@@ -119,20 +135,31 @@ IMPLEMENT_SELF_METHOD(List, read, size_t count)          {
     do {
         readingChunkSize = readingChunkSize >= remaining ? readingChunkSize : remaining;
         size_t currentRead = fread(chunk, sizeof(unsigned char), readingChunkSize, this.data->file);
-        ByteBuffer_writeBuffer(buffer, chunk, currentRead);
+        ByteBuffer_writeBuffer(buffer, chunk, currentRead, EXCEPTION);
+        if (HAS_EXCEPTION) {
+            RETHROW(DOWNCAST(null, List))
+        }
         remaining -= currentRead;
+
+        int error = ferror(this.data->file);
+        if (error != 0) {
+            // we already dealt with the error
+            clearerr(this.data->file);
+            Object_delete(buffer.asObject);
+            THROW(IOException$make_new(error), DOWNCAST(null, List));
+        }
         if (currentRead != readingChunkSize) {
-            List out = UInt8List_as_List(ByteBuffer_releaseToBytes(buffer));
+            List out = ByteBuffer_releaseToBytes(buffer).asList;
             Object_delete(buffer.asObject);
             return out;
         }
     } while (remaining > 0);
-    List out = UInt8List_as_List(ByteBuffer_releaseToBytes(buffer));
+    List out = ByteBuffer_releaseToBytes(buffer).asList;
     Object_delete(buffer.asObject);
     return out;
     #undef CHUNK
 }
-IMPLEMENT_SELF_METHOD(String, readString, size_t count)          {
+IMPLEMENT_SELF_METHOD(String, readString, size_t count, THROWS)          {
     #define CHUNK 512
     StringBuffer buffer = StringBuffer$make_new();
     StringBuffer_ensure(buffer, count);
@@ -144,30 +171,50 @@ IMPLEMENT_SELF_METHOD(String, readString, size_t count)          {
         size_t currentRead = fread(chunk, sizeof(char), readingChunkSize, this.data->file);
         StringBuffer_writeBuffer(buffer, chunk, currentRead);
         remaining -= currentRead;
+        int error = ferror(this.data->file);
+        if (error != 0) {
+            // we already dealt with the error
+            clearerr(this.data->file);
+            Object_delete(buffer.asObject);
+            THROW(IOException$make_new(error), DOWNCAST(null, String));
+        }
         if (currentRead != readingChunkSize) {
             String out = StringBuffer_releaseToString(buffer);
-            Object_delete (StringBuffer_as_Object(buffer));
+            Object_delete (buffer.asObject);
             return out;
         }
     } while (remaining > 0);
     String out = StringBuffer_releaseToString(buffer);
-    Object_delete (StringBuffer_as_Object(buffer));
+    Object_delete (buffer.asObject);
     return out;
     #undef CHUNK
 }
-IMPLEMENT_SELF_METHOD(void, setPosition, size_t position) {
-    fseek(this.data->file, (long)position, SEEK_SET);
+IMPLEMENT_SELF_METHOD(void, setPosition, size_t position, THROWS) {
+    int res = fseek(this.data->file, (long)position, SEEK_SET);
+    if (res < 0) {
+        THROW(IOException$make_fromErrno());
+    }
 }
-IMPLEMENT_SELF_METHOD(void, truncate, size_t length)           {
-    ftruncate (fileno(this.data->file), (long)length);
+IMPLEMENT_SELF_METHOD(void, truncate, size_t length, THROWS)           {
+    int fd = fileno(this.data->file);
+    if (fd < 0) {
+        THROW(IOException$make_fromErrno());
+    }
+    int res = ftruncate (fd, (long)length);
+    if (res < 0) {
+        THROW(IOException$make_fromErrno());
+    }
 }
 IMPLEMENT_SELF_METHOD(void, unlock)           {
     funlockfile(this.data->file);
 }
-IMPLEMENT_SELF_METHOD(void, writeByte, char byte)           {
-    fputc(byte, this.data->file);
+IMPLEMENT_SELF_METHOD(void, writeByte, char byte, THROWS)           {
+    int written = fputc(byte, this.data->file);
+    if (written == EOF) {
+        THROW(IOException$make_fromErrno());
+    }
 }
-IMPLEMENT_SELF_METHOD(void, writeFrom, List buffer, size_t start, Integer end)         {
+IMPLEMENT_SELF_METHOD(void, writeFrom, List buffer, size_t start, Integer end, THROWS)         {
     #define CHUNK 512
     size_t bufferLen = List_length(buffer);
     size_t end_ = Object_isNull(UPCAST(end, Object)) ? bufferLen : Integer_unbox_ll(end);
@@ -190,6 +237,13 @@ IMPLEMENT_SELF_METHOD(void, writeFrom, List buffer, size_t start, Integer end)  
         }
         start += writingChunkSize;
         size_t currentWritten = fwrite(chunk, sizeof(char), writingChunkSize, this.data->file);
+
+        int error = ferror(this.data->file);
+        if (error != 0) {
+            // we already dealt with the error
+            clearerr(this.data->file);
+            THROW(IOException$make_new(error));
+        }
         remaining -= currentWritten;
         if (currentWritten != writingChunkSize) {
             return;
@@ -197,7 +251,7 @@ IMPLEMENT_SELF_METHOD(void, writeFrom, List buffer, size_t start, Integer end)  
     }
     #undef CHUNK
 }
-IMPLEMENT_SELF_METHOD(void, writeString, String string) {
+IMPLEMENT_SELF_METHOD(void, writeString, String string, THROWS) {
     #define CHUNK 512
     const char *str = String_cStringView(string);
     size_t start = 0;
@@ -210,6 +264,12 @@ IMPLEMENT_SELF_METHOD(void, writeString, String string) {
         memcpy(chunk, str + start, writingChunkSize);
         start += writingChunkSize;
         size_t currentWritten = fwrite(chunk, sizeof(char), writingChunkSize, this.data->file);
+        int error = ferror(this.data->file);
+        if (error != 0) {
+            // we already dealt with the error
+            clearerr(this.data->file);
+            THROW(IOException$make_new(error));
+        }
         remaining -= currentWritten;
         if (currentWritten != writingChunkSize) {
             return;
@@ -229,9 +289,7 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
         fclose(self.data->file);
         self.data->file = NULL;
     }
-    if (!Object_isNull(String_as_Object(self.data->path))) {
-        Object_delete(String_as_Object(self.data->path));
-    }
+    Object_delete(self.data->path.asObject);
     Super()->delete(this);
 }
 
@@ -277,18 +335,17 @@ OBJECT_CAST_IMPL(Closeable, RandomAccessFile)
 
 INTERFACE_CAST_IMPL(RandomAccessFile, Closeable, Object)
 
-SUPER_CAST_IMPL(RandomAccessFile, Object)
 
-RandomAccessFile RandomAccessFile$make_open (String path, const char *modes) {
+RandomAccessFile RandomAccessFile$make_open (String path, const char *modes, THROWS) {
     RandomAccessFile this = RandomAccessFile_operator_new();
-    if (Object_isNull(CONCAT(Self, _as_Object)(this))) { return this; }
+    if (Object_isNull(this.asObject)) { return this; }
     FILE* file = this.data->file = fopen(String_cStringView(path), modes);
     if (file == NULL) {
         this.data->path = DOWNCAST(null, String);
-        Object_delete(RandomAccessFile_as_Object(this));
-        return DOWNCAST(null, RandomAccessFile);
+        Object_delete(this.asObject);
+        THROW(IOException$make_fromErrno(), DOWNCAST(null, RandomAccessFile))
     }
-    this.data->path = Object_toString(String_as_Object(path));
+    this.data->path = Object_toString(path.asObject);
     return this;
 }
 

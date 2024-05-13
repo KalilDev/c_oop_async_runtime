@@ -1,27 +1,16 @@
-#include "Object.h"
-#include "List.h"
-#include "TypedList.h"
 #include "UInt8List.h"
 #include "oop.h"
 #include "stddef.h"
 #include "oop.h"
 #include <assert.h>
 #include "String.h"
-#include "GrowableList.h"
 #include "primitive/Number.h"
 #include "primitive/Integer.h"
 
 #define Super() TypedList_vtable()
 #define Self UInt8List
 IMPLEMENT_OPERATOR_NEW()
-
-#define ENUMERATE_TYPED_LIST_CONSTRUCTORS(CONSTRUCTOR) \
-    CONSTRUCTOR(new, void* buffer, size_t bufferSize)
-
-
-#define ENUMERATE_TYPED_LIST_GETTERS(ATTRIBUTE) \
-    ATTRIBUTE(void*, buffer)                       \
-    ATTRIBUTE(size_t, bufferSize)
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_UINT8_LIST_PARENTS)
 
 IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     TypedList self = DOWNCAST(this, TypedList);
@@ -34,7 +23,7 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
 }
 
 IMPLEMENT_OVERRIDE_METHOD(Object, List, at, size_t i) {
-UInt8List self = DOWNCAST(this, UInt8List);
+    UInt8List self = DOWNCAST(this, UInt8List);
     unsigned char* list = UInt8List_list(self);
     size_t length = UInt8List_length(self);
     if (i >= length) {
@@ -83,16 +72,12 @@ IMPLEMENT_SELF_VTABLE() {
 
 OBJECT_CAST_IMPL(Iterable, UInt8List)
 
-SUPER_CAST_IMPL(UInt8List, TypedList)
-UPCAST_IMPL(UInt8List, List)
-UPCAST_IMPL(UInt8List, Object)
-
 IMPLEMENT_CONSTRUCTOR(new, size_t length) {
-    TypedList$new(UInt8List_as_TypedList(this), calloc(length, sizeof(unsigned char)), length);
+    TypedList$new(this.asTypedList, calloc(length, sizeof(unsigned char)), length);
 }
 
 IMPLEMENT_CONSTRUCTOR(fromBuffer, unsigned char* list, size_t length) {
-    TypedList$new(UInt8List_as_TypedList(this), list, length * sizeof(unsigned char));
+    TypedList$new(this.asTypedList, list, length * sizeof(unsigned char));
 }
 
 IMPLEMENT_SELF_GETTER(size_t, length) {

@@ -19,9 +19,6 @@ DEFINE_SELF_INTERFACE(
         NO_STATIC_ATTRIBUTES
 )
 
-DECLARE_SUPER_CAST(Comparable, Interface)
-DECLARE_OBJECT_CAST(Comparable, Object)
-
 END_CLASS
 #undef Super
 #undef Self

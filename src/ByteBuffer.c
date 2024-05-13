@@ -10,14 +10,19 @@
 #include "primitive/Bool.h"
 #include "primitive/Number.h"
 #include "primitive/Integer.h"
+#include "primitive/StringRef.h"
 #include "foreach.h"
 #include <strings.h>
 #include <assert.h>
+#include "Throwable.h"
+#include "TypeError.h"
+#include "primitive/OutOfMemoryException.h"
 
 #define Super() Object_vtable()
 #define Self ByteBuffer
 IMPLEMENT_OPERATOR_NEW()
 
+IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_BYTE_BUFFER_PARENTS)
 ENUMERATE_BYTE_BUFFER_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
 
 
@@ -43,20 +48,26 @@ IMPLEMENT_SELF_METHOD(UInt8List, releaseToBytes) {
     return UInt8List$make_fromBuffer(buffer, len);
 }
 
-IMPLEMENT_SELF_METHOD(void, write, unsigned char byte) {
+IMPLEMENT_SELF_METHOD(void, write, unsigned char byte, THROWS) {
     size_t selfLen = this.data->length;
-    ByteBuffer_ensure(this, selfLen + 1);
+    ByteBuffer_ensure(this, selfLen + 1, EXCEPTION);
+    if (HAS_EXCEPTION) {
+        RETHROW()
+    }
     unsigned char* buffer = this.data->buffer;
     buffer[selfLen] = byte;
     this.data->length++;
 }
 
-IMPLEMENT_SELF_METHOD(void, writeAll, List list) {
+IMPLEMENT_SELF_METHOD(void, writeAll, List list, THROWS) {
     size_t i = 0;
     unsigned char *buffer = this.data->buffer;
     size_t length = this.data->length;
     size_t list_length = List_length(list);
-    ByteBuffer_ensure(this, length + list_length);
+    ByteBuffer_ensure(this, length + list_length, EXCEPTION);
+    if (HAS_EXCEPTION) {
+        RETHROW()
+    }
 
     // fast path!!!
     if (list.vtable == UInt8List_vtable()) {
@@ -69,7 +80,7 @@ IMPLEMENT_SELF_METHOD(void, writeAll, List list) {
     foreach(Object, b, List_as_Iterable(list), {
         // is not number
         if (!Object_isObjectTypeAssignable(b, "Number")) {
-            // todo: throw
+            THROW(TypeError$make_new(b, StringRef$wrap("Number").asString))
         }
         Number b_number = DOWNCAST(b, Number);
         int num = Integer_unbox_i(Number_toInteger(b_number));
@@ -78,24 +89,30 @@ IMPLEMENT_SELF_METHOD(void, writeAll, List list) {
     })
 }
 
-IMPLEMENT_SELF_METHOD(void, writeCString, const char* cstring) {
+IMPLEMENT_SELF_METHOD(void, writeCString, const char* cstring, THROWS) {
     if (cstring == NULL) {
         return;
     }
-    ByteBuffer_writeBuffer(this, (const unsigned char*)cstring, strlen(cstring));
+    ByteBuffer_writeBuffer(this, (const unsigned char*)cstring, strlen(cstring), EXCEPTION);
+    if (HAS_EXCEPTION) {
+        RETHROW()
+    }
 }
 
-IMPLEMENT_SELF_METHOD(void, writeString, String string) {
+IMPLEMENT_SELF_METHOD(void, writeString, String string, THROWS) {
     if (Object_isNull(string.asObject)) {
         return;
     }
     const char *cstring = String_cStringView(string);
     size_t strLen = String_length(string);
-    ByteBuffer_writeBuffer(this, (const unsigned char*)cstring, strLen);
+    ByteBuffer_writeBuffer(this, (const unsigned char*)cstring, strLen, EXCEPTION);
+    if (HAS_EXCEPTION) {
+        RETHROW()
+    }
 }
 
 
-IMPLEMENT_SELF_METHOD(void, writeBuffer, const unsigned char* buffer, size_t size) {
+IMPLEMENT_SELF_METHOD(void, writeBuffer, const unsigned char* buffer, size_t size, THROWS) {
     if (buffer == NULL) {
         return;
     }
@@ -103,13 +120,16 @@ IMPLEMENT_SELF_METHOD(void, writeBuffer, const unsigned char* buffer, size_t siz
         return;
     }
     size_t selfLen = this.data->length;
-    ByteBuffer_ensure(this, selfLen + size);
+    ByteBuffer_ensure(this, selfLen + size, EXCEPTION);
+    if (HAS_EXCEPTION) {
+        RETHROW()
+    }
     unsigned char* selfBuffer = this.data->buffer;
     memcpy(selfBuffer + selfLen, buffer, size);
     this.data->length += size;
 }
 
-IMPLEMENT_SELF_METHOD(void, ensure, size_t min_capacity) {
+IMPLEMENT_SELF_METHOD(void, ensure, size_t min_capacity, THROWS) {
     size_t capacity = this.data->capacity;
     if (capacity >= min_capacity) {
         return;
@@ -122,7 +142,7 @@ IMPLEMENT_SELF_METHOD(void, ensure, size_t min_capacity) {
     unsigned char* old_buffer = this.data->buffer;
     unsigned char* new_buffer = realloc(old_buffer, new_capacity * sizeof(unsigned char));
     if (new_buffer == NULL) {
-        // TODO: throw
+        THROW(OutOfMemoryException_atUnknownLocation)
     }
     this.data->buffer = new_buffer;
     this.data->capacity = new_capacity;
@@ -163,7 +183,6 @@ IMPLEMENT_SELF_VTABLE() {
     object_vtable->delete = _ByteBuffer_delete_impl;
 }
 
-SUPER_CAST_IMPL(ByteBuffer, Object)
 
 IMPLEMENT_CONSTRUCTOR(new) {
 

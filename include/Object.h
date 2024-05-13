@@ -77,6 +77,8 @@ const runtime_type_information_t* Object_runtimeTypeInformation(Object object);
 
 extern const Object null;
 
+Object Object$$fromObject(Object this);
+
 // The var parameters are the interfaces implemented
 void initVtable(Object_vtable_t * selfVtable, Object_vtable_t *superVtable, size_t superVtableSize, const char* class_name, size_t implemented_interface_count, ...);
 

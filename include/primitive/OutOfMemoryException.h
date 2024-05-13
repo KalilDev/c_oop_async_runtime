@@ -29,10 +29,6 @@ DEFINE_SELF_PRIMITIVE_CLASS(
     NO_GETTERS
 )
 
-
-DECLARE_SUPER_CAST(OutOfMemoryException, Exception)
-DECLARE_UPCAST(OutOfMemoryException, Object)
-
 END_CLASS
 #undef Super
 #undef Self

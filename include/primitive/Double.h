@@ -42,9 +42,6 @@ DEFINE_SELF_PRIMITIVE_CLASS(
         ENUMERATE_DOUBLE_GETTERS
 )
 
-DECLARE_SUPER_CAST(Double, Number)
-DECLARE_UPCAST(Double, Object)
-
 #define Double$box(x) _Generic((x), \
     float: Double$box_f(x),           \
     double: Double$box_d(x),           \

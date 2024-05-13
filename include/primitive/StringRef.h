@@ -1,5 +1,6 @@
 #pragma once
 #include "oop.h"
+#include "../String.h"
 #include <stdlib.h>
 
 #define Super String
@@ -24,9 +25,6 @@ DEFINE_SELF_PRIMITIVE_CLASS(
         NO_STATIC_ATTRIBUTES,
         NO_GETTERS
 )
-
-DECLARE_SUPER_CAST(StringRef, String)
-DECLARE_UPCAST(StringRef, Object)
 
 END_CLASS
 #undef Super
