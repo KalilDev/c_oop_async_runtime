@@ -36,8 +36,3 @@ IMPLEMENT_ABSTRACT_CONSTRUCTOR(new) {
 
 #undef Super
 #undef Self
-
-IMPLEMENT_STATIC_FUNCTION(MyLambda) {
-    StaticFunction_MyLambda self = DOWNCAST(this, StaticFunction_MyLambda);
-    assert(argc == 2);
-}
