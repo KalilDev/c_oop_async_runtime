@@ -271,3 +271,47 @@ return_type CONCAT(CONCAT(class, _), method)(class this __VA_OPT__(,) __VA_ARGS_
             return this;\
         }\
         Object CONCAT(CONCAT(CONCAT(Lambda, _), name), _call)(Function this, size_t argc, va_list args)
+
+#define IMPLEMENT_STATIC_FUNCTION(name) \
+        Object CONCAT(CONCAT(CONCAT(StaticFunction, _), name), _call)(Function this, size_t argc, va_list args); \
+        typedef struct CONCAT(CONCAT(CONCAT(StaticFunction, _), name), _vtable_t) {                              \
+            Function_vtable_t super;                                          \
+        } CONCAT(CONCAT(CONCAT(StaticFunction, _), name), _vtable_t);                                           \
+        typedef union CONCAT(CONCAT(StaticFunction, _), name) {                              \
+            struct {                               \
+                const CONCAT(CONCAT(CONCAT(StaticFunction, _), name), _vtable_t)* vtable;   \
+                size_t data;                                      \
+            };                                     \
+            any asAny;                     \
+            Function asFunction;\
+            ENUMERATE_FUNCTION_PARENTS(_DECLARE_PARENT_CAST)\
+        } CONCAT(CONCAT(StaticFunction, _), name);                                   \
+\
+        void CONCAT(CONCAT(CONCAT(StaticFunction, _), name), _delete)(Object this) { \
+        }\
+        IMPLEMENT_CLASS_VTABLE(CONCAT(CONCAT(StaticFunction, _), name)) { \
+            initVtable( \
+            (Object_vtable_t*)vtable, \
+            (Object_vtable_t*)Function_vtable(), \
+            sizeof(*Function_vtable()), \
+            STR(CONCAT(CONCAT(StaticFunction, _), name)), \
+            0); \
+            /* Object */                                            \
+            Object_vtable_t *object_vtable = (Object_vtable_t *)vtable; \
+            object_vtable->delete = CONCAT(CONCAT(CONCAT(StaticFunction, _), name), _delete); \
+            /* Function */                                            \
+            Function_vtable_t *function_vtable = (Function_vtable_t *)vtable; \
+            function_vtable->call = CONCAT(CONCAT(CONCAT(StaticFunction, _), name), _call); \
+        }\
+        CONCAT(CONCAT(StaticFunction, _), name) CONCAT(CONCAT(CONCAT(StaticFunction, _), name), _operator_new)() {              \
+            CONCAT(CONCAT(StaticFunction, _), name) this = {      \
+                .vtable = CONCAT(CONCAT(CONCAT(StaticFunction, _), name), _vtable)(),                            \
+                .data = 0\
+            };            \
+            return this;\
+        }                                           \
+        CONCAT(CONCAT(StaticFunction, _), name) CONCAT(CONCAT(CONCAT(CONCAT(CONCAT(StaticFunction, _), name), $), make_), new)() { \
+            CONCAT(CONCAT(StaticFunction, _), name) this = CONCAT(CONCAT(CONCAT(StaticFunction, _), name), _operator_new)();                         \
+            return this;\
+        }\
+        Object CONCAT(CONCAT(CONCAT(StaticFunction, _), name), _call)(Function this, size_t argc, va_list args)

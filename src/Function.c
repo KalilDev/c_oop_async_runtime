@@ -37,7 +37,7 @@ IMPLEMENT_ABSTRACT_CONSTRUCTOR(new) {
 #undef Super
 #undef Self
 
-IMPLEMENT_LAMBDA(MyLambda, NO_CAPTURES, NO_OWNED_CAPTURES) {
-    Lambda_MyLambda self = DOWNCAST(this, Lambda_MyLambda);
+IMPLEMENT_STATIC_FUNCTION(MyLambda) {
+    StaticFunction_MyLambda self = DOWNCAST(this, StaticFunction_MyLambda);
     assert(argc == 2);
 }
