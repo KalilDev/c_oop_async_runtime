@@ -9,6 +9,8 @@
 #include "GrowableList.h"
 #include "Throwable.h"
 #include "primitive/StringRef.h"
+#include "Exception.h"
+#include <string.h>
 #define Super() List_vtable()
 #define Self GrowableList
 IMPLEMENT_OPERATOR_NEW()
@@ -53,6 +55,25 @@ IMPLEMENT_OVERRIDE_METHOD(void, List, setAt, size_t i, Object obj) {
     }
     Object* elements = self.data->elements;
     elements[i] = obj;
+}
+IMPLEMENT_OVERRIDE_METHOD(Object, List, removeAt, size_t i, THROWS) {
+    GrowableList self = DOWNCAST(this, GrowableList);
+    size_t length = self.data->length;
+    if (i >= length) {
+        // TODO: Throw range exception
+        THROW(Exception$make_new(StringRef$wrap("Index out of range").asString), null)
+    }
+    Object *elements = self.data->elements;
+    Object deleted = elements[i];
+    if (i == 0) {
+        memmove(elements, elements + 1, (length - 1) * sizeof(Object));
+    } else if (i == length - 1) {
+        // do nothing
+    } else {
+        memmove(elements + i, elements + i + 1, (length - 1 - i) * sizeof(Object));
+    }
+    self.data->length--;
+    return deleted;
 }
 IMPLEMENT_OVERRIDE_METHOD(size_t, List, length) {
     GrowableList self = DOWNCAST(this, GrowableList);
@@ -109,6 +130,7 @@ IMPLEMENT_SELF_VTABLE() {
     list_vtable->setAt = _GrowableList_setAt_impl;
     list_vtable->length = _GrowableList_length_impl;
     list_vtable->setLength = _GrowableList_setLength_impl;
+    list_vtable->removeAt = _GrowableList_removeAt_impl;
     // Object
     Object_vtable_t *object_vtable = (Object_vtable_t*)vtable;
     object_vtable->delete = _GrowableList_delete_impl;

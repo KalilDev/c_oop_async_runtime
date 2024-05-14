@@ -39,6 +39,10 @@ bool Object_isObjectTypeAssignable(Object obj, const char* class_name) {
         inheritance_chain += sepIndex + 1;
         chainLength -= sepIndex + 1;
     }
+    if (chainLength == classLength && strncmp(inheritance_chain, class_name, classLength) == 0) {
+        return true;
+    }
+    return false;
 }
 
 void initRtti(runtime_type_information_t* selfRtti, runtime_type_information_t *superRtti, const char* class_name, size_t implemented_interface_count, ...) {

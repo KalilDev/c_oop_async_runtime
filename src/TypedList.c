@@ -35,6 +35,10 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     }
 }
 
+IMPLEMENT_OVERRIDE_METHOD(Object, List, removeAt, size_t i, THROWS) {
+    THROW(Exception$make_newCString("Unsupported operation on TypedList"), null);
+}
+
 IMPLEMENT_OVERRIDE_METHOD(void, List, add, Object e, THROWS) {
     THROW(Exception$make_newCString("Unsupported operation on TypedList"))
 }
@@ -57,6 +61,7 @@ IMPLEMENT_SELF_VTABLE() {
     List_vtable_t *list_vtable = (List_vtable_t *)vtable;
     list_vtable->add = _TypedList_add_impl;
     list_vtable->setLength = _TypedList_setLength_impl;
+    list_vtable->removeAt = _TypedList_removeAt_impl;
     // Object
     Object_vtable_t *object_vtable = (Object_vtable_t*)vtable;
     object_vtable->delete = _TypedList_delete_impl;

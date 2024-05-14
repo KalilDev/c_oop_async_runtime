@@ -2,10 +2,12 @@
 #include "oop.h"
 #include "FileSystemEntity.h"
 #include "File.h"
+#include "Future.h"
 #include "Directory.h"
 #include "RandomAccessFile.h"
 #include "primitive/StringRef.h"
 #include "IOException.h"
+#include "Future.h"
 #include <assert.h>
 
 #include <sys/sendfile.h>
@@ -110,6 +112,27 @@ IMPLEMENT_SELF_METHOD(size_t, lengthSync, THROWS)         {
     size_t size = stat_.st_size;
     return size;
 }
+
+#define ENUMERATE_FILE_OPEN_ASYNC_CAPTURES(CAPTURE) \
+    CAPTURE(File, file)                                                \
+    CAPTURE(FileMode, mode)
+
+IMPLEMENT_LAMBDA(FileOpenAsync, ENUMERATE_FILE_OPEN_ASYNC_CAPTURES, NO_OWNED_CAPTURES, File file, FileMode mode) {
+    Lambda_FileOpenAsync self = DOWNCAST(this, Lambda_FileOpenAsync);
+    File file = self.data->file;
+    FileMode mode = self.data->mode;
+    THROWS = va_arg(args, Throwable*);
+    RandomAccessFile raf = File_openSync(file, mode, EXCEPTION);
+    if (HAS_EXCEPTION) {
+        RETHROW(null)
+    }
+    return raf.asObject;
+}
+
+IMPLEMENT_SELF_METHOD(Future, open, FileMode mode){
+    Lambda_FileOpenAsync lambda = Lambda_FileOpenAsync$make_new(this, mode);
+    return Future_computation(lambda.asFunction);
+}
 IMPLEMENT_SELF_METHOD(RandomAccessFile, openSync, FileMode mode, THROWS){
     String path = this.data->super.path;
     const char* modes;
@@ -174,6 +197,7 @@ IMPLEMENT_SELF_VTABLE() {
     vtable->deleteSync = _File_deleteSync_impl;
     vtable->existsSync = _File_existsSync_impl;
     vtable->lengthSync = _File_lengthSync_impl;
+    vtable->open = _File_open_impl;
     vtable->openSync = _File_openSync_impl;
     // FileSystemEntity
     FileSystemEntity_vtable_t *fs_entity_vtable = (FileSystemEntity_vtable_t *)vtable;

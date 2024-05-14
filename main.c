@@ -13,21 +13,31 @@
 #include "primitive/Bool.h"
 #include "Directory.h"
 #include "src/oop.h"
+#include "EventLoop.h"
+#include "Future.h"
+#include "Error.h"
+#include "TypeError.h"
+#include <assert.h>
 
-Integer Main(List arguments, THROWS) {
-    autoclean(File) file = File$make_new(StringRef$wrap("masaadsa.c").asString);
-    RandomAccessFile f = File_openSync(file, FileMode$read,EXCEPTION);
+IMPLEMENT_STATIC_FUNCTION(MainWithRAF) {
+    RandomAccessFile raf = va_arg(args, RandomAccessFile);
+    THROWS = va_arg(args, Throwable*);
+    autoclean(String) str = RandomAccessFile_readString(raf, 100, EXCEPTION);
     if (HAS_EXCEPTION) {
-        RETHROW(DOWNCAST(null, Integer))
+        RETHROW(null)
     }
-    RandomAccessFile_writeByte(f, 1, EXCEPTION);
-    if (HAS_EXCEPTION) {
-        RETHROW(DOWNCAST(null, Integer))
-    }
-    return DOWNCAST(null, Integer);
+    printf("%s\n", String_cStringView(str));
+    return Integer$box(10).asObject;
+}
+
+Object Main(List arguments, THROWS) {
+    File file = File$make_new(StringRef$wrap("CMakeCache.txt").asString);
+    Future f = File_open(file, FileMode$read);
+    return Future_then(f, StaticFunction_MainWithRAF$make_new().asFunction).asObject;
 }
 
 int main(int argc, char **argv) {
+    EventLoop loop = EventLoop_instance();
     Throwable EXCEPTION = DOWNCAST(null, Throwable);
     List arguments = List_new();
     if (Object_isNull(arguments.asObject)) {
@@ -47,17 +57,47 @@ int main(int argc, char **argv) {
         }
     }
 
-    Integer res = Main(arguments, &EXCEPTION);
+    Object res = Main(arguments, &EXCEPTION);
     if (!Object_isNull(EXCEPTION.asObject)) {
         goto threw_with_list;
     }
-
     Object_delete(arguments.asObject);
-    if (Object_isNull(res.asObject)) {
+
+    EventLoop_drain(loop);
+
+    if (Object_isNull(res)) {
         return 0;
     }
 
-    return (int)res.unwrap;
+    if (IS_OBJECT_ASSIGNABLE(res, Future)) {
+        Future futureRes = Future$$fromObject(res);
+        switch (futureRes.data->state) {
+            case FutureState$pending: {
+                EXCEPTION = Error$make_new(StringRef$wrap("Unexpected state, this means the event loop was not drained!").asString).asThrowable;
+                APPEND_STACK(EXCEPTION)
+                goto threw_without_list;
+            }
+            case FutureState$complete: {
+                res = futureRes.data->value;
+                break;
+            }
+            case FutureState$completedWithError: {
+                EXCEPTION = futureRes.data->exception;
+                APPEND_STACK(EXCEPTION)
+                goto threw_without_list;
+            }
+        }
+    }
+
+    if (!IS_OBJECT_ASSIGNABLE(res, Integer)) {
+        EXCEPTION = TypeError$make_new(res, StringRef$wrap("Integer").asString).asThrowable;
+        APPEND_STACK(EXCEPTION)
+        goto threw_without_list;
+    }
+
+    Integer resInt = Integer$$fromObject(res);
+
+    return (int)resInt.unwrap;
 
     threw_with_list:;
     Object_delete(arguments.asObject);

@@ -192,14 +192,18 @@ return_type CONCAT(CONCAT(class, _), method)(class this __VA_OPT__(,) __VA_ARGS_
 #define S2(x) S1(x)
 #define LOCATION __FILE__ ":" S2(__LINE__)
 
+#define APPEND_STACK(exc) \
+    Throwable_addStackFrame((exc), StringRef$wrap(LOCATION));                  \
+
+
 #define THROW(e, ...) \
     *__exception__ = e.asThrowable;\
-    Throwable_addStackFrame(*__exception__, StringRef$wrap(LOCATION));                  \
+    APPEND_STACK(*__exception__) \
     return __VA_ARGS__;
 
 
 #define RETHROW(...) \
-    Throwable_addStackFrame(*__exception__, StringRef$wrap(LOCATION));                  \
+    APPEND_STACK(*__exception__)                  \
     return __VA_ARGS__;
 
 
@@ -207,14 +211,22 @@ return_type CONCAT(CONCAT(class, _), method)(class this __VA_OPT__(,) __VA_ARGS_
 #define HAS_EXCEPTION (__exception__ != NULL && !Object_isNull((*__exception__).asObject))
 
 
+#define CAPTURE_TO_ARG_FIRST(type, name) type name
+#define CAPTURE_TO_ARG_REST(type, name) , type name
+
+#define CAPTURE_TO_ARG(type, name, ...) \
+    _Generic((type, ##__VA_ARGS__), \
+        default: CAPTURE_TO_ARG_REST, \
+        CAPTURE_TO_ARG_FIRST \
+    )(type, name)
 
 
-#define CAPTURE_TO_ARG(type, name) type name,
-#define DELETE_OWNED_CAPTURE(capture) Object_delete(UPCAST(capture, Object));
+//#define CAPTURE_TO_ARG(type, name) type name,
+#define DELETE_OWNED_CAPTURE(capture) Object_delete(UPCAST(self.data->capture, Object));
 #define SET_CAPTURE(type, name) this.data->name = name;
 #define NO_CAPTURES(ATTRIBUTE)
 #define NO_OWNED_CAPTURES(CAPTURE)
-#define IMPLEMENT_LAMBDA(name, ENUMERATE_CAPTURES, ENUMERATE_OWNED_CAPTURES) \
+#define IMPLEMENT_LAMBDA(name, ENUMERATE_CAPTURES, ENUMERATE_OWNED_CAPTURES, ...) \
         Object CONCAT(CONCAT(CONCAT(Lambda, _), name), _call)(Function this, size_t argc, va_list args); \
         typedef struct CONCAT(CONCAT(CONCAT(Lambda, _), name), _vtable_t) {                              \
             Function_vtable_t super;                                          \
@@ -262,7 +274,7 @@ return_type CONCAT(CONCAT(class, _), method)(class this __VA_OPT__(,) __VA_ARGS_
             }\
             return this;\
         }                                           \
-        CONCAT(CONCAT(Lambda, _), name) CONCAT(CONCAT(CONCAT(CONCAT(CONCAT(Lambda, _), name), $), make_), new)(ENUMERATE_CAPTURES(CAPTURE_TO_ARG)) { \
+        CONCAT(CONCAT(Lambda, _), name) CONCAT(CONCAT(CONCAT(CONCAT(CONCAT(Lambda, _), name), $), make_), new)(__VA_ARGS__) { \
             CONCAT(CONCAT(Lambda, _), name) this = CONCAT(CONCAT(CONCAT(Lambda, _), name), _operator_new)();                         \
             if (Object_isNull(this.asObject)) {               \
                 return this;\
