@@ -78,23 +78,28 @@ return_type CONCAT(CONCAT(class, _), method)(class this __VA_OPT__(,) __VA_ARGS_
 // ok
 #define IMPLEMENT_SELF_METHOD(return_type, method, ...) IMPLEMENT_METHOD(return_type, Self, Self, method __VA_OPT__(,) __VA_ARGS__)
 
+
 // ok
-#define IMPLEMENT_SELF_VTABLE() \
+#define IMPLEMENT_CLASS_VTABLE(class) \
     /* forward decl */                            \
-    static void CONCAT(_make_, CONCAT(Self, _vtable))(CONCAT(Self, _vtable_t)*vtable); \
-    static CONCAT(CONCAT(Self, _vtable), _t) CONCAT(_, CONCAT(Self, _vtable)) = {0}; \
-    const CONCAT(Self, _vtable_t)* CONCAT(Self, _vtable)() {                    \
-        CONCAT(CONCAT(Self, _vtable), _t) *vtable = &CONCAT(_, CONCAT(Self, _vtable)); \
+    static void CONCAT(_make_, CONCAT(class, _vtable))(CONCAT(class, _vtable_t)*vtable); \
+    static CONCAT(CONCAT(class, _vtable), _t) CONCAT(_, CONCAT(class, _vtable)) = {0}; \
+    const CONCAT(class, _vtable_t)* CONCAT(class, _vtable)() {                    \
+        CONCAT(CONCAT(class, _vtable), _t) *vtable = &CONCAT(_, CONCAT(class, _vtable)); \
         if (((Object_vtable_t*)vtable)->object_vtable_tag != OBJECT_VTABLE_TAG) {      \
             /* The vtable was not initialized yet */                          \
             /* initialize it*/                    \
-            CONCAT(_make_, CONCAT(Self, _vtable))(vtable);                     \
+            CONCAT(_make_, CONCAT(class, _vtable))(vtable);                     \
             /* it must have been initialized correctly */                     \
             assert(((Object_vtable_t*)vtable)->object_vtable_tag == OBJECT_VTABLE_TAG);                        \
         }                       \
         return vtable;                            \
     }\
-    static void CONCAT(_make_, CONCAT(Self, _vtable))(CONCAT(Self, _vtable_t)*vtable)
+    static void CONCAT(_make_, CONCAT(class, _vtable))(CONCAT(class, _vtable_t)*vtable)
+
+// ok
+#define IMPLEMENT_SELF_VTABLE() \
+    IMPLEMENT_CLASS_VTABLE(Self)
 
 
 // ok
@@ -200,3 +205,69 @@ return_type CONCAT(CONCAT(class, _), method)(class this __VA_OPT__(,) __VA_ARGS_
 
 #define EXCEPTION __exception__
 #define HAS_EXCEPTION (__exception__ != NULL && !Object_isNull((*__exception__).asObject))
+
+
+
+
+#define CAPTURE_TO_ARG(type, name) type name,
+#define DELETE_OWNED_CAPTURE(capture) Object_delete(UPCAST(capture, Object));
+#define SET_CAPTURE(type, name) this.data->name = name;
+#define NO_CAPTURES(ATTRIBUTE)
+#define NO_OWNED_CAPTURES(CAPTURE)
+#define IMPLEMENT_LAMBDA(name, ENUMERATE_CAPTURES, ENUMERATE_OWNED_CAPTURES) \
+        Object CONCAT(CONCAT(CONCAT(Lambda, _), name), _call)(Function this, size_t argc, va_list args); \
+        typedef struct CONCAT(CONCAT(CONCAT(Lambda, _), name), _vtable_t) {                              \
+            Function_vtable_t super;                                          \
+        } CONCAT(CONCAT(CONCAT(Lambda, _), name), _vtable_t);                                           \
+        typedef struct CONCAT(CONCAT(CONCAT(Lambda, _), name), _data) {                              \
+            Function_data super;               \
+            ENUMERATE_CAPTURES(DEFINE_ATTRIBUTE); \
+        } CONCAT(CONCAT(CONCAT(Lambda, _), name), _data);                                                \
+        typedef union CONCAT(CONCAT(Lambda, _), name) {                              \
+            struct {                               \
+                const CONCAT(CONCAT(CONCAT(Lambda, _), name), _vtable_t)* vtable;   \
+                CONCAT(CONCAT(CONCAT(Lambda, _), name), _data)* data;                                      \
+            };                                     \
+            any asAny;                     \
+            Function asFunction;\
+            ENUMERATE_FUNCTION_PARENTS(_DECLARE_PARENT_CAST)\
+        } CONCAT(CONCAT(Lambda, _), name);                                   \
+\
+        void CONCAT(CONCAT(CONCAT(Lambda, _), name), _delete)(Object this) { \
+            CONCAT(CONCAT(Lambda, _), name) self = DOWNCAST(this, CONCAT(CONCAT(Lambda, _), name));      \
+            ENUMERATE_OWNED_CAPTURES(DELETE_OWNED_CAPTURE)                   \
+            ((const Object_vtable_t*)Function_vtable())->delete(this);                                                                     \
+        }\
+        IMPLEMENT_CLASS_VTABLE(CONCAT(CONCAT(Lambda, _), name)) { \
+            initVtable( \
+            (Object_vtable_t*)vtable, \
+            (Object_vtable_t*)Function_vtable(), \
+            sizeof(*Function_vtable()), \
+            STR(CONCAT(CONCAT(Lambda, _), name)), \
+            0); \
+            /* Object */                                            \
+            Object_vtable_t *object_vtable = (Object_vtable_t *)vtable; \
+            object_vtable->delete = CONCAT(CONCAT(CONCAT(Lambda, _), name), _delete); \
+            /* Function */                                            \
+            Function_vtable_t *function_vtable = (Function_vtable_t *)vtable; \
+            function_vtable->call = CONCAT(CONCAT(CONCAT(Lambda, _), name), _call); \
+        }\
+        CONCAT(CONCAT(Lambda, _), name) CONCAT(CONCAT(CONCAT(Lambda, _), name), _operator_new)() {              \
+            CONCAT(CONCAT(Lambda, _), name) this = {      \
+                .vtable = CONCAT(CONCAT(CONCAT(Lambda, _), name), _vtable)(),                            \
+                .data = Object_allocate_memory(sizeof(CONCAT(CONCAT(CONCAT(Lambda, _), name), _data)))\
+            };                                     \
+            if (this.data == NULL) {               \
+                return DOWNCAST(null, CONCAT(CONCAT(Lambda, _), name));                                      \
+            }\
+            return this;\
+        }                                           \
+        CONCAT(CONCAT(Lambda, _), name) CONCAT(CONCAT(CONCAT(CONCAT(CONCAT(Lambda, _), name), $), make_), new)(ENUMERATE_CAPTURES(CAPTURE_TO_ARG)) { \
+            CONCAT(CONCAT(Lambda, _), name) this = CONCAT(CONCAT(CONCAT(Lambda, _), name), _operator_new)();                         \
+            if (Object_isNull(this.asObject)) {               \
+                return this;\
+            }                            \
+            ENUMERATE_CAPTURES(SET_CAPTURE) \
+            return this;\
+        }\
+        Object CONCAT(CONCAT(CONCAT(Lambda, _), name), _call)(Function this, size_t argc, va_list args)

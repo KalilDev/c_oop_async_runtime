@@ -1,0 +1,42 @@
+#ifndef Function
+#define Function Function
+
+#include "Object.h"
+#include "oop.h"
+#include <stdarg.h>
+#define WITH_RTTI
+#include "rtti.h"
+
+#define Super Object
+#define Self Function
+
+#define ENUMERATE_FUNCTION_PARENTS(PARENT) \
+    ENUMERATE_OBJECT_PARENTS(PARENT)        \
+    PARENT(Object)
+
+START_CLASS
+
+#define ENUMERATE_FUNCTION_METHODS(METHOD) \
+    METHOD(Object, call, size_t argc, va_list args)
+
+#define ENUMERATE_FUNCTION_CONSTRUCTORS(CONSTRUCTOR) \
+    CONSTRUCTOR(new)
+
+METHOD_SIGNATURE(Function, call, Object, (Function this , size_t argc, va_list args))
+Object Function_call (Function this, size_t argc, ...);
+DEFINE_SELF_VTABLE(NO_IMPLEMENTS, ENUMERATE_FUNCTION_METHODS)
+DEFINE_SELF_DATA(Super, NO_ATTRIBUTES)
+DECLARE_SELF_FAT_POINTER(ENUMERATE_FUNCTION_PARENTS)
+DECLARE_SELF_VTABLE_GETTER()
+NO_GETTERS(DECLARE_SELF_GETTER)
+NO_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD)
+ENUMERATE_FUNCTION_CONSTRUCTORS(DECLARE_SELF_ABSTRACT_CONSTRUCTOR)
+DEFINE_SELF_DOWNCASTS(ENUMERATE_FUNCTION_PARENTS)
+NO_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
+
+END_CLASS
+
+#undef Self
+#undef Super
+
+#endif
