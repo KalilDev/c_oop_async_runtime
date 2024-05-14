@@ -1,6 +1,6 @@
 #include "Object.h"
-#include "List.h"
 #include "primitive/Integer.h"
+#include "primitive/OutOfMemoryException.h"
 #include <stdio.h>
 #include "foreach.h"
 #include "downcast.h"
@@ -9,41 +9,68 @@
 #include "primitive/StringRef.h"
 #include "primitive/Double.h"
 #include "File.h"
+#include "RandomAccessFile.h"
 #include "primitive/Bool.h"
 #include "Directory.h"
+#include "src/oop.h"
 
-int main() {
-    autoclean(List) list = List_new();
-    if (Object_isNull(List_as_Object(list))) {
-        fprintf(stderr, "Could not allocate the list\n");
-        return -1;
+Integer Main(List arguments, THROWS) {
+    autoclean(File) file = File$make_new(StringRef$wrap("masaadsa.c").asString);
+    RandomAccessFile f = File_openSync(file, FileMode$read,EXCEPTION);
+    if (HAS_EXCEPTION) {
+        RETHROW(DOWNCAST(null, Integer))
+    }
+    RandomAccessFile_writeByte(f, 1, EXCEPTION);
+    if (HAS_EXCEPTION) {
+        RETHROW(DOWNCAST(null, Integer))
+    }
+    return DOWNCAST(null, Integer);
+}
+
+int main(int argc, char **argv) {
+    Throwable EXCEPTION = DOWNCAST(null, Throwable);
+    List arguments = List_new();
+    if (Object_isNull(arguments.asObject)) {
+        EXCEPTION = OutOfMemoryException$at(LOCATION).asThrowable;
+        goto threw_without_list;
     }
 
-    List_add(list, Integer_as_Object(Integer$box(1)));
-    List_add(list, Integer_as_Object(Integer$box(2)));
-    List_add(list, Integer_as_Object(Integer$box(3)));
-    List_add(list, Integer_as_Object(Integer$box(8)));
+    List_setLength(arguments, argc - 1 < 0 ? 0 : argc - 1, &EXCEPTION);
+    if (!Object_isNull(EXCEPTION.asObject)) {
+        goto threw_with_list;
+    }
 
+    for (size_t i = 1; i < argc; i++) {
+        List_setAt(arguments, i - 1, StringRef$wrap(argv[i]).asObject);
+        if (!Object_isNull(EXCEPTION.asObject)) {
+            goto threw_with_list;
+        }
+    }
 
-    printf("[");
-    foreach(Integer, current, List_as_Iterable(list), {
-        printf("%i,", Integer_unbox_i(current));
-    })
-    printf("]\n");
+    Integer res = Main(arguments, &EXCEPTION);
+    if (!Object_isNull(EXCEPTION.asObject)) {
+        goto threw_with_list;
+    }
 
-    autoclean(String) s = String_format_c("Object 1: {} 2: {}\n", null, Double$box(2.0));
-    printf("%s\n", String_cStringView(s));
+    Object_delete(arguments.asObject);
+    if (Object_isNull(res.asObject)) {
+        return 0;
+    }
 
-    autoclean(File) f = File$make_new(StringRef_as_String(StringRef$wrap("../main.c")));
+    return (int)res.unwrap;
 
-    autoclean(Directory) cwd = Directory_current();
-    FileSystemEntity cwdAbs_e = FileSystemEntity_absolute(Directory_as_FileSystemEntity(cwd));
-    autoclean(Directory) cwdAbs = DOWNCAST(cwdAbs_e, Directory);
-    autoclean(Directory) project = Directory_parent(cwd);
-    autoclean(List) projectFiles = Directory_list(project);
-    autoclean(String) s1 = String_format_c("Cwd: {}, CwdAbs: {}, Project: {}, main: {}, p: {}\n", cwd, cwdAbs, project, f, projectFiles);
-    printf("%s\n", String_cStringView(s1));
-    autoclean(String) mainString = File_readStringSync(f);
-    printf("%s\n", String_cStringView(mainString));
-
+    threw_with_list:;
+    Object_delete(arguments.asObject);
+    threw_without_list:;
+    String errorMessage = Object_toString(EXCEPTION.asObject);
+    const char* error_message;
+    if (Object_isNull(errorMessage.asObject)) {
+        error_message = "Unknown error";
+    } else {
+        error_message = String_cStringView(errorMessage);
+    }
+    fprintf(stderr, "An error ocurred: %s\nStack trace:\n", error_message);
+    Throwable_printStackTrace(EXCEPTION, stderr);
+    Object_delete(errorMessage.asObject);
+    return -1;
 }
