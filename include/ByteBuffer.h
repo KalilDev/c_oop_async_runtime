@@ -25,11 +25,13 @@ FORWARD_DECL_THROWABLE
 #define PARAMS_INVOCATION_ByteBuffer_writeString string, THROWS_PARAM_INVOCATION
 #define PARAMS_INVOCATION_ByteBuffer_writeCString cstring, THROWS_PARAM_INVOCATION
 #define PARAMS_INVOCATION_ByteBuffer_writeBuffer buffer, size, THROWS_PARAM_INVOCATION
+#define PARAMS_INVOCATION_ByteBuffer_consumeToBuffer buffer, bufferSize
 #define ENUMERATE_BYTE_BUFFER_METHODS(METHOD) \
     METHOD(void, ensure, size_t capacity, THROWS) \
     METHOD(void, clear)                           \
     METHOD(UInt8List, releaseToBytes)           \
     METHOD(UInt8List, toBytes)                           \
+    METHOD(size_t, consumeToBuffer, unsigned char *buffer, size_t bufferSize)                       \
     METHOD(void, write, unsigned char byte, THROWS)                       \
     METHOD(void, writeAll, List list, THROWS)                       \
     METHOD(void, writeString, String string, THROWS) \

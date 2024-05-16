@@ -47,6 +47,17 @@ IMPLEMENT_SELF_METHOD(UInt8List, releaseToBytes) {
     this.data->length = 0;
     return UInt8List$make_fromBuffer(buffer, len);
 }
+IMPLEMENT_SELF_METHOD(size_t, consumeToBuffer, unsigned char *buffer, size_t bufferSize) {
+    size_t selfLen = this.data->length;
+    unsigned char *selfBuf = this.data->buffer;
+    size_t toBeWritten = selfLen > bufferSize ? bufferSize : selfLen;
+
+    memcpy(buffer, selfBuf, toBeWritten);
+
+    memmove(selfBuf + toBeWritten, selfBuf, selfLen - toBeWritten);
+
+    return toBeWritten;
+}
 
 IMPLEMENT_SELF_METHOD(void, write, unsigned char byte, THROWS) {
     size_t selfLen = this.data->length;

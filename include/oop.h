@@ -200,14 +200,15 @@ typedef struct CONCAT(Self, _vtable_t) { \
     ENUMERATE_METHODS(DEFINE_SELF_VIRTUAL_METHOD) \
 } CONCAT(Self, _vtable_t);
 
-#define DECLARE_SELF_INTERFACE_FAT_POINTER(On) \
+#define DECLARE_SELF_INTERFACE_FAT_POINTER(On, ...) \
 /* An fat pointer to an Object */ \
 typedef union Self { \
     struct {                       \
         const CONCAT(Self, _vtable_t)* vtable; \
         On ## _data* data;\
     };                             \
-    any asAny;                     \
+    any asAny;                                      \
+    __VA_OPT__(__VA_ARGS__ CONCAT(as, __VA_ARGS__);)                                                \
     Interface asInterface;\
 } Self;
 
@@ -218,6 +219,14 @@ typedef union Self { \
 ENUMERATE_METHODS(DECLARE_SELF_METHOD) \
 DEFINE_SELF_INTERFACE_VTABLE(On, ENUMERATE_METHODS) \
 DECLARE_SELF_INTERFACE_FAT_POINTER(On) \
+DECLARE_SELF_VTABLE_GETTER() \
+ENUMERATE_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD) \
+ENUMERATE_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)
+
+#define DEFINE_SELF_EXTENDED_INTERFACE(SuperInterface, On, ENUMERATE_METHODS, ENUMERATE_STATIC_METHODS, ENUMERATE_STATIC_ATTRIBUTES) \
+ENUMERATE_METHODS(DECLARE_SELF_METHOD) \
+DEFINE_SELF_INTERFACE_VTABLE(On, ENUMERATE_METHODS) \
+DECLARE_SELF_INTERFACE_FAT_POINTER(On, SuperInterface) \
 DECLARE_SELF_VTABLE_GETTER() \
 ENUMERATE_STATIC_METHODS(DECLARE_SELF_STATIC_METHOD) \
 ENUMERATE_STATIC_ATTRIBUTES(DEFINE_STATIC_SELF_ATTRIBUTE)

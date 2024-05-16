@@ -19,6 +19,7 @@
 #include "TypeError.h"
 #include "ServerSocket.h"
 #include "Completer.h"
+#include "Socket.h"
 #include <assert.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -53,18 +54,8 @@ IMPLEMENT_LAMBDA(OnDone, ENUMERATE_CAPTURES, NO_OWNED_CAPTURES, Completer comple
 
 #define ENUMERATE_CAPTURES(CAPTURE) \
     CAPTURE(Completer, completer) \
-    CAPTURE(ServerSocket, server)
+    CAPTURE(Socket, socket)
 
-IMPLEMENT_LAMBDA(JoinThreadAsync, ENUMERATE_CAPTURES, NO_OWNED_CAPTURES, Completer completer, ServerSocket server) {
-    ServerSocket server = DOWNCAST(this, Lambda_JoinThreadAsync).data->server;
-    THROWS = va_arg(args, Throwable*);
-    if (Object_isNull(server.data->subs.asObject)) {
-        Completer completer = DOWNCAST(this, Lambda_JoinThreadAsync).data->completer;
-        return Completer_future(completer).asObject;
-    }
-    thrd_yield();
-    return Future_computation(this).asObject;
-}
 IMPLEMENT_STATIC_FUNCTION(MainWithRandomAccessFile) {
     RandomAccessFile raf = va_arg(args, RandomAccessFile);
     THROWS = va_arg(args, Throwable*);
@@ -87,7 +78,7 @@ Object Main(List arguments, THROWS) {
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     addr.sin_port = 3001;
     addr.sin_family = AF_INET;
-    ServerSocket server = ServerSocket_bindSync(
+    Socket socket = Socket_connectSync(
     AF_INET,
     (const struct sockaddr*)&addr,
     sizeof(addr),
@@ -98,14 +89,14 @@ Object Main(List arguments, THROWS) {
     }
     Completer completer = Completer$make_new();
     Stream_listen(
-            ServerSocket_as_Stream(server),
+            Socket_as_Stream(socket),
             Lambda_OnData$make_new(completer).asFunction,
             Lambda_OnError$make_new(completer).asFunction,
             Lambda_OnDone$make_new(completer).asFunction,
             Bool$box(true)
     ).asObject;
-    printf("Listening on 127.0.0.1:3000...\n");
-    return Future_computation(Lambda_JoinThreadAsync$make_new(completer, server).asFunction).asObject;
+    printf("Connected to 127.0.0.1:3000...\n");
+    return Completer_future(completer).asObject;
 }
 
 int main(int argc, char **argv) {

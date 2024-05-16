@@ -20,6 +20,8 @@ add_library(c_oop STATIC
         src/Completer.c
         src/Future.c
         src/EventLoop.c
+        src/StreamSubscription.c
+        src/Stream.c
         src/Closeable.c
         src/Interface.c
         src/String.c
@@ -42,6 +44,10 @@ add_library(c_oop STATIC
         src/IOException.c
         src/TypeError.c
         src/Function.c
+        src/Sink.c
+        src/IOSink.c
+        src/Socket.c
+        src/ServerSocket.c
 )
 target_link_libraries(c_oop PRIVATE m)
 
@@ -54,3 +60,10 @@ add_executable(
 )
 target_link_libraries(oop_example PRIVATE c_oop)
 target_include_directories(oop_example PRIVATE PRIVATE include)
+
+add_executable(
+        client
+        client.c
+)
+target_link_libraries(client PRIVATE c_oop)
+target_include_directories(client PRIVATE PRIVATE include)
