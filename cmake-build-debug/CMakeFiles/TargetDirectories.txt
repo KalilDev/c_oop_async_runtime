@@ -1,4 +1,0 @@
-/home/pedro/projects/c_oop/cmake-build-debug/CMakeFiles/c_oop.dir
-/home/pedro/projects/c_oop/cmake-build-debug/CMakeFiles/oop_example.dir
-/home/pedro/projects/c_oop/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/pedro/projects/c_oop/cmake-build-debug/CMakeFiles/rebuild_cache.dir
