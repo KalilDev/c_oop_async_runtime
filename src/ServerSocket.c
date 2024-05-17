@@ -45,14 +45,18 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     Super()->delete(this);
 }
 
-int serverSocketMain(void* data) {
-    ServerSocket this = {
-        .vtable = ServerSocket_vtable(),
-        .data = (ServerSocket_data*)data
-    };
+#define ENUMERATE_SSM_CAPTURES(CAPTURE) \
+    CAPTURE(ServerSocket, myself)
+
+
+IMPLEMENT_LAMBDA(ServerSocketMain, ENUMERATE_SSM_CAPTURES, NO_OWNED_CAPTURES, ServerSocket myself) {
+    Lambda_ServerSocketMain self = DOWNCAST(this, Lambda_ServerSocketMain);
+    ServerSocket myself = self.data->myself;
+    int sockfd = myself.data->sockfd;
+    StreamSubscription subscription = myself.data->subs;
+    THROWS = va_arg(args, Throwable*);
+
     fprintf(stderr, "on thread\n");
-    int sockfd = this.data->sockfd;
-    StreamSubscription subscription = this.data->subs;
     struct sockaddr clientAddr;
     size_t clientAddrLen;
     int clientFd;
@@ -71,8 +75,8 @@ int serverSocketMain(void* data) {
 void startServerSocket(ServerSocket this) {
     int sockfd = this.data->sockfd;
     StreamSubscription  subscription = this.data->subs;
-    thrd_t *serverThread = &this.data->serverThread;
     fprintf(stderr, "listen\n");
+    Throwable EXCEPTION = DOWNCAST(null, Throwable);
     int success = listen(sockfd, MAX_CONNECTIONS);
     if (success < 0) {
         Throwable error = IOException$make_fromErrno().asThrowable;
@@ -82,13 +86,14 @@ void startServerSocket(ServerSocket this) {
     }
     fprintf(stderr, "success\n");
     fprintf(stderr, "thread\n");
-    success = thrd_create(serverThread, serverSocketMain, this.data);
-    if (success != 0) {
-        Throwable error = IOException$make_fromErrno().asThrowable;
-        StreamSubscription_handleError(subscription, error);
+    Thread thread = Thread_spawnSync(Lambda_ServerSocketMain$make_new(this).asFunction, &EXCEPTION);
+    if (!Object_isNull(EXCEPTION.asObject)) {
+        Object_delete(thread.asObject);
+        StreamSubscription_handleError(subscription, EXCEPTION);
         StreamSubscription_handleDone(subscription);
         return;
     }
+    this.data->serverThread = thread;
 }
 
 #define ENUMERATE_CLOSE_CAPTURES(CAPTURE) \
@@ -101,9 +106,7 @@ IMPLEMENT_LAMBDA(Close, ENUMERATE_CLOSE_CAPTURES, NO_OWNED_CAPTURES, ServerSocke
     if (Object_isNull(myself.data->subs.asObject)) {
         return null;
     }
-    int ignoreRes;
-    // todo
-    thrd_join(myself.data->serverThread, &ignoreRes);
+    Thread_kill(myself.data->serverThread, KillUrgency$immediate);
     StreamSubscription_handleDone(myself.data->subs);
     return null;
 }

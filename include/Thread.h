@@ -5,6 +5,7 @@
 #include "Function.h"
 #include "List.h"
 #include "Completer.h"
+#include "ThreadChildren.h"
 #include "EventLoop.h"
 #include "oop.h"
 #include <stdlib.h>
@@ -58,8 +59,8 @@ typedef enum KillUrgency {
     ATTRIBUTE(Function, main)                  \
     ATTRIBUTE(Completer, completer)                  \
     ATTRIBUTE(EventLoop, loop)                 \
-    ATTRIBUTE(List, children) \
-    ATTRIBUTE(List, siblings)
+    ATTRIBUTE(ThreadChildren, children) \
+    ATTRIBUTE(ThreadChildren, siblings)
 
 DEFINE_SELF_CLASS(
         ENUMERATE_THREAD_PARENTS,

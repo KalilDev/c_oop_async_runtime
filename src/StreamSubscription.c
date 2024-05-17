@@ -71,7 +71,7 @@ IMPLEMENT_SELF_METHOD(Future, handleData, Object data) {
     }
     printf("handleData\n");
     Function computation = Lambda_CompleteOnDataOnNextMicrotask$make_new(data, this.data->onData).asFunction;
-    return Future_computation(computation);
+    return Future_computationAt(computation, this.data->listenerLoop);
 }
 
 IMPLEMENT_SELF_METHOD(Future, handleError, Throwable error) {
@@ -83,7 +83,7 @@ IMPLEMENT_SELF_METHOD(Future, handleError, Throwable error) {
         StreamSubscription_cancel(this);
     }
     Function computation = Lambda_CompleteOnErrorOnNextMicrotask$make_new(error, this.data->onError).asFunction;
-    return Future_computation(computation);
+    return Future_computationAt(computation, this.data->listenerLoop);
 }
 
 IMPLEMENT_SELF_METHOD(Future, handleDone) {
@@ -92,7 +92,7 @@ IMPLEMENT_SELF_METHOD(Future, handleDone) {
         return Future$make__();
     }
     Function computation = Lambda_CompleteOnDoneOnNextMicrotask$make_new(this.data->onDone).asFunction;
-    return Future_computation(computation);
+    return Future_computationAt(computation, this.data->listenerLoop);
 }
 
 IMPLEMENT_SELF_METHOD(Future, cancel) {
@@ -127,6 +127,7 @@ IMPLEMENT_CONSTRUCTOR(new, Function onData, Function onError, Function onDone, F
     this.data->onCancel = onCancel;
     this.data->cancelOnError = Object_isNull(cancelOnError.asObject) ? false : cancelOnError.unwrap;
     this.data->cancelled = false;
+    this.data->listenerLoop = EventLoop_current();
 }
 
 #undef Self

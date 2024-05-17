@@ -1,6 +1,7 @@
 #pragma once
 #include "Object.h"
 #include "Function.h"
+#include "EventLoop.h"
 #include "oop.h"
 #include <stdlib.h>
 #include <stdbool.h>
@@ -33,6 +34,7 @@ FORWARD_DECL_CLASS(Bool)
     ATTRIBUTE(Function, onError)                                        \
     ATTRIBUTE(Function, onDone)                             \
     ATTRIBUTE(Function, onCancel)                           \
+    ATTRIBUTE(EventLoop, listenerLoop)    \
     ATTRIBUTE(bool, cancelOnError)    \
     ATTRIBUTE(bool, cancelled)
 

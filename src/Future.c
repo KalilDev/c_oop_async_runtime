@@ -114,14 +114,23 @@ IMPLEMENT_LAMBDA(FutureCompleteWithDataCatch, ENUMERATE_COMPLETE_WITH_ERROR_CAPT
     return null;
 }
 
-IMPLEMENT_LAMBDA(FutureCompleteCatch, ENUMERATE_COMPLETE_CAPTURES, ENUMERATE_COMPLETE_OWNED_CAPTURES, Completer completer, Function then) {
-    Lambda_FutureCompleteThen self = DOWNCAST(this, Lambda_FutureCompleteThen);
+#define ENUMERATE_COMPLETE_CATCH_CAPTURES(CAPTURE) \
+    CAPTURE(Completer, completer)            \
+    CAPTURE(Function, catch)
+
+
+#define ENUMERATE_COMPLETE_OWNED_CAPTURES(CAPTURE) \
+    CAPTURE(completer)            \
+    CAPTURE(catch)
+
+IMPLEMENT_LAMBDA(FutureCompleteCatch, ENUMERATE_COMPLETE_CATCH_CAPTURES, ENUMERATE_COMPLETE_OWNED_CAPTURES, Completer completer, Function catch) {
+    Lambda_FutureCompleteCatch self = DOWNCAST(this, Lambda_FutureCompleteCatch);
     Completer completer = self.data->completer;
-    Function then = self.data->then;
+    Function catch = self.data->catch;
     Throwable exception = va_arg(args, Throwable);
     THROWS = va_arg(args, Throwable*);
 
-    Lambda_Catch lambda = Lambda_Catch$make_new(exception, then);
+    Lambda_Catch lambda = Lambda_Catch$make_new(exception, catch);
     Future result = Future_computation(lambda.asFunction);
     Completer_follow(completer, result);
 
@@ -253,9 +262,13 @@ IMPLEMENT_SELF_VTABLE() {
 
 
 IMPLEMENT_STATIC_METHOD(Future, computation, Function function) {
-    Task task = Task$make_new(function);
     EventLoop current = EventLoop_current();
+    Task task = Task$make_new(function);
     return EventLoop_invokeTask(current, task);
+}
+IMPLEMENT_STATIC_METHOD(Future, computationAt, Function function, EventLoop loop) {
+    Task task = Task$make_new(function);
+    return EventLoop_invokeTask(loop, task);
 }
 
 IMPLEMENT_CONSTRUCTOR(value, Object value) {

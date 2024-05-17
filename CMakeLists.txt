@@ -50,6 +50,7 @@ add_library(c_oop STATIC
         src/ServerSocket.c
         include/Thread.h
         src/Thread.c
+        src/ThreadChildren.c
 )
 target_link_libraries(c_oop PRIVATE m)
 

@@ -40,7 +40,7 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
 }
 
 IMPLEMENT_SELF_METHOD(Future, kill, KillUrgency urgency) {
-    foreach(Thread, child, List_as_Iterable(this.data->children), {
+    foreach(Thread, child, ThreadChildren_as_Iterable(this.data->children), {
         Thread_kill(child, urgency);
     })
     // TODO: actually kill
@@ -61,7 +61,7 @@ IMPLEMENT_SELF_METHOD(int, runInCurrentThread) {
     EventLoop loop = this.data->loop;
     Function main = this.data->main;
     Completer completer = this.data->completer;
-    List children = this.data->children;
+    ThreadChildren children = this.data->children;
     Throwable EXCEPTION = DOWNCAST(null, Throwable);
     Object res = Function_call(main, 1, &EXCEPTION);
     int thread_res = 0;
@@ -71,14 +71,14 @@ IMPLEMENT_SELF_METHOD(int, runInCurrentThread) {
         APPEND_STACK(EXCEPTION)
         goto exception;
     }
-    if (EventLoop_empty(loop) && List_length(children) == 0) {
+    if (EventLoop_empty(loop) && ThreadChildren_empty(children)) {
         assert(!IS_OBJECT_ASSIGNABLE(res, Future));
         goto success;
     }
 
     while (true) {
         EventLoop_drain(loop);
-        if (List_length(children) == 0) {
+        if (ThreadChildren_empty(children)) {
             break;
         }
 
@@ -129,14 +129,7 @@ IMPLEMENT_SELF_METHOD(int, runInCurrentThread) {
     if (Object_isNull(this.data->siblings.asObject)) {
         return thread_res;
     }
-    size_t index = 0;
-    foreach(Thread, sibling, List_as_Iterable(this.data->siblings), {
-        if (Object_equals(sibling.asObject, this.asObject)) {
-            break;
-        }
-        index++;
-    })
-    List_removeAt(this.data->siblings, index, &EXCEPTION);
+    ThreadChildren_stopped(this.data->siblings, this, &EXCEPTION);
     return thread_res;
 }
 
@@ -168,8 +161,8 @@ IMPLEMENT_CONSTRUCTOR(main, Function entry) {
     this.data->main = entry;
     this.data->completer = Completer$make_new();
     this.data->loop = EventLoop$make_new();
-    this.data->children = List_new();
-    this.data->siblings = DOWNCAST(null, List);
+    this.data->children = ThreadChildren$make_new();
+    this.data->siblings = DOWNCAST(null, ThreadChildren);
     this.data->thread = thrd_current();
 }
 
@@ -177,15 +170,14 @@ IMPLEMENT_CONSTRUCTOR(new, Function main) {
     this.data->main = main;
     this.data->completer = Completer$make_new();
     this.data->loop = EventLoop$make_new();
-    this.data->children = List_new();
+    this.data->children = ThreadChildren$make_new();
     this.data->siblings = Thread_current().data->children;
 }
 
 IMPLEMENT_STATIC_METHOD(Thread, spawnSync, Function main, THROWS) {
     Thread thread = Thread$make_new(main);
     thrd_create(&thread.data->thread, threadMain, thread.data);
-    // todo: mutex
-    List_add(thread.data->siblings, thread.asObject, EXCEPTION);
+    ThreadChildren_spawned(thread.data->siblings, thread, EXCEPTION);
     if (HAS_EXCEPTION) {
         RETHROW(DOWNCAST(null, Thread))
     }

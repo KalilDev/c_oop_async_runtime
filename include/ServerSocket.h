@@ -4,6 +4,7 @@
 #include "Object.h"
 #include "oop.h"
 #include "Stream.h"
+#include "Thread.h"
 #include "StreamSubscription.h"
 #include <stdlib.h>
 #include <stdbool.h>
@@ -42,7 +43,7 @@ FORWARD_DECL_THROWABLE
     ATTRIBUTE(int, sockfd)                                        \
     ATTRIBUTE(const struct sockaddr*, addr)                       \
     ATTRIBUTE(socklen_t, addrlen)                     \
-    ATTRIBUTE(thrd_t, serverThread)                   \
+    ATTRIBUTE(Thread, serverThread)                   \
     ATTRIBUTE(StreamSubscription, subs)
 
 DEFINE_SELF_CLASS(

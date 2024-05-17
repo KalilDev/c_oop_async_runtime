@@ -27,6 +27,7 @@ IMPLEMENT_SELF_METHOD(void, blockUntilNextTask, THROWS) {
     mtx_t *queueMutex = &this.data->queueMutex;
     mtx_lock(queueMutex);
     int res = cnd_wait(taskAdded, queueMutex);
+    mtx_unlock(queueMutex);
     if (res == thrd_error) {
         THROW(IOException$make_fromErrno())
     }
@@ -42,7 +43,6 @@ IMPLEMENT_SELF_METHOD(Task, popTask) {
     mtx_lock(queueMutex);
 
     if (List_length(tasks) == 0) {
-
         mtx_unlock(queueMutex);
         return DOWNCAST(null, Task);
     }
@@ -66,8 +66,8 @@ IMPLEMENT_SELF_METHOD(void, pushTask, Task task) {
     List tasks = this.data->enqueuedTasks;
     mtx_lock(queueMutex);
     List_add(tasks, task.asObject, CRASH_ON_EXCEPTION);
-    mtx_unlock(queueMutex);
     cnd_signal(taskAdded);
+    mtx_unlock(queueMutex);
 }
 
 IMPLEMENT_SELF_METHOD(Future, invokeTask, Task task) {
@@ -94,6 +94,7 @@ IMPLEMENT_SELF_VTABLE() {
     vtable->popTask = _EventLoop_popTask_impl;
     vtable->pushTask = _EventLoop_pushTask_impl;
     vtable->invokeTask = _EventLoop_invokeTask_impl;
+    vtable->blockUntilNextTask = _EventLoop_blockUntilNextTask_impl;
     vtable->drain = _EventLoop_drain_impl;
     vtable->empty = _EventLoop_empty_impl;
     // Object

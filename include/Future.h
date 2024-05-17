@@ -41,10 +41,12 @@ START_CLASS
     CONSTRUCTOR(value, Object value)                              \
     CONSTRUCTOR(exception, Throwable exception)    \
     CONSTRUCTOR(_)
+FORWARD_DECL_CLASS(EventLoop)
 
-#define PARAMS_INVOCATION_Future_computation function
+#define PARAMS_INVOCATION_Future_computation function, loop
 #define ENUMERATE_FUTURE_STATIC_METHODS(METHOD) \
-    METHOD(Future, computation, Function function)
+    METHOD(Future, computation, Function function) \
+    METHOD(Future, computationAt, Function function, EventLoop loop)
 
 typedef enum FutureState {
     FutureState$pending,
