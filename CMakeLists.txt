@@ -51,6 +51,8 @@ add_library(c_oop STATIC
         include/Thread.h
         src/Thread.c
         src/ThreadChildren.c
+        src/StreamController.c
+        src/AsyncEvent.c
 )
 target_link_libraries(c_oop PRIVATE m)
 
