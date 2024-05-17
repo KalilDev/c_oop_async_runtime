@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <threads.h>
 #include "List.h"
 #define WITH_RTTI
 #include "rtti.h"
@@ -25,20 +26,25 @@ FORWARD_DECL_CLASS(Future)
 FORWARD_DECL_CLASS(Task)
 #define PARAMS_INVOCATION_EventLoop_pushTask task
 #define PARAMS_INVOCATION_EventLoop_invokeTask task
+#define PARAMS_INVOCATION_EventLoop_blockUntilNextTask THROWS_PARAM_INVOCATION
 #define ENUMERATE_EVENT_LOOP_METHODS(METHOD) \
     METHOD(Task, popTask) \
     METHOD(void, pushTask, Task task)        \
     METHOD(Future, invokeTask, Task task)                                         \
-    METHOD(void, drain)
+    METHOD(void, drain)                      \
+    METHOD(bool, empty)                      \
+    METHOD(void, blockUntilNextTask, THROWS)
 
 #define ENUMERATE_EVENT_LOOP_CONSTRUCTORS(CONSTRUCTOR) \
-    CONSTRUCTOR(_)
+    CONSTRUCTOR(new)
 
 #define ENUMERATE_EVENT_LOOP_ATTRIBUTES(ATTRIBUTE) \
-    ATTRIBUTE(List, enqueuedTasks)
+    ATTRIBUTE(List, enqueuedTasks)                 \
+    ATTRIBUTE(cnd_t, taskAdded)                    \
+    ATTRIBUTE(mtx_t, queueMutex)
 
 #define ENUMERATE_EVENT_LOOP_STATIC_METHODS(METHOD) \
-    METHOD(EventLoop, instance)                                                    \
+    METHOD(EventLoop, current)                                                    \
 
 DEFINE_SELF_CLASS(
         ENUMERATE_EVENT_LOOP_PARENTS,

@@ -136,7 +136,7 @@ IMPLEMENT_SELF_METHOD(void, _onComplete) {
     }
     Lambda_Then lambda = Lambda_Then$make_new(this.data->value, then);
     Task task = Task$make_new(lambda.asFunction);
-    EventLoop current = EventLoop_instance();
+    EventLoop current = EventLoop_current();
     EventLoop_pushTask(current, task);
 }
 
@@ -148,7 +148,7 @@ IMPLEMENT_SELF_METHOD(void, _onCompleteWithError) {
     }
     Lambda_Catch lambda = Lambda_Catch$make_new(this.data->exception, catch);
     Task task = Task$make_new(lambda.asFunction);
-    EventLoop current = EventLoop_instance();
+    EventLoop current = EventLoop_current();
     EventLoop_pushTask(current, task);
 }
 
@@ -165,7 +165,7 @@ IMPLEMENT_SELF_METHOD(void, onCatch, Function catch) {
         case FutureState$completedWithError: {
             Lambda_Catch lambda = Lambda_Catch$make_new(this.data->exception, catch);
             Task task = Task$make_new(lambda.asFunction);
-            EventLoop loop = EventLoop_instance();
+            EventLoop loop = EventLoop_current();
             EventLoop_pushTask(loop, task);
             return;
         }
@@ -178,7 +178,7 @@ IMPLEMENT_SELF_METHOD(void, onThen, Function then) {
         case FutureState$complete: {
             Lambda_Then lambda = Lambda_Then$make_new(this.data->value, then);
             Task task = Task$make_new(lambda.asFunction);
-            EventLoop loop = EventLoop_instance();
+            EventLoop loop = EventLoop_current();
             EventLoop_pushTask(loop, task);
             return;
         }
@@ -254,7 +254,7 @@ IMPLEMENT_SELF_VTABLE() {
 
 IMPLEMENT_STATIC_METHOD(Future, computation, Function function) {
     Task task = Task$make_new(function);
-    EventLoop current = EventLoop_instance();
+    EventLoop current = EventLoop_current();
     return EventLoop_invokeTask(current, task);
 }
 

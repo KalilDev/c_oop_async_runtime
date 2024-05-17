@@ -35,7 +35,7 @@ IMPLEMENT_SELF_METHOD(void, invokeSync) {
 }
 
 IMPLEMENT_SELF_METHOD(Future, invoke) {
-    EventLoop loop = EventLoop_instance();
+    EventLoop loop = EventLoop_current();
     return EventLoop_invokeTask(loop, this);
 }
 

@@ -100,7 +100,7 @@ Object Main(List arguments, THROWS) {
 }
 
 int main(int argc, char **argv) {
-    EventLoop loop = EventLoop_instance();
+    EventLoop loop = EventLoop_current();
     Throwable EXCEPTION = DOWNCAST(null, Throwable);
     List arguments = List_new();
     if (Object_isNull(arguments.asObject)) {

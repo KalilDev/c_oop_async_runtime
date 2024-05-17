@@ -48,6 +48,8 @@ add_library(c_oop STATIC
         src/IOSink.c
         src/Socket.c
         src/ServerSocket.c
+        include/Thread.h
+        src/Thread.c
 )
 target_link_libraries(c_oop PRIVATE m)
 
