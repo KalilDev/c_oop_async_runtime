@@ -174,7 +174,7 @@ IMPLEMENT_SELF_VTABLE() {
     Stream_vtable_t *stream_vtable = &vtable->Stream_vtable;
     initImplementedInterfaceVtable(
             (Interface_vtable_t*)stream_vtable,
-            (Interface_vtable_t*)IOSink_vtable(),
+            (Interface_vtable_t*)Stream_vtable(),
             sizeof(*IOSink_vtable()),
             offsetof(struct Socket_vtable_t, IOSink_vtable)
     );

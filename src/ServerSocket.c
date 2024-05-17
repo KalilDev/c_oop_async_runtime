@@ -139,16 +139,16 @@ IMPLEMENT_SELF_VTABLE() {
         sizeof(*Super()),
         STR(Self),
 1,
-        "Stream", offsetof(Socket_vtable_t , Stream_vtable)
+        "Stream", offsetof(ServerSocket_vtable_t , Stream_vtable)
         );
-    // Socket
+    // ServerSocket
     // Stream
     Stream_vtable_t *stream_vtable = &vtable->Stream_vtable;
     initImplementedInterfaceVtable(
             (Interface_vtable_t*)stream_vtable,
-            (Interface_vtable_t*)IOSink_vtable(),
-            sizeof(*IOSink_vtable()),
-            offsetof(struct Socket_vtable_t, IOSink_vtable)
+            (Interface_vtable_t*)Stream_vtable(),
+            sizeof(*Stream_vtable()),
+            offsetof(struct ServerSocket_vtable_t, Stream_vtable)
     );
     stream_vtable->listen = _ServerSocket_listen_impl;
     // Object
