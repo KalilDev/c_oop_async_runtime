@@ -11,6 +11,7 @@
 #include "HttpHeaders.h"
 #include "StreamSubscription.h"
 #include <stdlib.h>
+#include "HttpResponse.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <sys/socket.h>
@@ -40,12 +41,11 @@ FORWARD_DECL_THROWABLE
 #define PARAMS_INVOCATION_HttpRequest_processLine line, state
 #define ENUMERATE_HTTP_REQUEST_METHODS(METHOD) \
     METHOD(HttpRequestReceiveState, processLine, String line, HttpRequestReceiveState state) \
-    METHOD(void, startListening)
-
+    METHOD(void, startListening)               \
+    METHOD(HttpResponse, response)
 
 #define ENUMERATE_HTTP_REQUEST_IMPLEMENTS(IMPLEMENTS) \
-    IMPLEMENTS(Stream)                                \
-    IMPLEMENTS(IOSink)
+    IMPLEMENTS(Stream)
 
 #define ENUMERATE_HTTP_REQUEST_GETTERS(ATTRIBUTE) \
     ATTRIBUTE(Future, onReady)                    \
@@ -71,28 +71,23 @@ typedef enum HttpRequestReceiveState {
     ATTRIBUTE(StreamController, bodyController) \
     ATTRIBUTE(StreamSubscription, socketSubscription)\
     ATTRIBUTE(Completer, onReady)                    \
-    ATTRIBUTE(HttpRequestReceiveState, state)
+    ATTRIBUTE(HttpRequestReceiveState, state) \
+    ATTRIBUTE(HttpResponse, response)
 
 
 DEFINE_SELF_CLASS(
-        ENUMERATE_HTTP_REQUEST_PARENTS,
-        ENUMERATE_HTTP_REQUEST_IMPLEMENTS,
-        ENUMERATE_HTTP_REQUEST_METHODS,
-        ENUMERATE_HTTP_REQUEST_ATTRIBUTES,
-        ENUMERATE_HTTP_REQUEST_CONSTRUCTORS,
-        NO_STATIC_METHODS,
-        NO_STATIC_ATTRIBUTES,
-        ENUMERATE_HTTP_REQUEST_GETTERS
+    ENUMERATE_HTTP_REQUEST_PARENTS,
+    ENUMERATE_HTTP_REQUEST_IMPLEMENTS,
+    ENUMERATE_HTTP_REQUEST_METHODS,
+    ENUMERATE_HTTP_REQUEST_ATTRIBUTES,
+    ENUMERATE_HTTP_REQUEST_CONSTRUCTORS,
+    NO_STATIC_METHODS,
+    NO_STATIC_ATTRIBUTES,
+    ENUMERATE_HTTP_REQUEST_GETTERS
 )
 
 DECLARE_OBJECT_CAST(Stream, HttpRequest)
 DECLARE_INTERFACE_CAST(HttpRequest, Stream)
-
-DECLARE_OBJECT_CAST(IOSink, HttpRequest)
-DECLARE_INTERFACE_CAST(HttpRequest, IOSink)
-
-DECLARE_OBJECT_CAST(Sink, HttpRequest)
-DECLARE_INTERFACE_CAST(HttpRequest, Sink)
 
 END_CLASS
 

@@ -24,6 +24,7 @@
 #include "HttpRequest.h"
 #include <threads.h>
 #include <netinet/in.h>
+#include "StreamSubscription.h"
 #include <arpa/inet.h>
 
 #define Super() Object_vtable()

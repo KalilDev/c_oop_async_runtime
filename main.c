@@ -58,24 +58,31 @@ IMPLEMENT_LAMBDA(OnData, ENUMERATE_CAPTURES, NO_OWNED_CAPTURES, Completer comple
     fprintf(stdout, "Method: %s\n", String_cStringView(HttpRequest_method(request)));
     fprintf(stdout, "Uri: %s\n", String_cStringView(HttpRequest_uri(request)));
     fprintf(stdout, "Http: %s\n", String_cStringView(HttpRequest_http(request)));
-    //fprintf(stdout, "Http: %s\n", String_cStringView(HttpRequest_http(request)));
-    Sink requestSink = HttpRequest_as_Sink(request);
-    String responseCommand = String_format_c("{} {} {}\r\n", HttpRequest_http(request), Integer$box(200), StringRef$wrap("OK"));
-    String response = buildResponse();
-    Integer contentLength = Integer$box_l((long)String_length(response));
-    autoclean(HttpHeaders) responseHeaders = HttpHeaders$make_new();
+
+
+    String responseBody = buildResponse();
+    Integer contentLength = Integer$box_l((long)String_length(responseBody));
+
+    HttpResponse response = HttpRequest_response(request);
+    Sink requestSink = HttpResponse_as_Sink(response);
+
+    HttpResponse_setStatusCode(response, Integer$box_l(200));
+    HttpResponse_setHttp(response, StringRef$wrap("HTTP/1.1").asString);
+    HttpResponse_setStatusReason(response, StringRef$wrap("Okay!!!").asString);
+
+    HttpHeaders responseHeaders = HttpResponse_headers(response);
     HttpHeaders_add(responseHeaders, StringRef$wrap("Date").asString, StringRef$wrap("Sun, 01 Oct 2000 23:25:17 GMT").asString);
     HttpHeaders_add(responseHeaders, StringRef$wrap("Server").asString, StringRef$wrap("Poor man's dart HttpServer").asString);
     HttpHeaders_add(responseHeaders, StringRef$wrap("Last-modified").asString, StringRef$wrap("Tue, 04 Jul 2000 09:46:21 GMT").asString);
     HttpHeaders_add(responseHeaders, StringRef$wrap("Content-length").asString, Object_toString(contentLength.asObject));
     HttpHeaders_add(responseHeaders, StringRef$wrap("Content-type").asString, StringRef$wrap("text/html").asString);
-    String emptyLine = StringRef$wrap("\r\n").asString;
 
-    Sink_add(requestSink, responseCommand.asObject);
-    HttpHeaders_encodeTo(responseHeaders, requestSink);
-    Sink_add(requestSink, emptyLine.asObject);
-    Sink_add(requestSink, response.asObject);
+    HttpResponse_send(response);
+
+    Sink_add(requestSink, responseBody.asObject);
     Sink_close(requestSink);
+
+
     printf("Sent response!\n");
     Object_delete(request.asObject);
     return null;

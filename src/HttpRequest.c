@@ -306,11 +306,17 @@ IMPLEMENT_LAMBDA(HttpRequestOnData, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpReque
     }
     return null;
 }
-
+IMPLEMENT_SELF_METHOD(HttpResponse, response) {
+    if (!Object_isNull(this.data->response.asObject)) {
+        return this.data->response;
+    }
+    HttpResponse response = HttpResponse$make_fromTcp(this.data->socket);
+    this.data->socket = DOWNCAST(null, Socket);
+    return this.data->response = response;
+}
 IMPLEMENT_SELF_METHOD(void, startListening) {
     Socket socket = this.data->socket;
-    this.data->
-    socketSubscription = Stream_listen(
+    this.data->socketSubscription = Stream_listen(
             Socket_as_Stream(socket),
             Lambda_HttpRequestOnData$make_new(this).asFunction,
             Lambda_HttpRequestOnError$make_new(this).asFunction,
@@ -325,27 +331,6 @@ IMPLEMENT_OVERRIDE_METHOD(StreamSubscription, Stream, listen, Function onData, F
     return Stream_listen (StreamController_as_Stream(self.data->bodyController), onData, onError, onDone, cancelOnError);
 }
 
-IMPLEMENT_OVERRIDE_METHOD(void, Sink, close) {
-Self self = Sink_as_HttpRequest(this);
-Sink_close(Socket_as_IOSink(self.data->socket).asSink);
-}
-IMPLEMENT_OVERRIDE_METHOD(void, IOSink, flush) {
-Self self = IOSink_as_HttpRequest(this);
-IOSink_flush(Socket_as_IOSink(self.data->socket));
-}
-
-
-IMPLEMENT_OVERRIDE_METHOD(void, Sink, add, Object value) {
-Self self = Sink_as_HttpRequest(this);
-if (IS_OBJECT_ASSIGNABLE(value, String)) {
-String v = DOWNCAST(value, String);
-UInt8List stringBytes = UInt8List$make_fromBuffer((unsigned char *)String_cStringView(v), String_length(v));
-// TODO: Free string
-value = stringBytes.asObject;
-}
-Sink_add(Socket_as_IOSink(self.data->socket).asSink, value);
-}
-
 IMPLEMENT_SELF_VTABLE() {
     initVtable(
     (Object_vtable_t *) vtable,
@@ -358,6 +343,7 @@ IMPLEMENT_SELF_VTABLE() {
     // HttpRequest
     vtable->processLine = _HttpRequest_processLine_impl;
     vtable->startListening = _HttpRequest_startListening_impl;
+    vtable->response = _HttpRequest_response_impl;
     // Stream
     Stream_vtable_t *stream_vtable = &vtable->Stream_vtable;
     initImplementedInterfaceVtable(
@@ -367,19 +353,6 @@ IMPLEMENT_SELF_VTABLE() {
     offsetof(struct HttpRequest_vtable_t, Stream_vtable)
     );
     stream_vtable->listen = _HttpRequest_listen_impl;
-    // IOSink
-    IOSink_vtable_t *iosink_vtable = &vtable->IOSink_vtable;
-    initImplementedInterfaceVtable(
-    (Interface_vtable_t *) iosink_vtable,
-    (Interface_vtable_t *) IOSink_vtable(),
-    sizeof(*IOSink_vtable()),
-    offsetof(struct HttpRequest_vtable_t, IOSink_vtable)
-    );
-    iosink_vtable->flush = _HttpRequest_flush_impl;
-    // Sink
-    Sink_vtable_t *sink_vtable = (Sink_vtable_t *)iosink_vtable;
-    sink_vtable->add = _HttpRequest_add_impl;
-    sink_vtable->close = _HttpRequest_close_impl;
     // Object
     Object_vtable_t *object_vtable = (Object_vtable_t *) vtable;
     //object_vtable->delete = _List_delete_impl;
@@ -388,16 +361,6 @@ IMPLEMENT_SELF_VTABLE() {
 
 INTERFACE_CAST_IMPL(HttpRequest, Stream, Object)
 OBJECT_CAST_IMPL(Stream, HttpRequest)
-INTERFACE_CAST_IMPL(HttpRequest, IOSink, Object)
-OBJECT_CAST_IMPL(IOSink, HttpRequest)
-
-Sink HttpRequest_as_Sink(HttpRequest this) {
-    return HttpRequest_as_IOSink(this).asSink;
-}
-
-HttpRequest Sink_as_HttpRequest(Sink this) {
-    return IOSink_as_HttpRequest(DOWNCAST(this, IOSink));
-}
 
 
 IMPLEMENT_LAMBDA(OnListen, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpRequest myself) {
@@ -433,6 +396,7 @@ this.data->
 socket = socket;
 this.data->
 socketSubscription = DOWNCAST(null, StreamSubscription);
+this.data->response = DOWNCAST(null, HttpResponse);
 this.data->
 bodyController = StreamController$make_new(
         Lambda_OnListen$make_new(this).asFunction,

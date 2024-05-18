@@ -8,10 +8,10 @@
 #define Self IOSink
 
 START_CLASS
-
+FORWARD_DECL_CLASS(Future)
 #define PARAMS_INVOCATION_IOSink_add value
 #define ENUMERATE_IO_SINK_METHODS(METHOD) \
-    METHOD(void, flush)
+    METHOD(Future, flush)
 
 DEFINE_SELF_EXTENDED_INTERFACE(
         Sink,

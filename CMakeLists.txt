@@ -56,6 +56,7 @@ add_library(c_oop STATIC
         src/HttpServer.c
         src/HttpRequest.c
         src/HttpHeaders.c
+        src/HttpResponse.c
 )
 target_link_libraries(c_oop PRIVATE m)
 

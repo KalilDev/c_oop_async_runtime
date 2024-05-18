@@ -73,10 +73,11 @@ IMPLEMENT_SELF_METHOD(void, sendOverqueuedSync, THROWS) {
     } while (queuedCount >= CHUNK);
 }
 
-IMPLEMENT_OVERRIDE_METHOD(void, IOSink, flush) {
+IMPLEMENT_OVERRIDE_METHOD(Future, IOSink, flush) {
     Socket self = IOSink_as_Socket(this);
     _Socket_sendOverqueuedSync_impl(self, CRASH_ON_EXCEPTION);
     _Socket_sendChunkSync_impl(self, CRASH_ON_EXCEPTION);
+    return Future$make_value(null);
 }
 
 IMPLEMENT_OVERRIDE_METHOD(void, Sink, close) {
