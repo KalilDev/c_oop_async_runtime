@@ -23,6 +23,14 @@ long _sepIndex(const char* chain) {
         }
     }
 }
+bool Object_isExactType(Object object, const char* class_name) {
+    assert(object.vtable != NULL);
+    assert(object.vtable->runtime_type_information.class_name != NULL);
+    return strcmp(object.vtable->runtime_type_information.class_name, class_name) == 0;
+}
+bool any_isExactType(any any, const char* class_name) {
+    return Object_isExactType(any_asObject(any), class_name);
+}
 bool Object_isObjectTypeAssignable(Object obj, const char* class_name) {
     const char* inheritance_chain = obj.vtable->runtime_type_information.inheritance_chain;
     size_t chainLength = strlen(inheritance_chain);

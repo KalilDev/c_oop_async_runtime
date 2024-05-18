@@ -123,7 +123,7 @@ IMPLEMENT_LAMBDA(Start, ENUMERATE_START_CAPTURES, NO_OWNED_CAPTURES, ServerSocke
 }
 
 IMPLEMENT_OVERRIDE_METHOD(StreamSubscription, Stream, listen, Function onData, Function onError, Function onDone, Bool cancelOnError) {
-    Self self = DOWNCAST(this, Self);
+    Self self = Stream_as_ServerSocket(this);
     Function onCancel = Lambda_Close$make_new(self).asFunction;
     StreamSubscription subs = StreamSubscription$make_new(onData, onError, onDone, onCancel, cancelOnError);
     self.data->subs = subs;

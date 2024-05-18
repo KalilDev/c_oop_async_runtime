@@ -16,6 +16,7 @@
 START_CLASS
 
 FORWARD_DECL_CLASS(String)
+FORWARD_DECL_CLASS(UInt8List)
 FORWARD_DECL_CLASS(List)
 #define PARAMS_INVOCATION_StringBuffer_ensure capacity
 #define PARAMS_INVOCATION_StringBuffer_write obj
@@ -33,7 +34,9 @@ FORWARD_DECL_CLASS(List)
     METHOD(void, writeCharCode, char code)    \
     METHOD(void, writeCString, const char*cstring)\
     METHOD(void, writeBuffer, const char*buffer, size_t size) \
-    METHOD(void, writeLn, Object obj)
+    METHOD(void, writeLn, Object obj) \
+    METHOD(UInt8List, toBytes) \
+    METHOD(UInt8List, releaseToBytes)
 
 #define ENUMERATE_STRING_BUFFER_ATTRIBUTES(ATTRIBUTE) \
     ATTRIBUTE(char*, c_string)            \

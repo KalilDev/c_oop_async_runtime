@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <stdio.h>
 #include "Object.h"
 #include "String.h"
 #include "oop.h"
@@ -192,4 +193,20 @@ initVtable(Object_vtable_t *selfVtable, Object_vtable_t *superVtable, size_t sup
                 implemented_interface_count, args);
     va_end(args);
 #endif
+}
+bool any_isNull(any any) {
+    return any_isExactType(any, "Null");
+}
+Object any_asObject(any any) {
+    switch (any.vtable->tag) {
+        case OBJECT_VTABLE_TAG:
+            return DOWNCAST(any, Object);
+        case INTERFACE_VTABLE_TAG: {
+            size_t vtable_offset = any.vtable->object_vtable_offset;
+            return Interface_as_Object(DOWNCAST(any, Interface));
+        }
+        default: {
+            assert(!"FAILURE: Any is not an object or interface.");
+        }
+    }
 }

@@ -20,27 +20,72 @@
 #define WITH_OOP_MAIN
 #include "main.h"
 #include "Socket.h"
+#include "HttpRequest.h"
+#include "HttpServer.h"
+#include "UInt8List.h"
+#include "StringBuffer.h"
 
 
 #define ENUMERATE_CAPTURES(CAPTURE) \
     CAPTURE(Completer, completer)
 
+String buildResponse() {
+    StringBuffer buffer = StringBuffer$make_new();
+#define Ln(line) StringBuffer_writeLn(buffer, StringRef$wrap(line).asObject);
+    Ln("<!DOCTYPE html>");
+    Ln("<html lang=\"en\">");
+    Ln("  <head>");
+    Ln("    <meta charset=\"ASCII\">");
+    Ln("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">");
+    Ln("    <meta http-equiv=\"X-UA-Compatible\" content=\"ie=edge\">")
+    Ln("    <title>Hello</title>");
+    //Ln("    <link rel=\"stylesheet\" href=\"style.css\">");
+    Ln("  </head>");
+    Ln("  <body>");
+    Ln("    <h1>Hello</h1>");
+    Ln("  </body>");
+    Ln("</html>");
+#undef Ln
+    String res = StringBuffer_releaseToString(buffer);
+    Object_delete(buffer.asObject);
+    return res;
+}
+
 IMPLEMENT_LAMBDA(OnData, ENUMERATE_CAPTURES, NO_OWNED_CAPTURES, Completer completer) {
-    Object data = va_arg(args, Object);
+    HttpRequest request = va_arg(args, HttpRequest);
     THROWS = va_arg(args, Throwable*);
+    fprintf(stdout, "Request!\n");
+    fprintf(stdout, "Method: %s\n", String_cStringView(HttpRequest_method(request)));
+    fprintf(stdout, "Uri: %s\n", String_cStringView(HttpRequest_uri(request)));
+    fprintf(stdout, "Http: %s\n", String_cStringView(HttpRequest_http(request)));
+    //fprintf(stdout, "Http: %s\n", String_cStringView(HttpRequest_http(request)));
+    Sink requestSink = HttpRequest_as_Sink(request);
+    String responseCommand = String_format_c("{} {} {}\r\n", HttpRequest_http(request), Integer$box(200), StringRef$wrap("OK"));
+    String response = buildResponse();
+    Integer contentLength = Integer$box_l((long)String_length(response));
+    autoclean(HttpHeaders) responseHeaders = HttpHeaders$make_new();
+    HttpHeaders_add(responseHeaders, StringRef$wrap("Date").asString, StringRef$wrap("Sun, 01 Oct 2000 23:25:17 GMT").asString);
+    HttpHeaders_add(responseHeaders, StringRef$wrap("Server").asString, StringRef$wrap("Poor man's dart HttpServer").asString);
+    HttpHeaders_add(responseHeaders, StringRef$wrap("Last-modified").asString, StringRef$wrap("Tue, 04 Jul 2000 09:46:21 GMT").asString);
+    HttpHeaders_add(responseHeaders, StringRef$wrap("Content-length").asString, Object_toString(contentLength.asObject));
+    HttpHeaders_add(responseHeaders, StringRef$wrap("Content-type").asString, StringRef$wrap("text/html").asString);
+    String emptyLine = StringRef$wrap("\r\n").asString;
 
-    Socket connection = Socket$$fromObject(data);
-
-    connection
-
-
+    Sink_add(requestSink, responseCommand.asObject);
+    HttpHeaders_encodeTo(responseHeaders, requestSink);
+    Sink_add(requestSink, emptyLine.asObject);
+    Sink_add(requestSink, response.asObject);
+    Sink_close(requestSink);
+    printf("Sent response!\n");
+    Object_delete(request.asObject);
     return null;
 }
 IMPLEMENT_LAMBDA(OnError, ENUMERATE_CAPTURES, NO_OWNED_CAPTURES, Completer completer) {
     Completer completer = DOWNCAST(this, Lambda_OnError).data->completer;
     Throwable error = va_arg(args, Throwable);
     THROWS = va_arg(args, Throwable*);
-    fprintf(stderr, "error arrived\n");
+    autoclean(String) errorStr = Object_toString(error.asObject);
+    fprintf(stderr, "error arrived %s\n", String_cStringView(errorStr));
     Completer_completeException(completer, error);
     return null;
 }
@@ -53,40 +98,19 @@ IMPLEMENT_LAMBDA(OnDone, ENUMERATE_CAPTURES, NO_OWNED_CAPTURES, Completer comple
 }
 
 
-#define ENUMERATE_CAPTURES(CAPTURE) \
-    CAPTURE(Completer, completer) \
-    CAPTURE(ServerSocket, server)
-
-IMPLEMENT_LAMBDA(JoinThreadAsync, ENUMERATE_CAPTURES, NO_OWNED_CAPTURES, Completer completer, ServerSocket server) {
-    ServerSocket server = DOWNCAST(this, Lambda_JoinThreadAsync).data->server;
-    THROWS = va_arg(args, Throwable*);
-    if (Object_isNull(server.data->subs.asObject)) {
-        Completer completer = DOWNCAST(this, Lambda_JoinThreadAsync).data->completer;
-        return Completer_future(completer).asObject;
-    }
-    thrd_sleep(&(struct timespec){.tv_nsec=16*1000000}, NULL); // sleep 16 msec
-    thrd_yield();
-    return Future_computation(this).asObject;
-}
-
 
 Object Main(List arguments, THROWS) {
-    struct sockaddr_in addr;
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    addr.sin_port = 3000;
-    addr.sin_family = AF_INET;
-    ServerSocket server = ServerSocket_bindSync(
-    AF_INET,
-    (const struct sockaddr*)&addr,
-    sizeof(addr),
-    EXCEPTION
+    HttpServer server = HttpServer_bindSync(
+            StringRef$wrap("0.0.0.0").asString,
+            3000,
+            EXCEPTION
     );
     if (HAS_EXCEPTION) {
         RETHROW(null)
     }
     Completer completer = Completer$make_new();
     Stream_listen(
-            ServerSocket_as_Stream(server),
+            HttpServer_as_Stream(server),
             Lambda_OnData$make_new(completer).asFunction,
             Lambda_OnError$make_new(completer).asFunction,
             Lambda_OnDone$make_new(completer).asFunction,

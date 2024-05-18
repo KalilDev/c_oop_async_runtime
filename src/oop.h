@@ -60,6 +60,8 @@
 // ok
 #define VIRTUAL_METHOD_IMPLEMENTATION(return_type, class, method, ...) \
 return_type CONCAT(CONCAT(class, _), method)(class this __VA_OPT__(,) __VA_ARGS__) { \
+    assert(this.vtable != NULL);                                                                   \
+    assert(!any_isNull(UPCAST(this, any)));                                                                   \
     assert(this.vtable->method != NULL);                                                                   \
     return _VIRTUAL_METHOD_INVOCATION(class, method __VA_OPT__(,) __VA_ARGS__);                                                                       \
 }

@@ -19,6 +19,8 @@ IMPLEMENT_OPERATOR_NEW()
 
 IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_STREAM_CONTROLLER_PARENTS)
 
+ENUMERATE_STREAM_CONTROLLER_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
+
 IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     StreamController self = DOWNCAST(this, StreamController);
     Object_delete(self.data->onListen.asObject);
@@ -29,7 +31,7 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
 }
 
 IMPLEMENT_OVERRIDE_METHOD(void, Sink, add, Object value) {
-    Self self = DOWNCAST(this, Self);
+    Self self = Sink_as_StreamController(this);
     StreamSubscription subs = self.data->subs;
     if (!Object_isNull(subs.asObject)) {
         StreamSubscription_handleData(subs, value);
@@ -41,7 +43,7 @@ IMPLEMENT_OVERRIDE_METHOD(void, Sink, add, Object value) {
 
 
 IMPLEMENT_OVERRIDE_METHOD(void, Sink, close) {
-    Self self = DOWNCAST(this, Self);
+    Self self = Sink_as_StreamController(this);
     StreamSubscription subs = self.data->subs;
     if (!Object_isNull(subs.asObject)) {
         StreamSubscription_handleDone(subs);
@@ -63,12 +65,13 @@ IMPLEMENT_SELF_METHOD(void, addError, Throwable error) {
 }
 
 IMPLEMENT_OVERRIDE_METHOD(StreamSubscription, Stream, listen, Function onData, Function onError, Function onDone, Bool cancelOnError) {
-    Self self = DOWNCAST(this, Self);
+    Self self = Stream_as_StreamController(this);
     StreamSubscription subs = StreamSubscription$make_new(onData, onError, onDone, self.data->onCancelSubscription, cancelOnError);
     self.data->subs = subs;
     List bufferedEvents = self.data->bufferedEvents;
     if (List_length(bufferedEvents) != 0) {
         foreach(AsyncEvent, event, List_as_Iterable(bufferedEvents), {
+            // todo: cancel on error
             // todo: what if the listener cancels?
             AsyncEvent_addToStreamSubscription(event, subs);
         })
@@ -76,7 +79,7 @@ IMPLEMENT_OVERRIDE_METHOD(StreamSubscription, Stream, listen, Function onData, F
     }
     // TODO: Exception
     // TODO: Should this be async?
-    Function_call(self.data->onListen, 2, this, subs);
+    Function_call(self.data->onListen, 2, self, subs);
     return subs;
 }
 

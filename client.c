@@ -56,7 +56,7 @@ IMPLEMENT_LAMBDA(OnDone, ENUMERATE_CAPTURES, NO_OWNED_CAPTURES, Completer comple
 Object Main(List arguments, THROWS) {
     struct sockaddr_in addr;
     addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    addr.sin_port = 3000;
+    addr.sin_port = htons(3000);
     addr.sin_family = AF_INET;
     Socket socket = Socket_connectSync(
     AF_INET,

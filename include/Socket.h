@@ -4,6 +4,7 @@
 #include "Object.h"
 #include "oop.h"
 #include "Stream.h"
+#include "StreamController.h"
 #include "ByteBuffer.h"
 #include "IOSink.h"
 #include <stdlib.h>
@@ -42,7 +43,8 @@ FORWARD_DECL_THROWABLE
     ATTRIBUTE(int, sockfd)                                        \
     ATTRIBUTE(const struct sockaddr*, addr)                       \
     ATTRIBUTE(socklen_t, addrlen)              \
-    ATTRIBUTE(ByteBuffer, queued)
+    ATTRIBUTE(ByteBuffer, queued)              \
+    ATTRIBUTE(StreamController, streamController)
 
 DEFINE_SELF_CLASS(
         ENUMERATE_SOCKET_PARENTS,

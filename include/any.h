@@ -3,7 +3,11 @@
 #include "rtti.h"
 
 typedef union object_or_interface_vtable {
-    size_t interface_offset;
+    size_t tag;
+    struct {
+        size_t interface_vtable_tag;
+        size_t object_vtable_offset;
+    };
     struct {
         size_t object_vtable_tag;
         #ifdef WITH_RTTI
@@ -24,3 +28,6 @@ typedef struct any {
 #ifdef WITH_RTTI
 const runtime_type_information_t* any_runtimeTypeInformation(any any);
 #endif
+
+bool any_isNull(any any);
+Object any_asObject(any any);

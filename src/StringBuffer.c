@@ -2,6 +2,7 @@
 #include "StringBuffer.h"
 #include "String.h"
 #include "List.h"
+#include "UInt8List.h"
 #include "oop.h"
 #include "stddef.h"
 #include "oop.h"
@@ -32,6 +33,23 @@ IMPLEMENT_SELF_METHOD(String, releaseToString) {
     this.data->capacity = 0;
     this.data->length = 0;
     return String$make_own_len(cstring, len);
+}
+
+IMPLEMENT_SELF_METHOD(UInt8List, toBytes) {
+    char *cstring = this.data->c_string;
+    size_t len = this.data->length;
+
+    return UInt8List$make_fromBuffer((unsigned char *)cstring, len);
+}
+
+IMPLEMENT_SELF_METHOD(UInt8List, releaseToBytes) {
+    char *cstring = this.data->c_string;
+    size_t len = this.data->length;
+    this.data->c_string = NULL;
+    this.data->capacity = 0;
+    this.data->length = 0;
+
+    return UInt8List$make_fromBuffer((unsigned char *)cstring, len);
 }
 
 IMPLEMENT_SELF_METHOD(void, write, Object obj) {
@@ -127,6 +145,13 @@ IMPLEMENT_SELF_METHOD(void, writeLn, Object obj) {
     StringBuffer_write(this, obj);
     StringBuffer_writeCharCode(this, '\n');
 }
+//
+//IMPLEMENT_SELF_METHOD(void, writeLnCrlf, Object obj) {
+//    StringBuffer_write(this, obj);
+//    StringBuffer_writeCharCode(this, '\r');
+//    StringBuffer_writeCharCode(this, '\n');
+//}
+
 
 IMPLEMENT_SELF_METHOD(void, ensure, size_t min_capacity) {
     // null terminator

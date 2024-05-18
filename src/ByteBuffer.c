@@ -47,16 +47,18 @@ IMPLEMENT_SELF_METHOD(UInt8List, releaseToBytes) {
     this.data->length = 0;
     return UInt8List$make_fromBuffer(buffer, len);
 }
-IMPLEMENT_SELF_METHOD(size_t, consumeToBuffer, unsigned char *buffer, size_t bufferSize) {
-    size_t selfLen = this.data->length;
-    unsigned char *selfBuf = this.data->buffer;
-    size_t toBeWritten = selfLen > bufferSize ? bufferSize : selfLen;
+IMPLEMENT_SELF_METHOD(size_t, consumeToBuffer, unsigned char *consumer, size_t consumerSize) {
+    size_t *selfLen = &this.data->length;
+    unsigned char *buffer = this.data->buffer;
+    size_t consumed = *selfLen > consumerSize ? consumerSize : *selfLen;
+    size_t remainining = *selfLen - consumed;
 
-    memcpy(buffer, selfBuf, toBeWritten);
+    memcpy(consumer, buffer, consumed);
 
-    memmove(selfBuf + toBeWritten, selfBuf, selfLen - toBeWritten);
+    memmove(buffer, buffer + consumed, remainining);
+    *selfLen = remainining;
 
-    return toBeWritten;
+    return consumed;
 }
 
 IMPLEMENT_SELF_METHOD(void, write, unsigned char byte, THROWS) {
@@ -72,10 +74,10 @@ IMPLEMENT_SELF_METHOD(void, write, unsigned char byte, THROWS) {
 
 IMPLEMENT_SELF_METHOD(void, writeAll, List list, THROWS) {
     size_t i = 0;
-    unsigned char *buffer = this.data->buffer;
-    size_t length = this.data->length;
     size_t list_length = List_length(list);
-    ByteBuffer_ensure(this, length + list_length, EXCEPTION);
+    ByteBuffer_ensure(this, this.data->length + list_length, EXCEPTION);
+    size_t *length = &this.data->length;
+    unsigned char *buffer = this.data->buffer;
     if (HAS_EXCEPTION) {
         RETHROW()
     }
@@ -84,7 +86,8 @@ IMPLEMENT_SELF_METHOD(void, writeAll, List list, THROWS) {
     if (list.vtable == UInt8List_vtable()) {
         UInt8List l = DOWNCAST(list, UInt8List);
         unsigned char *list_buffer = UInt8List_list(l);
-        memcpy(buffer + length, list_buffer, list_length);
+        memcpy(buffer + *length, list_buffer, list_length);
+        *length += list_length;
         return;
     }
 
@@ -95,8 +98,7 @@ IMPLEMENT_SELF_METHOD(void, writeAll, List list, THROWS) {
         }
         Number b_number = DOWNCAST(b, Number);
         int num = Integer_unbox_i(Number_toInteger(b_number));
-        buffer[length] = (unsigned char)num;
-        length++;
+        buffer[(*length)++] = (unsigned char)num;
     })
 }
 
@@ -189,6 +191,7 @@ IMPLEMENT_SELF_VTABLE() {
     vtable->writeAll = _ByteBuffer_writeAll_impl;
     vtable->writeCString = _ByteBuffer_writeCString_impl;
     vtable->writeBuffer = _ByteBuffer_writeBuffer_impl;
+    vtable->consumeToBuffer = _ByteBuffer_consumeToBuffer_impl;
     // Object
     Object_vtable_t *object_vtable = (Object_vtable_t*)vtable;
     object_vtable->delete = _ByteBuffer_delete_impl;

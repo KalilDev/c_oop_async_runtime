@@ -130,4 +130,8 @@ IMPLEMENT_CONSTRUCTOR(new, Function onData, Function onError, Function onDone, F
     this.data->listenerLoop = EventLoop_current();
 }
 
+IMPLEMENT_SELF_GETTER(bool, cancelOnError) {
+    return this.data->cancelOnError;
+}
+
 #undef Self

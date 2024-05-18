@@ -37,6 +37,7 @@ FORWARD_DECL_THROWABLE
     IMPLEMENTS(Stream)                                     \
     IMPLEMENTS(Sink)
 
+#define PARAMS_INVOCATION_StreamController_addError error
 #define ENUMERATE_STREAM_CONTROLLER_METHODS(METHOD) \
     METHOD(void, addError, Throwable error)
 
