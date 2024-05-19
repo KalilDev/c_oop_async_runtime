@@ -3,11 +3,13 @@
 #include "FileSystemEntity.h"
 #include "File.h"
 #include "Future.h"
+#include "Stream.h"
 #include "Directory.h"
 #include "RandomAccessFile.h"
 #include "primitive/StringRef.h"
 #include "IOException.h"
 #include "Future.h"
+#include "FileReadStream.h"
 #include <assert.h>
 
 #include <sys/sendfile.h>
@@ -133,6 +135,11 @@ IMPLEMENT_SELF_METHOD(Future, open, FileMode mode){
     Lambda_FileOpenAsync lambda = Lambda_FileOpenAsync$make_new(this, mode);
     return Future_computation(lambda.asFunction);
 }
+
+IMPLEMENT_SELF_METHOD(Stream, openRead){
+    return FileReadStream_as_Stream(FileReadStream$make_new(this));
+}
+
 IMPLEMENT_SELF_METHOD(RandomAccessFile, openSync, FileMode mode, THROWS){
     String path = this.data->super.path;
     const char* modes;
@@ -172,6 +179,12 @@ IMPLEMENT_OVERRIDE_METHOD(FileSystemEntity, FileSystemEntity, absolute, THROWS) 
     return File$make_new(absolutePath).asFileSystemEntity;
 }
 
+IMPLEMENT_STATIC_METHOD(bool, isFileSync, String path) {
+    struct stat path_stat;
+    stat(String_cStringView(path), &path_stat);
+    return S_ISREG(path_stat.st_mode);
+}
+
 IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
     File self = DOWNCAST(this, File);
     String path = self.data->super.path;
@@ -199,6 +212,7 @@ IMPLEMENT_SELF_VTABLE() {
     vtable->lengthSync = _File_lengthSync_impl;
     vtable->open = _File_open_impl;
     vtable->openSync = _File_openSync_impl;
+    vtable->openRead = _File_openRead_impl;
     // FileSystemEntity
     FileSystemEntity_vtable_t *fs_entity_vtable = (FileSystemEntity_vtable_t *)vtable;
     fs_entity_vtable->absolute = _File_absolute_impl;

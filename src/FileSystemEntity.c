@@ -2,6 +2,8 @@
 #include "oop.h"
 #include "FileSystemEntity.h"
 #include <assert.h>
+#include <string.h>
+#include <libgen.h>
 
 #define Self FileSystemEntity
 #define Super() Object_vtable()
@@ -36,6 +38,14 @@ IMPLEMENT_SELF_VTABLE() {
 
 IMPLEMENT_SELF_GETTER(String, path) {
     return this.data->path;
+}
+IMPLEMENT_SELF_GETTER(String, name) {
+    char *pathcstring = strdup(String_cStringView(FileSystemEntity_path(this)));
+    // messy api holy shit
+    char *name = basename(pathcstring);
+    char *res = strdup(name);
+    free(pathcstring);
+    return String$make_own(res);
 }
 
 #undef Self

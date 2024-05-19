@@ -32,7 +32,7 @@ typedef enum FileMode {
 FORWARD_DECL_CLASS(RandomAccessFile)
 FORWARD_DECL_CLASS(Directory)
 FORWARD_DECL_CLASS(Future)
-
+FORWARD_DECL_CLASS(Stream)
 FORWARD_DECL_THROWABLE
 #define PARAMS_INVOCATION_File_readStringSync THROWS_PARAM_INVOCATION
 #define PARAMS_INVOCATION_File_copy newPath, THROWS_PARAM_INVOCATION
@@ -51,7 +51,8 @@ FORWARD_DECL_THROWABLE
     METHOD(bool, existsSync, THROWS)           \
     METHOD(size_t, lengthSync, THROWS)         \
     METHOD(RandomAccessFile, openSync, FileMode mode, THROWS) \
-    METHOD(Future, open, FileMode mode)
+    METHOD(Future, open, FileMode mode) \
+    METHOD(Stream, openRead)
 
 #define ENUMERATE_FILE_GETTERS(ATTRIBUTE) \
 
@@ -61,13 +62,16 @@ FORWARD_DECL_THROWABLE
 #define ENUMERATE_FILE_CONSTRUCTORS(CONSTRUCTOR) \
     CONSTRUCTOR(new, String path)
 
+#define ENUMERATE_FILE_STATIC_METHODS(METHOD) \
+    METHOD(bool, isFileSync, String path)
+
 DEFINE_SELF_CLASS(
         ENUMERATE_FILE_PARENTS,
         NO_IMPLEMENTS,
         ENUMERATE_FILE_METHODS,
         ENUMERATE_FILE_ATTRIBUTES,
         ENUMERATE_FILE_CONSTRUCTORS,
-        NO_STATIC_METHODS,
+        ENUMERATE_FILE_STATIC_METHODS,
         NO_STATIC_ATTRIBUTES,
         ENUMERATE_FILE_GETTERS
 )

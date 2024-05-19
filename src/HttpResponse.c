@@ -84,6 +84,10 @@ IMPLEMENT_OVERRIDE_METHOD(Future, IOSink, flush) {
     return IOSink_flush(Socket_as_IOSink(self.data->socket));
 }
 
+IMPLEMENT_OVERRIDE_METHOD(Future, IOSink, addStream, Stream stream) {
+    Self self = IOSink_as_HttpResponse(this);
+    return IOSink_addStream(Socket_as_IOSink(self.data->socket), stream);
+}
 
 IMPLEMENT_OVERRIDE_METHOD(void, Sink, add, Object value) {
     Self self = Sink_as_HttpResponse(this);
@@ -120,6 +124,7 @@ IMPLEMENT_SELF_VTABLE() {
         offsetof(struct HttpResponse_vtable_t, IOSink_vtable)
     );
     iosink_vtable->flush = _HttpResponse_flush_impl;
+    iosink_vtable->addStream = _HttpResponse_addStream_impl;
     // Sink
     Sink_vtable_t *sink_vtable = (Sink_vtable_t *)iosink_vtable;
     sink_vtable->add = _HttpResponse_add_impl;

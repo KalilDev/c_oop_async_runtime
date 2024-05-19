@@ -138,6 +138,12 @@ IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
     return String_format_c("Directory({})", path);
 }
 
+IMPLEMENT_STATIC_METHOD(bool, isDirectorySync, String path) {
+    struct stat path_stat;
+    stat(String_cStringView(path), &path_stat);
+    return S_ISDIR(path_stat.st_mode);
+}
+
 IMPLEMENT_CONSTRUCTOR(new, String path) {
     FileSystemEntity$new(this.asFileSystemEntity, path);
 }

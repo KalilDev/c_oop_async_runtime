@@ -25,7 +25,8 @@ FORWARD_DECL_THROWABLE
     METHOD(FileSystemEntity, absolute, THROWS)
 
 #define ENUMERATE_FILE_SYSTEM_ENTITY_GETTERS(ATTRIBUTE) \
-    ATTRIBUTE(String, path)
+    ATTRIBUTE(String, path) \
+    ATTRIBUTE(String, name)
 
 #define ENUMERATE_FILE_SYSTEM_ENTITY_ATTRIBUTES(ATTRIBUTE) \
     ATTRIBUTE(String, path)

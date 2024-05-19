@@ -68,6 +68,7 @@ IMPLEMENT_LAMBDA(OnHttpRequestError, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpServ
     Lambda_OnHttpRequestReady self = DOWNCAST(this, Lambda_OnHttpRequestReady);
     HttpServer myself = self.data->myself;
     Throwable error = va_arg(args, Throwable);
+    APPEND_STACK(error);
     StreamController requestsController = myself.data->requestsController;
     StreamController_addError(requestsController, error);
 }

@@ -46,7 +46,8 @@ FORWARD_DECL_THROWABLE
     ATTRIBUTE(socklen_t, addrlen)              \
     ATTRIBUTE(ByteBuffer, queued)              \
     ATTRIBUTE(StreamController, streamController)                 \
-    ATTRIBUTE(IOCoroutine, coroutine)
+    ATTRIBUTE(IOCoroutine, coroutine) \
+    ATTRIBUTE(StreamSubscription, addedStreamSubs)
 
 
 DEFINE_SELF_CLASS(

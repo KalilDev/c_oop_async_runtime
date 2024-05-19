@@ -31,9 +31,17 @@ START_CLASS
 #define ENUMERATE_IO_COROUTINE_CONSTRUCTORS(CONSTRUCTOR) \
     CONSTRUCTOR(new, Function step, int fd, short usedEvents)
 
+typedef enum IOCoroutineState {
+    IOCoroutineState$pending,
+    IOCoroutineState$enabled,
+    IOCoroutineState$disabled,
+    IOCoroutineState$removed,
+} IOCoroutineState;
+
 #define ENUMERATE_IO_COROUTINE_ATTRIBUTES(ATTRIBUTE) \
     ATTRIBUTE(int, fd)                       \
-    ATTRIBUTE(Function, step)
+    ATTRIBUTE(Function, step)                        \
+    ATTRIBUTE(IOCoroutineState, state)
 
 DEFINE_SELF_CLASS(
         ENUMERATE_IO_COROUTINE_PARENTS,

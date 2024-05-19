@@ -4,6 +4,9 @@
 #include "stddef.h"
 #include "oop.h"
 #include "string.h"
+#include "Stream.h"
+#include "Completer.h"
+#include "Stream.h"
 #include "StringBuffer.h"
 #include <strings.h>
 #include <assert.h>
@@ -68,6 +71,7 @@ IMPLEMENT_SELF_METHOD(void, sendOverqueuedSync, THROWS) {
         size_t toBeSentCount = ByteBuffer_consumeToBuffer(queued, chunk, CHUNK);
 
         ssize_t res = write(this.data->sockfd, chunk, toBeSentCount);
+        queuedCount -= toBeSentCount;
         if (res < 0) {
             THROW(IOException$make_fromErrno())
         }
@@ -79,6 +83,46 @@ IMPLEMENT_OVERRIDE_METHOD(Future, IOSink, flush) {
     _Socket_sendOverqueuedSync_impl(self, CRASH_ON_EXCEPTION);
     _Socket_sendChunkSync_impl(self, CRASH_ON_EXCEPTION);
     return Future$make_value(null);
+}
+#define CAPTURE_MYSELF_AND_COMPLETER(CAPTURE) \
+    CAPTURE(Socket, myself)                   \
+    CAPTURE(Completer, completer)
+
+IMPLEMENT_LAMBDA(OnAddedStreamData, CAPTURE_MYSELF_AND_COMPLETER, NO_OWNED_CAPTURES, Socket myself, Completer completer) {
+    Lambda_OnAddedStreamData self = DOWNCAST(this, Lambda_OnAddedStreamData);
+    Object data = va_arg(args, Object);
+    Socket myself = self.data->myself;
+    Sink_add(Socket_as_IOSink(myself).asSink, data);
+}
+
+IMPLEMENT_LAMBDA(OnAddedStreamError, CAPTURE_MYSELF_AND_COMPLETER, NO_OWNED_CAPTURES, Socket myself, Completer completer) {
+    Lambda_OnAddedStreamError self = DOWNCAST(this, Lambda_OnAddedStreamError);
+    Throwable error = va_arg(args, Throwable);
+    Socket myself = self.data->myself;
+    Completer completer = self.data->completer;
+    Completer_completeException(completer, error);
+}
+
+IMPLEMENT_LAMBDA(OnAddedStreamDone, CAPTURE_MYSELF_AND_COMPLETER, NO_OWNED_CAPTURES, Socket myself, Completer completer) {
+    Lambda_OnAddedStreamError self = DOWNCAST(this, Lambda_OnAddedStreamError);
+    Socket myself = self.data->myself;
+    Completer completer = self.data->completer;
+
+    Completer_complete(completer, null);
+}
+
+IMPLEMENT_OVERRIDE_METHOD(Future, IOSink, addStream, Stream stream) {
+    Socket self = IOSink_as_Socket(this);
+    assert(Object_isNull(self.data->addedStreamSubs.asObject));
+    Completer completer = Completer$make_new();
+    self.data->addedStreamSubs = Stream_listen(
+        stream,
+        Lambda_OnAddedStreamData$make_new(self, completer).asFunction,
+        Lambda_OnAddedStreamError$make_new(self, completer).asFunction,
+        Lambda_OnAddedStreamDone$make_new(self, completer).asFunction,
+        True
+    );
+    return Completer_future(completer);
 }
 
 IMPLEMENT_OVERRIDE_METHOD(void, Sink, close) {
@@ -241,6 +285,7 @@ IMPLEMENT_SELF_VTABLE() {
         offsetof(struct Socket_vtable_t, IOSink_vtable)
     );
     io_sink_vtable->flush = _Socket_flush_impl;
+    io_sink_vtable->addStream = _Socket_addStream_impl;
     // Sink
     Sink_vtable_t *sink_vtable = (Sink_vtable_t*)io_sink_vtable;
     sink_vtable->add = _Socket_add_impl;
@@ -268,6 +313,7 @@ IMPLEMENT_CONSTRUCTOR(new, int sockfd, const struct sockaddr* addr, socklen_t ad
         Lambda_OnListen$make_new(this).asFunction,
         Lambda_OnCancel$make_new(this).asFunction
     );
+    this.data->addedStreamSubs = DOWNCAST(null, StreamSubscription);
 }
 
 IMPLEMENT_STATIC_METHOD(Socket, connectSync, int domain, const struct sockaddr* addr, socklen_t addrlen, THROWS) {

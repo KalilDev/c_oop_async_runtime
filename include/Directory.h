@@ -43,7 +43,8 @@ FORWARD_DECL_CLASS(List)
     CONSTRUCTOR(new, String path)
 
 #define ENUMERATE_DIRECTORY_STATIC_METHODS(ATTRIBUTE) \
-    ATTRIBUTE(Directory, current)
+    ATTRIBUTE(Directory, current)                     \
+    ATTRIBUTE(bool, isDirectorySync, String path)
 
 DEFINE_SELF_CLASS(
         ENUMERATE_DIRECTORY_PARENTS,
