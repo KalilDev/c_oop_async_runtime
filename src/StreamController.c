@@ -63,10 +63,21 @@ IMPLEMENT_SELF_METHOD(void, addError, Throwable error) {
     List bufferedEvents = self.data->bufferedEvents;
     List_add(bufferedEvents, AsyncEvent$make_error(error).asObject, CRASH_ON_EXCEPTION);
 }
+#define CAPTURE_MYSELF(CAPTURE) \
+    CAPTURE(StreamController, myself)
+
+IMPLEMENT_LAMBDA(OnCancel, CAPTURE_MYSELF, NO_OWNED_CAPTURES, StreamController myself) {
+    Lambda_OnCancel self = DOWNCAST(this, Lambda_OnCancel);
+    StreamController myself = self.data->myself;
+    Function onCancel = myself.data->onCancelSubscription;
+
+    return Function_call(onCancel, 1, myself);
+}
 
 IMPLEMENT_OVERRIDE_METHOD(StreamSubscription, Stream, listen, Function onData, Function onError, Function onDone, Bool cancelOnError) {
     Self self = Stream_as_StreamController(this);
-    StreamSubscription subs = StreamSubscription$make_new(onData, onError, onDone, self.data->onCancelSubscription, cancelOnError);
+    Function onCancel = Lambda_OnCancel$make_new(self).asFunction;
+    StreamSubscription subs = StreamSubscription$make_new(onData, onError, onDone, onCancel, cancelOnError);
     self.data->subs = subs;
     List bufferedEvents = self.data->bufferedEvents;
     if (List_length(bufferedEvents) != 0) {
@@ -77,8 +88,8 @@ IMPLEMENT_OVERRIDE_METHOD(StreamSubscription, Stream, listen, Function onData, F
         })
         List_setLength(bufferedEvents, 0, CRASH_ON_EXCEPTION);
     }
-    // TODO: Exception
-    // TODO: Should this be async?
+    // TODO: Exception: and if there were, close the controller
+    // TODO: Should this be async?: Nope
     Function_call(self.data->onListen, 2, self, subs);
     return subs;
 }

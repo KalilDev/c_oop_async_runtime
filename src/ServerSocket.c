@@ -6,22 +6,19 @@
 #include "oop.h"
 #include "string.h"
 #include "StringBuffer.h"
-#include <strings.h>
 #include <assert.h>
 #include <unistd.h>
 #include <errno.h>
-#include "String.h"
 #include "primitive/StringRef.h"
 #include "foreach.h"
 #include "GrowableList.h"
 #include "Throwable.h"
-#include "Future.h"
 #include "IOException.h"
 #include "Function.h"
 #include "primitive/Bool.h"
 #include "StreamSubscription.h"
 #include "UInt8List.h"
-#include <threads.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 
 #define Super() Object_vtable()
@@ -45,85 +42,102 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     Super()->delete(this);
 }
 
-#define ENUMERATE_SSM_CAPTURES(CAPTURE) \
-    CAPTURE(ServerSocket, myself)
-
-
-IMPLEMENT_LAMBDA(ServerSocketMain, ENUMERATE_SSM_CAPTURES, NO_OWNED_CAPTURES, ServerSocket myself) {
-    Lambda_ServerSocketMain self = DOWNCAST(this, Lambda_ServerSocketMain);
-    ServerSocket myself = self.data->myself;
-    int sockfd = myself.data->sockfd;
-    StreamSubscription subscription = myself.data->subs;
-    THROWS = va_arg(args, Throwable*);
-
-    struct sockaddr clientAddr;
-    size_t clientAddrLen;
-    int clientFd;
-    while ((clientFd = accept(sockfd, &clientAddr, (socklen_t*)&clientAddrLen)) > 0) {
-        Socket connection = Socket$make_new(clientFd, &clientAddr, clientAddrLen);
-        StreamSubscription_handleData(subscription, connection.asObject);
-    }
-    Throwable error = IOException$make_fromErrno().asThrowable;
-    StreamSubscription_handleError(subscription, error);
-    StreamSubscription_handleDone(subscription);
-}
-
 #define MAX_CONNECTIONS 200
-void startServerSocket(ServerSocket this) {
-    int sockfd = this.data->sockfd;
-    StreamSubscription  subscription = this.data->subs;
-    Throwable EXCEPTION = DOWNCAST(null, Throwable);
-    int success = listen(sockfd, MAX_CONNECTIONS);
-    if (success < 0) {
-        Throwable error = IOException$make_fromErrno().asThrowable;
-        StreamSubscription_handleError(subscription, error);
-        StreamSubscription_handleDone(subscription);
-        return;
-    }
-    Thread thread = Thread_spawnSync(Lambda_ServerSocketMain$make_new(this).asFunction, &EXCEPTION);
-    if (!Object_isNull(EXCEPTION.asObject)) {
-        Object_delete(thread.asObject);
-        StreamSubscription_handleError(subscription, EXCEPTION);
-        StreamSubscription_handleDone(subscription);
-        return;
-    }
-    this.data->serverThread = thread;
-}
 
-#define ENUMERATE_CLOSE_CAPTURES(CAPTURE) \
+#define CAPTURE_MYSELF(CAPTURE) \
     CAPTURE(ServerSocket, myself)
 
-IMPLEMENT_LAMBDA(Close, ENUMERATE_CLOSE_CAPTURES, NO_OWNED_CAPTURES, ServerSocket myself) {
-    Lambda_Close self = DOWNCAST(this, Lambda_Close);
+IMPLEMENT_LAMBDA(OnCancel, CAPTURE_MYSELF, NO_OWNED_CAPTURES, ServerSocket myself) {
+    Lambda_OnCancel self = DOWNCAST(this, Lambda_OnCancel);
+    StreamController controller = va_arg(args, StreamController);
     ServerSocket myself = self.data->myself;
-    THROWS = va_arg(args, Throwable*);
-    if (Object_isNull(myself.data->subs.asObject)) {
+    IOCoroutine coroutine = myself.data->coroutine;
+    if (Object_isNull(coroutine.asObject)) {
+        StreamController_close(controller);
         return null;
     }
-    Thread_kill(myself.data->serverThread, KillUrgency$immediate);
-    StreamSubscription_handleDone(myself.data->subs);
+    IOCoroutine_remove(coroutine);
+    StreamController_close(controller);
     return null;
 }
 
-#define ENUMERATE_START_CAPTURES(CAPTURE) \
-    CAPTURE(ServerSocket, myself)
+#define ENUMERATE_STEP_CAPTURES(CAPTURE) \
+    CAPTURE(ServerSocket, myself)                \
+    CAPTURE(StreamController, controller)
 
-IMPLEMENT_LAMBDA(Start, ENUMERATE_START_CAPTURES, NO_OWNED_CAPTURES, ServerSocket myself) {
-    Lambda_Start self = DOWNCAST(this, Lambda_Start);
+
+IMPLEMENT_LAMBDA(Step, ENUMERATE_STEP_CAPTURES, NO_OWNED_CAPTURES, ServerSocket myself, StreamController controller) {
+    Lambda_Step looper = DOWNCAST(this, Lambda_Step);
+    ServerSocket myself = looper.data->myself;
+    StreamController controller = looper.data->controller;
+    int sockfd = myself.data->sockfd;
+    Throwable error = DOWNCAST(null, Throwable);
+    Socket connection = DOWNCAST(null, Socket);
+    THROWS = &error;
+    {
+        struct sockaddr clientAddr;
+        size_t clientAddrLen;
+        int clientFd = accept(sockfd, &clientAddr, (socklen_t*)&clientAddrLen);
+        if (clientFd < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                // We are not blocking, so just loop again
+                goto loop;
+            }
+            *EXCEPTION = IOException$make_fromErrno().asThrowable;
+            APPEND_STACK(error);
+            goto thrown;
+        }
+        connection = Socket$make_new(clientFd, &clientAddr, clientAddrLen);
+    }
+
+
+    data:
+
+    StreamController_add(controller, connection.asObject);
+
+    goto loop;
+    thrown:;
+    Throwable _error = *EXCEPTION;
+    *EXCEPTION = DOWNCAST(null, Throwable);
+    StreamController_addError(controller, _error);
+    loop:
+
+    // Recurse again in the next microtask
+    return True.asObject;
+    done:
+
+    StreamController_close(controller);
+    return False.asObject;
+}
+
+IMPLEMENT_LAMBDA(OnListen, CAPTURE_MYSELF, NO_OWNED_CAPTURES, ServerSocket myself) {
+    Lambda_OnListen self = DOWNCAST(this, Lambda_OnListen);
     ServerSocket myself = self.data->myself;
-    THROWS = va_arg(args, Throwable*);
-    startServerSocket(myself);
+    int sockfd = myself.data->sockfd;
+    THROWS = CRASH_ON_EXCEPTION;
+    StreamController controller = va_arg(args, StreamController);
+    StreamSubscription subs = va_arg(args, StreamSubscription);
+
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    if (flags == -1) {
+        THROW(IOException$make_fromErrno(), null)
+    }
+    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) != 0) {
+        THROW(IOException$make_fromErrno(), null)
+    }
+    int success = listen(sockfd, MAX_CONNECTIONS);
+    if (success < 0) {
+        THROW(IOException$make_fromErrno(), null)
+    }
+    Function stepper = Lambda_Step$make_new(myself, controller).asFunction;
+    IOCoroutine coro = IOCoroutine$make_new(stepper, sockfd, -1);
+    myself.data->coroutine = coro;
     return null;
 }
 
 IMPLEMENT_OVERRIDE_METHOD(StreamSubscription, Stream, listen, Function onData, Function onError, Function onDone, Bool cancelOnError) {
     Self self = Stream_as_ServerSocket(this);
-    Function onCancel = Lambda_Close$make_new(self).asFunction;
-    StreamSubscription subs = StreamSubscription$make_new(onData, onError, onDone, onCancel, cancelOnError);
-    self.data->subs = subs;
-    Function start = Lambda_Start$make_new(self).asFunction;
-    Future_computation(start);
-    return subs;
+    return Stream_listen(StreamController_as_Stream(self.data->streamController), onData, onError, onDone, cancelOnError);
 }
 
 IMPLEMENT_SELF_VTABLE() {
@@ -159,7 +173,11 @@ IMPLEMENT_CONSTRUCTOR(new, int domain, int sockfd, const struct sockaddr* addr, 
     this.data->addr = malloc(addrlen);
     memcpy((struct sockaddr*)this.data->addr, addr, addrlen);
     this.data->addrlen = addrlen;
-    this.data->subs = DOWNCAST(null, StreamSubscription);
+    this.data->coroutine = DOWNCAST(null, IOCoroutine);
+    this.data->streamController = StreamController$make_new(
+            Lambda_OnListen$make_new(this).asFunction,
+            Lambda_OnCancel$make_new(this).asFunction
+    );
 }
 
 IMPLEMENT_STATIC_METHOD(ServerSocket, bindSync, int domain, const struct sockaddr* addr, socklen_t addrlen, THROWS) {

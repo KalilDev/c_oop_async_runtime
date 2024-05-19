@@ -6,6 +6,8 @@
 #include "Stream.h"
 #include "Thread.h"
 #include "StreamSubscription.h"
+#include "StreamController.h"
+#include "IOCoroutine.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -43,8 +45,8 @@ FORWARD_DECL_THROWABLE
     ATTRIBUTE(int, sockfd)                                        \
     ATTRIBUTE(const struct sockaddr*, addr)                       \
     ATTRIBUTE(socklen_t, addrlen)                     \
-    ATTRIBUTE(Thread, serverThread)                   \
-    ATTRIBUTE(StreamSubscription, subs)
+    ATTRIBUTE(StreamController, streamController)                 \
+    ATTRIBUTE(IOCoroutine, coroutine)
 
 DEFINE_SELF_CLASS(
         ENUMERATE_SERVER_SOCKET_PARENTS,
