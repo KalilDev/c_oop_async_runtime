@@ -24,7 +24,6 @@ IMPLEMENT_LAMBDA(CompleteOnDataOnNextMicrotask, ENUMERATE_CODONM_CAPTURES, NO_OW
     Object value = self.data->value;
     Function onData = self.data->onData;
     THROWS = va_arg(args, Throwable*);
-    printf("completeOnData\n");
     Object res = Function_call(onData, 2, value, EXCEPTION);
     if (HAS_EXCEPTION) {
         RETHROW(null)
@@ -69,7 +68,6 @@ IMPLEMENT_SELF_METHOD(Future, handleData, Object data) {
         // todo: free error
         return Future$make__();
     }
-    printf("handleData\n");
     Function computation = Lambda_CompleteOnDataOnNextMicrotask$make_new(data, this.data->onData).asFunction;
     return Future_computationAt(computation, this.data->listenerLoop);
 }

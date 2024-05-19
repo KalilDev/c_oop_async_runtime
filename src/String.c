@@ -95,6 +95,16 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     Super()->delete(this);
 }
 
+IMPLEMENT_OVERRIDE_METHOD(bool, Object, equals, Object other) {
+    String self = DOWNCAST(this, String);
+    String otherString = String$$fromObject(other);
+    if (String_length(self) != String_length(otherString)) {
+        return false;
+    }
+    char* self_string = String_cStringView(self);
+    char* other_string = String_cStringView(otherString);
+    return strcmp(self_string, other_string) == 0;
+}
 IMPLEMENT_OVERRIDE_METHOD(String, Object, toString) {
     String self = DOWNCAST(this, String);
 
@@ -137,6 +147,7 @@ IMPLEMENT_SELF_VTABLE() {
     Object_vtable_t *object_vtable = (Object_vtable_t*)vtable;
     object_vtable->delete = _String_delete_impl;
     object_vtable->toString = _String_toString_impl;
+    object_vtable->equals = _String_equals_impl;
 }
 
 OBJECT_CAST_IMPL(Iterable, String)

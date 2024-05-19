@@ -56,13 +56,10 @@ IMPLEMENT_LAMBDA(ServerSocketMain, ENUMERATE_SSM_CAPTURES, NO_OWNED_CAPTURES, Se
     StreamSubscription subscription = myself.data->subs;
     THROWS = va_arg(args, Throwable*);
 
-    fprintf(stderr, "on thread\n");
     struct sockaddr clientAddr;
     size_t clientAddrLen;
     int clientFd;
-    fprintf(stderr, "accept\n");
     while ((clientFd = accept(sockfd, &clientAddr, (socklen_t*)&clientAddrLen)) > 0) {
-        fprintf(stderr, "accepted\n");
         Socket connection = Socket$make_new(clientFd, &clientAddr, clientAddrLen);
         StreamSubscription_handleData(subscription, connection.asObject);
     }
@@ -75,7 +72,6 @@ IMPLEMENT_LAMBDA(ServerSocketMain, ENUMERATE_SSM_CAPTURES, NO_OWNED_CAPTURES, Se
 void startServerSocket(ServerSocket this) {
     int sockfd = this.data->sockfd;
     StreamSubscription  subscription = this.data->subs;
-    fprintf(stderr, "listen\n");
     Throwable EXCEPTION = DOWNCAST(null, Throwable);
     int success = listen(sockfd, MAX_CONNECTIONS);
     if (success < 0) {
@@ -84,8 +80,6 @@ void startServerSocket(ServerSocket this) {
         StreamSubscription_handleDone(subscription);
         return;
     }
-    fprintf(stderr, "success\n");
-    fprintf(stderr, "thread\n");
     Thread thread = Thread_spawnSync(Lambda_ServerSocketMain$make_new(this).asFunction, &EXCEPTION);
     if (!Object_isNull(EXCEPTION.asObject)) {
         Object_delete(thread.asObject);

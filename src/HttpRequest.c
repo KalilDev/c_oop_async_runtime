@@ -255,7 +255,6 @@ IMPLEMENT_LAMBDA(HttpRequestOnData, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpReque
     List receivedBytes = List$$fromObject(va_arg(args, Object));
     {
         autoclean(String) str = Object_toString(receivedBytes.asObject);
-        fprintf(stderr, "Data arrived: %s\n", String_cStringView(str));
     }
     StreamController bodyController = myself.data->bodyController;
     THROWS = va_arg(args, Throwable *);
@@ -280,14 +279,11 @@ IMPLEMENT_LAMBDA(HttpRequestOnData, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpReque
         // dont keep the \r and \n
         line[lineLength - 2] = '\0';
         String lineString = String$make_own_len(line, lineLength - 2);
-        fprintf(stderr, "Line: %s\n", line);
-        fprintf(stderr, "State: %s\n", stateString(state));
         myself.data->state = state = HttpRequest_processLine(myself, lineString, state);
         if (state == HttpRequestReceiveState$content || state == HttpRequestReceiveState$error) {
             break;
         }
     }
-    fprintf(stderr, "Finish State: %s\n", stateString(state));
     if (state == HttpRequestReceiveState$content) {
         Completer onReady = myself.data->onReady;
         Completer_complete(onReady, myself.asObject);
