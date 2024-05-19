@@ -6,6 +6,7 @@
 #include "Stream.h"
 #include "StreamController.h"
 #include "ByteBuffer.h"
+#include "IOCoroutine.h"
 #include "IOSink.h"
 #include <stdlib.h>
 #include <stdbool.h>
@@ -44,7 +45,9 @@ FORWARD_DECL_THROWABLE
     ATTRIBUTE(const struct sockaddr*, addr)                       \
     ATTRIBUTE(socklen_t, addrlen)              \
     ATTRIBUTE(ByteBuffer, queued)              \
-    ATTRIBUTE(StreamController, streamController)
+    ATTRIBUTE(StreamController, streamController)                 \
+    ATTRIBUTE(IOCoroutine, coroutine)
+
 
 DEFINE_SELF_CLASS(
         ENUMERATE_SOCKET_PARENTS,

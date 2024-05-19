@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <sys/socket.h>
 #include <threads.h>
+#include "poll.h"
 
 #define WITH_RTTI
 
@@ -29,11 +30,19 @@ START_CLASS
 
 FORWARD_DECL_CLASS(String)
 FORWARD_DECL_THROWABLE
-
+FORWARD_DECL_CLASS(IOCoroutine)
 #define PARAMS_INVOCATION_Thread_kill urgency
+#define PARAMS_INVOCATION_Thread_removeWatchedFd fd
+#define PARAMS_INVOCATION_Thread_watchFd fd, events
+#define PARAMS_INVOCATION_Thread_addCoroutine coroutine
+#define PARAMS_INVOCATION_Thread_removeCoroutine coroutine
 #define ENUMERATE_THREAD_METHODS(METHOD) \
     METHOD(Future, kill, KillUrgency urgency) \
-    METHOD(int, runInCurrentThread)
+    METHOD(int, runInCurrentThread)      \
+    METHOD(void, removeWatchedFd, int fd)\
+    METHOD(void, watchFd, int fd, short events) \
+    METHOD(void, addCoroutine, IOCoroutine coroutine) \
+    METHOD(void, removeCoroutine, IOCoroutine coroutine)
 
 #define PARAMS_INVOCATION_Thread$new main
 #define PARAMS_INVOCATION_Thread$main entry
@@ -60,7 +69,11 @@ typedef enum KillUrgency {
     ATTRIBUTE(Completer, completer)                  \
     ATTRIBUTE(EventLoop, loop)                 \
     ATTRIBUTE(ThreadChildren, children) \
-    ATTRIBUTE(ThreadChildren, siblings)
+    ATTRIBUTE(List, ioCoroutines) \
+    ATTRIBUTE(ThreadChildren, siblings)        \
+    ATTRIBUTE(struct pollfd *, watched_fds)    \
+    ATTRIBUTE(nfds_t, watched_fds_length)      \
+    ATTRIBUTE(nfds_t, watched_fds_capacity)
 
 DEFINE_SELF_CLASS(
         ENUMERATE_THREAD_PARENTS,

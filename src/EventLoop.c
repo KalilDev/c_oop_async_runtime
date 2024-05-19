@@ -10,6 +10,8 @@
 #include "Thread.h"
 #include <assert.h>
 #include <threads.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #define Super() Object_vtable()
 #define Self EventLoop
@@ -22,19 +24,20 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     // todo
 }
 
-IMPLEMENT_SELF_METHOD(void, blockUntilNextTask, THROWS) {
-    cnd_t *taskAdded = &this.data->taskAdded;
-    mtx_t *queueMutex = &this.data->queueMutex;
-    mtx_lock(queueMutex);
-    int res = cnd_wait(taskAdded, queueMutex);
-    mtx_unlock(queueMutex);
-    if (res == thrd_error) {
-        THROW(IOException$make_fromErrno())
-    }
-    if (res == thrd_success) {
+IMPLEMENT_SELF_METHOD(void, notifyWakeup) {
+    if (!this.data->wasStarted) {
         return;
     }
-    THROW(Exception$make_new(StringRef$wrap("Error").asString))
+    char msg = 'O';
+    write(this.data->wakeupFd, &msg, 1);
+}
+
+IMPLEMENT_SELF_METHOD(void, ackNotification) {
+    char msg = '\0';
+    ssize_t res = read(this.data->wakeupListenerFd, &msg, 1);
+    assert(res > 0);
+    assert(res == 1);
+    assert(msg == 'O');
 }
 
 IMPLEMENT_SELF_METHOD(Task, popTask) {
@@ -61,13 +64,18 @@ IMPLEMENT_SELF_METHOD(bool, empty) {
     return isEmpty;
 }
 IMPLEMENT_SELF_METHOD(void, pushTask, Task task) {
-    cnd_t *taskAdded = &this.data->taskAdded;
     mtx_t *queueMutex = &this.data->queueMutex;
     List tasks = this.data->enqueuedTasks;
     mtx_lock(queueMutex);
+    bool wasEmpty = List_length(tasks) == 0;
     List_add(tasks, task.asObject, CRASH_ON_EXCEPTION);
-    cnd_signal(taskAdded);
+    if (wasEmpty && !this.data->wasStarted) {
+        this.data->wasStarted = true;
+    }
     mtx_unlock(queueMutex);
+    if (wasEmpty) {
+        EventLoop_notifyWakeup(this);
+    }
 }
 
 IMPLEMENT_SELF_METHOD(Future, invokeTask, Task task) {
@@ -94,7 +102,8 @@ IMPLEMENT_SELF_VTABLE() {
     vtable->popTask = _EventLoop_popTask_impl;
     vtable->pushTask = _EventLoop_pushTask_impl;
     vtable->invokeTask = _EventLoop_invokeTask_impl;
-    vtable->blockUntilNextTask = _EventLoop_blockUntilNextTask_impl;
+    vtable->notifyWakeup = _EventLoop_notifyWakeup_impl;
+    vtable->ackNotification = _EventLoop_ackNotification_impl;
     vtable->drain = _EventLoop_drain_impl;
     vtable->empty = _EventLoop_empty_impl;
     // Object
@@ -109,7 +118,20 @@ IMPLEMENT_STATIC_METHOD(EventLoop, current) {
 IMPLEMENT_CONSTRUCTOR(new) {
     this.data->enqueuedTasks = List_new();
     mtx_init(&this.data->queueMutex, mtx_plain);
-    cnd_init(&this.data->taskAdded);
+    this.data->wasStarted = false;
+    int fds[2] = {0};
+    int res = pipe(fds);
+    if (res < 0) {
+        perror("event loop new");
+        return;
+    }
+    this.data->wakeupListenerFd = fds[0];
+    fcntl( fds[0], F_SETFL, fcntl(fds[0], F_GETFL) | O_NONBLOCK);
+    this.data->wakeupFd = fds[1];
+}
+
+IMPLEMENT_SELF_GETTER(int, fd) {
+    return this.data->wakeupListenerFd;
 }
 
 #undef Super

@@ -22,6 +22,7 @@
 #include "primitive/Bool.h"
 #include "StreamSubscription.h"
 #include "UInt8List.h"
+#include "IOCoroutine.h"
 
 #define Super() Object_vtable()
 #define Self Socket
@@ -88,7 +89,11 @@ IMPLEMENT_OVERRIDE_METHOD(void, Sink, close) {
     if (res < 0) {
         THROW(IOException$make_fromErrno())
     }
-    self.data->sockfd = -1;
+    IOCoroutine coroutine = self.data->coroutine;
+    if (Object_isNull(coroutine.asObject)){
+        return;
+    }
+    IOCoroutine_remove(coroutine);
 }
 
 #define CAPTURE_MYSELF(CAPTURE) \
@@ -106,16 +111,13 @@ IMPLEMENT_LAMBDA(OnCancel, CAPTURE_MYSELF, NO_OWNED_CAPTURES, Socket myself) {
     CAPTURE(StreamController, controller)
 
 
-IMPLEMENT_LAMBDA(Looper, ENUMERATE_LOOPER_CAPTURES, NO_OWNED_CAPTURES, Socket myself, StreamController controller) {
-    Lambda_Looper looper = DOWNCAST(this, Lambda_Looper);
+IMPLEMENT_LAMBDA(Step, ENUMERATE_LOOPER_CAPTURES, NO_OWNED_CAPTURES, Socket myself, StreamController controller) {
+    Lambda_Step looper = DOWNCAST(this, Lambda_Step);
     Socket myself = looper.data->myself;
     StreamController controller = looper.data->controller;
-        Throwable error = DOWNCAST(null, Throwable);
+    Throwable error = DOWNCAST(null, Throwable);
     UInt8List data = DOWNCAST(null, UInt8List);
     THROWS = &error;
-    if (myself.data->sockfd < 0 ) {
-        goto done;
-    }
     {
         ByteBuffer buffer = ByteBuffer$make_new();
         ByteBuffer_ensure(buffer, CHUNK, EXCEPTION);
@@ -165,33 +167,31 @@ IMPLEMENT_LAMBDA(Looper, ENUMERATE_LOOPER_CAPTURES, NO_OWNED_CAPTURES, Socket my
     loop:
 
     // Recurse again in the next microtask
-    return Future_computation(this).asObject;
+    return True.asObject;
     done:
 
     StreamController_close(controller);
-    return null;
+    return False.asObject;
 }
 
 IMPLEMENT_LAMBDA(OnListen, CAPTURE_MYSELF, NO_OWNED_CAPTURES, Socket myself) {
-    Lambda_OnCancel self = DOWNCAST(this, Lambda_OnCancel);
+    Lambda_OnListen self = DOWNCAST(this, Lambda_OnListen);
     Socket myself = self.data->myself;
     int sockfd = myself.data->sockfd;
     THROWS = CRASH_ON_EXCEPTION;
     StreamController controller = va_arg(args, StreamController);
     StreamSubscription subs = va_arg(args, StreamSubscription);
 
-    bool blocking = false;
     int flags = fcntl(sockfd, F_GETFL, 0);
     if (flags == -1) {
         THROW(IOException$make_fromErrno(), null)
     }
-    flags = blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
-    if (fcntl(sockfd, F_SETFL, flags) != 0) {
+    if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) != 0) {
         THROW(IOException$make_fromErrno(), null)
     }
-
-    Function looper = Lambda_Looper$make_new(myself, controller).asFunction;
-    Function_call(looper, 0);
+    Function stepper = Lambda_Step$make_new(myself, controller).asFunction;
+    IOCoroutine coro = IOCoroutine$make_new(stepper, sockfd, -1);
+    myself.data->coroutine = coro;
     return null;
 }
 
@@ -263,6 +263,7 @@ IMPLEMENT_CONSTRUCTOR(new, int sockfd, const struct sockaddr* addr, socklen_t ad
     memcpy((struct sockaddr*)this.data->addr, addr, addrlen);
     this.data->addrlen = addrlen;
     this.data->queued = ByteBuffer$make_new();
+    this.data->coroutine = DOWNCAST(null, IOCoroutine);
     this.data->streamController = StreamController$make_new(
         Lambda_OnListen$make_new(this).asFunction,
         Lambda_OnCancel$make_new(this).asFunction

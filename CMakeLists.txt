@@ -57,6 +57,7 @@ add_library(c_oop STATIC
         src/HttpRequest.c
         src/HttpHeaders.c
         src/HttpResponse.c
+        src/IOCoroutine.c
 )
 target_link_libraries(c_oop PRIVATE m)
 

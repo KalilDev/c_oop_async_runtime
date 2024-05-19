@@ -32,19 +32,25 @@ FORWARD_DECL_CLASS(Task)
     METHOD(void, pushTask, Task task)        \
     METHOD(Future, invokeTask, Task task)                                         \
     METHOD(void, drain)                      \
-    METHOD(bool, empty)                      \
-    METHOD(void, blockUntilNextTask, THROWS)
+    METHOD(bool, empty) \
+    METHOD(void, ackNotification) \
+    METHOD(void, notifyWakeup)
 
 #define ENUMERATE_EVENT_LOOP_CONSTRUCTORS(CONSTRUCTOR) \
     CONSTRUCTOR(new)
 
 #define ENUMERATE_EVENT_LOOP_ATTRIBUTES(ATTRIBUTE) \
     ATTRIBUTE(List, enqueuedTasks)                 \
-    ATTRIBUTE(cnd_t, taskAdded)                    \
-    ATTRIBUTE(mtx_t, queueMutex)
+    ATTRIBUTE(mtx_t, queueMutex) \
+    ATTRIBUTE(bool, wasStarted)                                                                         \
+    ATTRIBUTE(int, wakeupListenerFd)                          \
+    ATTRIBUTE(int, wakeupFd)
 
 #define ENUMERATE_EVENT_LOOP_STATIC_METHODS(METHOD) \
     METHOD(EventLoop, current)                                                    \
+
+#define ENUMERATE_EVENT_LOOP_GETTERS(GETTER) \
+    GETTER(int, fd)
 
 DEFINE_SELF_CLASS(
         ENUMERATE_EVENT_LOOP_PARENTS,
@@ -54,7 +60,7 @@ DEFINE_SELF_CLASS(
         ENUMERATE_EVENT_LOOP_CONSTRUCTORS,
         ENUMERATE_EVENT_LOOP_STATIC_METHODS,
         NO_STATIC_ATTRIBUTES,
-        NO_GETTERS
+        ENUMERATE_EVENT_LOOP_GETTERS
 )
 
 END_CLASS
