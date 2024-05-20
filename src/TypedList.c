@@ -13,6 +13,12 @@ IMPLEMENT_OPERATOR_NEW()
 ENUMERATE_TYPED_LIST_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
 IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_TYPED_LIST_PARENTS)
 
+IMPLEMENT_SELF_METHOD(void*, release)       {
+    void *buf = this.data->buffer;
+    this.data->buffer = NULL;
+    this.data->bufferSize = 0;
+    return buf;
+}
 IMPLEMENT_SELF_METHOD(UInt8List, releaseToUInt8list)       {
     UInt8List list = TypedList_asUInt8list(this);
     this.data->buffer = NULL;
@@ -57,6 +63,7 @@ IMPLEMENT_SELF_VTABLE() {
     // TypedList
     vtable->asUInt8list = _TypedList_asUInt8list_impl;
     vtable->releaseToUInt8list = _TypedList_releaseToUInt8list_impl;
+    vtable->release = _TypedList_release_impl;
     // List
     List_vtable_t *list_vtable = (List_vtable_t *)vtable;
     list_vtable->add = _TypedList_add_impl;

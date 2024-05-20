@@ -26,19 +26,23 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
 }
 
 IMPLEMENT_SELF_METHOD(void, notifyWakeup) {
-    if (!this.data->wasStarted) {
+    if (!this.data->needToBeNotified) {
         return;
     }
+    assert(!this.data->notified);
     char msg = 'O';
     write(this.data->wakeupFd, &msg, 1);
+    this.data->notified = true;
 }
 
 IMPLEMENT_SELF_METHOD(void, ackNotification) {
+    assert(this.data->notified);
     char msg = '\0';
     ssize_t res = read(this.data->wakeupListenerFd, &msg, 1);
     assert(res > 0);
     assert(res == 1);
     assert(msg == 'O');
+    this.data->notified = false;
 }
 
 IMPLEMENT_SELF_METHOD(Task, popTask) {
@@ -70,9 +74,6 @@ IMPLEMENT_SELF_METHOD(void, pushTask, Task task) {
     mtx_lock(queueMutex);
     bool wasEmpty = List_length(tasks) == 0;
     List_add(tasks, task.asObject, CRASH_ON_EXCEPTION);
-    if (wasEmpty && !this.data->wasStarted) {
-        this.data->wasStarted = true;
-    }
     mtx_unlock(queueMutex);
     if (wasEmpty) {
         EventLoop_notifyWakeup(this);
@@ -87,9 +88,13 @@ IMPLEMENT_SELF_METHOD(Future, invokeTask, Task task) {
 
 IMPLEMENT_SELF_METHOD(void, drain) {
     Task task = DOWNCAST(null, Task);
+    this.data->needToBeNotified = false;
+
     while (!Object_isNull((task = EventLoop_popTask(this)).asObject)) {
         Task_invokeSync(task);
     }
+
+    this.data->needToBeNotified = true;
 }
 #define Self EventLoop
 IMPLEMENT_SELF_METHOD(void, runUntilCompletion, Function onUnhandledAsyncException, THROWS) {
@@ -186,16 +191,7 @@ IMPLEMENT_SELF_METHOD(void, addCoroutine, IOCoroutine coroutine) {
 }
 
 IMPLEMENT_SELF_METHOD(void, removeCoroutine, IOCoroutine coroutine) {
-    // todo: remove
-    size_t i = 0;
-
-    foreach(Object, coro, List_as_Iterable(this.data->ioCoroutines), {
-        if (Object_equals(coro, coroutine.asObject)) {
-            break;
-        }
-        i++;
-    })
-    List_removeAt(this.data->ioCoroutines, i, CRASH_ON_EXCEPTION);
+    List_remove(this.data->ioCoroutines, coroutine.asObject, CRASH_ON_EXCEPTION);
 }
 
 // Beautiful piece of code!
@@ -256,7 +252,6 @@ IMPLEMENT_CONSTRUCTOR(new) {
     mtx_init(&this.data->queueMutex, mtx_plain);
     mtx_init(&this.data->ioCoroutinesMutex, mtx_plain);
     mtx_init(&this.data->watchedFdsMutex, mtx_plain);
-    this.data->wasStarted = false;
     int fds[2] = {0};
     int res = pipe(fds);
     if (res < 0) {
@@ -271,6 +266,9 @@ IMPLEMENT_CONSTRUCTOR(new) {
     this.data->watched_fds = NULL;
     this.data->watched_fds_capacity = 0;
     this.data->watched_fds_length = 0;
+
+    this.data->notified = false;
+    this.data->needToBeNotified = false;
 
     EventLoop_watchFd(this, fds[0], -1);
 }

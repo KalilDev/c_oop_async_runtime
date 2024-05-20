@@ -86,7 +86,7 @@ IMPLEMENT_OVERRIDE_METHOD(StreamSubscription, Stream, listen, Function onData, F
             // todo: what if the listener cancels?
             AsyncEvent_addToStreamSubscription(event, subs);
         })
-        List_setLength(bufferedEvents, 0, CRASH_ON_EXCEPTION);
+        List_clear(bufferedEvents, CRASH_ON_EXCEPTION);
     }
     // TODO: Exception: and if there were, close the controller
     // TODO: Should this be async?: Nope

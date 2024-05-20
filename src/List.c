@@ -57,6 +57,24 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     Super()->delete(this);
 }
 
+
+IMPLEMENT_SELF_METHOD(Object, remove, Object obj, THROWS) {
+    size_t i = 0;
+    Object result = null;
+    foreach(Object, e, List_as_Iterable(this), {
+        if (Object_equals(e, obj)) {
+            result = List_removeAt(this, i, EXCEPTION);
+            break;
+        }
+        i++;
+    })
+    return result;
+}
+
+IMPLEMENT_SELF_METHOD(void, clear, THROWS) {
+    List_setLength(this, 0, EXCEPTION);
+}
+
 IMPLEMENT_OVERRIDE_METHOD(Iterator, Iterable, iterator) {
     List self = Iterable_as_List(this);
     return ListIterator$make_new(self).asIterator;
@@ -87,6 +105,8 @@ IMPLEMENT_SELF_VTABLE() {
     // List
     vtable->join = _List_join_impl;
     vtable->add = _List_add_impl;
+    vtable->clear = _List_clear_impl;
+    vtable->remove = _List_remove_impl;
     // Iterable
     Iterable_vtable_t *iterable_vtable = &vtable->Iterable_vtable;
     initImplementedInterfaceVtable(

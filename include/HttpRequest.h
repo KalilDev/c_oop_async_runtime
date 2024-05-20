@@ -39,9 +39,11 @@ FORWARD_DECL_THROWABLE
     CONSTRUCTOR(fromTcp, Socket socket)
 
 #define PARAMS_INVOCATION_HttpRequest_processLine line, state
+#define PARAMS_INVOCATION_HttpRequest__addBytes bytes
 #define ENUMERATE_HTTP_REQUEST_METHODS(METHOD) \
     METHOD(HttpRequestReceiveState, processLine, String line, HttpRequestReceiveState state) \
     METHOD(void, startListening)               \
+    METHOD(void, _addBytes, UInt8List bytes)               \
     METHOD(HttpResponse, response)
 
 #define ENUMERATE_HTTP_REQUEST_IMPLEMENTS(IMPLEMENTS) \
@@ -51,7 +53,8 @@ FORWARD_DECL_THROWABLE
     ATTRIBUTE(Future, onReady)                    \
     ATTRIBUTE(String, method)\
     ATTRIBUTE(String, http)\
-    ATTRIBUTE(String, uri)
+    ATTRIBUTE(String, uri) \
+    ATTRIBUTE(HttpHeaders, headers)
 
 typedef enum HttpRequestReceiveState {
     HttpRequestReceiveState$command = 0,
@@ -72,7 +75,9 @@ typedef enum HttpRequestReceiveState {
     ATTRIBUTE(StreamSubscription, socketSubscription)\
     ATTRIBUTE(Completer, onReady)                    \
     ATTRIBUTE(HttpRequestReceiveState, state) \
-    ATTRIBUTE(HttpResponse, response)
+    ATTRIBUTE(HttpResponse, response) \
+    ATTRIBUTE(size_t, remainingContentBytes) \
+    ATTRIBUTE(bool, closedContentStream)
 
 
 DEFINE_SELF_CLASS(

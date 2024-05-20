@@ -206,6 +206,61 @@ Bool _directoryIndexRoute(HttpRequest request, HttpResponse response, Directory 
 
     return True;
 }
+
+#define CAPTURE_REQUEST_BYTES(CAPTURE)\
+    CAPTURE(UInt8List, requestBytes)
+
+IMPLEMENT_LAMBDA(PostRequestThread, CAPTURE_REQUEST_BYTES, NO_OWNED_CAPTURES, UInt8List requestBytes) {
+    Lambda_PostRequestThread self = DOWNCAST(this, Lambda_PostRequestThread);
+    UInt8List requestBytes = self.data->requestBytes;
+    printf("Thread spawned!\n");
+    fwrite(UInt8List_list(requestBytes), sizeof(unsigned char), UInt8List_length(requestBytes), stdout);
+    printf("\n");
+
+    printf("Body ^\n");
+
+    return null;
+}
+
+IMPLEMENT_LAMBDA(PostOnBodyReady, CAPTURE_REQUEST_AND_RESPONSE, NO_OWNED_CAPTURES, HttpRequest request, HttpResponse response) {
+    Lambda_PostOnBodyReady self = DOWNCAST(this, Lambda_PostOnBodyReady);
+    HttpRequest request = self.data->request;
+    HttpResponse response = self.data->response;
+
+    autoclean(Object) rawRes = va_arg(args, Object);
+    List listRes = List$$fromObject(rawRes);
+    autoclean(ByteBuffer) resBytes = ByteBuffer$make_new();
+    foreach(List, bytes, List_as_Iterable(listRes), {
+        ByteBuffer_writeAll(resBytes, bytes, CRASH_ON_EXCEPTION);
+    })
+
+    HttpResponse_setStatusCode(response, Integer$box_l(202));
+    HttpResponse_setStatusReason(response, StringRef$wrap("Accepted!").asString);
+    BUILD_RESPONSE
+    Ln("{")
+    Ln("  \"status\": \"accepted\"")
+    Ln("}")
+    END_RESPONSE
+    HttpHeaders_add(HttpResponse_headers(response), StringRef$wrap("Content-length").asString,  Object_toString(contentLength.asObject));
+    HttpHeaders_add(HttpResponse_headers(response), StringRef$wrap("Content-type").asString, StringRef$wrap("application/json").asString);
+    HttpResponse_send(response);
+
+    Thread thread = Thread_spawnSync(Lambda_PostRequestThread$make_new(ByteBuffer_releaseToBytes(resBytes)).asFunction ,CRASH_ON_EXCEPTION);
+
+    Sink_add(HttpResponse_as_Sink(response), content.asObject);
+    // TODO: onComplete
+    /*Future onComplete = */Sink_close(HttpResponse_as_Sink(response));
+
+    Object_delete(response.asObject);
+    Object_delete(request.asObject);
+
+}
+
+Bool postRoot(HttpRequest request, HttpResponse response) {
+    Future requestBody = Stream_toList(HttpRequest_as_Stream(request));
+    Future_then(requestBody, Lambda_PostOnBodyReady$make_new(request, response).asFunction);
+    return True;
+}
 Bool currentDirectoryIndexRoute(HttpRequest request, HttpResponse response) {
     Directory directory = Directory_current();
     return _directoryIndexRoute(request, response, directory);
@@ -267,6 +322,9 @@ Object route(HttpRequest request, HttpResponse response) {
 //    if (MATCHES_ROUTE("GET", "/style.css")) {
 //        return getStyle(request, response).asObject;
 //    }
+    if (MATCHES_ROUTE("POST", "/")) {
+        return postRoot(request, response).asObject;
+    }
     if (MATCHES_ROUTE("GET", "/")) {
         return currentDirectoryIndexRoute(request, response).asObject;
     }
@@ -335,7 +393,7 @@ IMPLEMENT_LAMBDA(OnDone, ENUMERATE_CAPTURES, NO_OWNED_CAPTURES, Completer comple
 Object Main(List arguments, THROWS) {
     HttpServer server = HttpServer_bindSync(
             StringRef$wrap("0.0.0.0").asString,
-            3000,
+            3001,
             EXCEPTION
     );
     if (HAS_EXCEPTION) {

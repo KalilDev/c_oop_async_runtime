@@ -10,7 +10,30 @@
 
 #define Self Object
 
-ENUMERATE_OBJECT_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
+long CONCAT(CONCAT(Object, _), getHashCode)(Object this) {
+    assert(this.vtable != NULL);
+    assert(this.vtable->getHashCode != NULL);
+    return _VIRTUAL_METHOD_INVOCATION(Object, getHashCode);
+}
+
+_Bool CONCAT(CONCAT(Object, _), equals)(Object this, Object other) {
+    assert(this.vtable != NULL);
+    assert(this.vtable->equals != NULL);
+    return _VIRTUAL_METHOD_INVOCATION(Object, equals, Object other);
+}
+
+void CONCAT(CONCAT(Object, _), delete)(Object this) {
+    assert(this.vtable != NULL);
+    assert(this.vtable->delete != NULL);
+    return _VIRTUAL_METHOD_INVOCATION(Object, delete);
+}
+
+String CONCAT(CONCAT(Object, _), toString)(Object this) {
+    assert(this.vtable != NULL);
+    assert(this.vtable->toString != NULL);
+    return _VIRTUAL_METHOD_INVOCATION(Object, toString);
+}
+
 IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_OBJECT_PARENTS)
 
 IMPLEMENT_OPERATOR_NEW()
@@ -194,9 +217,11 @@ initVtable(Object_vtable_t *selfVtable, Object_vtable_t *superVtable, size_t sup
     va_end(args);
 #endif
 }
+
 bool any_isNull(any any) {
     return any_isExactType(any, "Null");
 }
+
 Object any_asObject(any any) {
     switch (any.vtable->tag) {
         case OBJECT_VTABLE_TAG:

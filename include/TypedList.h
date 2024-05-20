@@ -14,6 +14,7 @@ START_CLASS
 
 FORWARD_DECL_CLASS(UInt8List)
 #define ENUMERATE_TYPED_LIST_METHODS(METHOD) \
+    METHOD(void*, release)       \
     METHOD(UInt8List, releaseToUInt8list)       \
     METHOD(UInt8List, asUInt8list)
 

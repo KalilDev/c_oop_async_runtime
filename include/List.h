@@ -27,16 +27,20 @@ FORWARD_DECL_THROWABLE
 #define PARAMS_INVOCATION_List_join sep
 #define PARAMS_INVOCATION_List_add element, THROWS_PARAM_INVOCATION
 #define PARAMS_INVOCATION_List_at i
+#define PARAMS_INVOCATION_List_remove obj, THROWS_PARAM_INVOCATION
 #define PARAMS_INVOCATION_List_removeAt i, THROWS_PARAM_INVOCATION
 #define PARAMS_INVOCATION_List_setAt i, obj
+#define PARAMS_INVOCATION_List_clear THROWS_PARAM_INVOCATION
 #define PARAMS_INVOCATION_List_setLength newLength, THROWS_PARAM_INVOCATION
 #define ENUMERATE_LIST_METHODS(METHOD) \
     METHOD(String, join, String sep)                           \
     METHOD(void, add, Object element, THROWS) \
     METHOD(Object, at, size_t i) \
     METHOD(void, setAt, size_t i, Object obj)                  \
+    METHOD(Object, remove, Object obj, THROWS)                                                     \
     METHOD(Object, removeAt, size_t i, THROWS)                  \
     METHOD(size_t, length) \
+    METHOD(void, clear, THROWS) \
     METHOD(void, setLength, size_t newLength, THROWS)
 
 #define ENUMERATE_LIST_CONSTRUCTORS(CONSTRUCTOR) \

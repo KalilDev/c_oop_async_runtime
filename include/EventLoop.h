@@ -57,14 +57,14 @@ FORWARD_DECL_CLASS(Task)
     ATTRIBUTE(mtx_t, queueMutex)                   \
     ATTRIBUTE(mtx_t, ioCoroutinesMutex)            \
     ATTRIBUTE(mtx_t, watchedFdsMutex)                                                \
-    ATTRIBUTE(bool, wasStarted)                                                                         \
     ATTRIBUTE(int, wakeupListenerFd)                          \
     ATTRIBUTE(int, wakeupFd) \
     ATTRIBUTE(List, ioCoroutines) \
     ATTRIBUTE(struct pollfd *, watched_fds)    \
     ATTRIBUTE(nfds_t, watched_fds_length)      \
-    ATTRIBUTE(nfds_t, watched_fds_capacity)
-
+    ATTRIBUTE(nfds_t, watched_fds_capacity) \
+    ATTRIBUTE(bool, notified)                      \
+    ATTRIBUTE(bool, needToBeNotified)
 #define ENUMERATE_EVENT_LOOP_STATIC_METHODS(METHOD) \
     METHOD(EventLoop, current)                                                    \
 

@@ -61,21 +61,11 @@ IMPLEMENT_SELF_METHOD(void, stopped, Thread thread, THROWS) {
     List threads = this.data->threads;
     mtx_lock(threadsMutex);
 
-    size_t index = 0;
-    bool found = false;
-    foreach(Thread, sibling, List_as_Iterable(threads), {
-        if (Object_equals(sibling.asObject, thread.asObject)) {
-            found = true;
-            break;
-        }
-        index++;
-    })
-    if (!found) {
+    Object removed = List_remove(threads, thread.asObject, CRASH_ON_EXCEPTION);
+    if (!Object_isNull(removed)) {
         mtx_unlock(threadsMutex);
         THROW(Exception$make_new(StringRef$wrap("Couldnt find the stopped thread").asString))
     }
-
-    List_removeAt(threads, index, EXCEPTION);
 
     if (HAS_EXCEPTION) {
         mtx_unlock(threadsMutex);

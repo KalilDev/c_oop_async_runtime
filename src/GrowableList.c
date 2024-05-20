@@ -97,8 +97,8 @@ IMPLEMENT_OVERRIDE_METHOD(void, List, setLength, size_t newLength, THROWS) {
         }
     } else {
         Object *elements = self.data->elements;
-        for (size_t i = length - 1; i >= newLength; i--) {
-            Object_delete(elements[i]);
+        for (size_t i = length; i > newLength; i--) {
+            Object_delete(elements[i - 1]);
         }
     }
     self.data->length = newLength;

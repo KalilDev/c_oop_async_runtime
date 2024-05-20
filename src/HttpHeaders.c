@@ -5,6 +5,8 @@
 #include "oop.h"
 #include "StringBuffer.h"
 #include <assert.h>
+#include <strings.h>
+#include <string.h>
 #include "String.h"
 #include "primitive/StringRef.h"
 #include "primitive/Integer.h"
@@ -50,8 +52,19 @@ IMPLEMENT_SELF_METHOD(void, encodeTo, Sink sink) {
     })
 }
 IMPLEMENT_SELF_METHOD(Integer, contentLength) {
-    // todo
-    return DOWNCAST(null, Integer);
+    const char* content_length = "Content-Length: ";
+    Integer result = DOWNCAST(null, Integer);
+    foreach(String, line, List_as_Iterable(this.data->headers), {
+        const char* lineCstring = String_cStringView(line);
+        if (strncasecmp(content_length, lineCstring, strlen(content_length)) != 0) {
+            continue;
+        }
+        size_t n = 0;
+        sscanf(lineCstring, "Content-Length: %lu", &n);
+        result = Integer$box_l(n);
+        break;
+    })
+    return result;
 }
 
 IMPLEMENT_SELF_VTABLE() {

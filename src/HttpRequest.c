@@ -247,6 +247,27 @@ const char *stateString(HttpRequestReceiveState state) {
             return "HttpRequestReceiveState.lineAfterHeaders";
     }
 }
+IMPLEMENT_SELF_METHOD(void, _addBytes, UInt8List bytes) {
+    // todo: fishy that im getting data. i should shutdown the socket
+    if (this.data->closedContentStream) {
+        return;
+    }
+    size_t length = UInt8List_length(bytes);
+    StreamController bodyController = this.data->bodyController;
+    size_t *remainingContentBytes = &this.data->remainingContentBytes;
+    size_t wantedBufferLen = *remainingContentBytes > length ? length : *remainingContentBytes;
+    if (wantedBufferLen < length) {
+        UInt8List list = UInt8List$make_fromBuffer(UInt8List_list(bytes), wantedBufferLen);
+        TypedList_release(bytes.asTypedList);
+        Object_delete(bytes.asObject);
+        bytes = list;
+    }
+    StreamController_add(bodyController, bytes.asObject);
+    (*remainingContentBytes) -= wantedBufferLen;
+    if (*remainingContentBytes == 0) {
+        StreamController_close(bodyController);
+    }
+}
 
 IMPLEMENT_LAMBDA(HttpRequestOnData, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpRequest myself) {
     Lambda_HttpRequestOnData self = DOWNCAST(this, Lambda_HttpRequestOnData);
@@ -287,12 +308,11 @@ IMPLEMENT_LAMBDA(HttpRequestOnData, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpReque
     if (state == HttpRequestReceiveState$content) {
         Completer onReady = myself.data->onReady;
         Completer_complete(onReady, myself.asObject);
+        HttpHeaders headers = myself.data->headers;
+        Integer contentLength = HttpHeaders_contentLength(headers);
+        myself.data->remainingContentBytes = Object_isNull(contentLength.asObject) ? 0 : contentLength.unwrap;
         UInt8List remainingBytes = ByteBuffer_releaseToBytes(scratchPad);
-        if (UInt8List_length(remainingBytes) != 0) {
-            StreamController_add(bodyController, remainingBytes.asObject);
-        } else {
-            Object_delete(remainingBytes.asObject);
-        }
+        HttpRequest__addBytes(myself, remainingBytes);
         return null;
     }
     if (state == HttpRequestReceiveState$error) {
@@ -340,6 +360,7 @@ IMPLEMENT_SELF_VTABLE() {
     vtable->processLine = _HttpRequest_processLine_impl;
     vtable->startListening = _HttpRequest_startListening_impl;
     vtable->response = _HttpRequest_response_impl;
+    vtable->_addBytes = _HttpRequest__addBytes_impl;
     // Stream
     Stream_vtable_t *stream_vtable = &vtable->Stream_vtable;
     initImplementedInterfaceVtable(
@@ -393,6 +414,7 @@ socket = socket;
 this.data->
 socketSubscription = DOWNCAST(null, StreamSubscription);
 this.data->response = DOWNCAST(null, HttpResponse);
+this.data->remainingContentBytes = 0;
 this.data->
 bodyController = StreamController$make_new(
         Lambda_OnListen$make_new(this).asFunction,
@@ -435,5 +457,8 @@ IMPLEMENT_SELF_GETTER(String, uri) {
     return this.data->uri;
 }
 
+IMPLEMENT_SELF_GETTER(HttpHeaders, headers) {
+    return this.data->headers;
+}
 #undef Super
 #undef Self
