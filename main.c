@@ -210,20 +210,12 @@ Bool _directoryIndexRoute(HttpRequest request, HttpResponse response, Directory 
 #define CAPTURE_REQUEST_BYTES(CAPTURE)\
     CAPTURE(UInt8List, requestBytes)
 
-IMPLEMENT_LAMBDA(PostRequestThread, CAPTURE_REQUEST_BYTES, NO_OWNED_CAPTURES, UInt8List requestBytes) {
-    Lambda_PostRequestThread self = DOWNCAST(this, Lambda_PostRequestThread);
-    UInt8List requestBytes = self.data->requestBytes;
-    printf("Thread spawned!\n");
-    fwrite(UInt8List_list(requestBytes), sizeof(unsigned char), UInt8List_length(requestBytes), stdout);
-    printf("\n");
 
-    printf("Body ^\n");
+#define CAPTURE_REQUEST_BYTES_STREAM(CAPTURE)\
+    CAPTURE(Stream, requestBytes)
 
-    return null;
-}
-
-IMPLEMENT_LAMBDA(PostOnBodyReady, CAPTURE_REQUEST_AND_RESPONSE, NO_OWNED_CAPTURES, HttpRequest request, HttpResponse response) {
-    Lambda_PostOnBodyReady self = DOWNCAST(this, Lambda_PostOnBodyReady);
+IMPLEMENT_LAMBDA(PostRequestThreadBodyArrived, CAPTURE_REQUEST_AND_RESPONSE, NO_OWNED_CAPTURES, HttpRequest request, HttpResponse response) {
+    Lambda_PostRequestThreadBodyArrived self = DOWNCAST(this, Lambda_PostRequestThreadBodyArrived);
     HttpRequest request = self.data->request;
     HttpResponse response = self.data->response;
 
@@ -233,6 +225,16 @@ IMPLEMENT_LAMBDA(PostOnBodyReady, CAPTURE_REQUEST_AND_RESPONSE, NO_OWNED_CAPTURE
     foreach(List, bytes, List_as_Iterable(listRes), {
         ByteBuffer_writeAll(resBytes, bytes, CRASH_ON_EXCEPTION);
     })
+    autoclean(UInt8List) requestBytes = ByteBuffer_releaseToBytes(resBytes);
+
+    Thread currentThread = Thread_current();
+    autoclean (String) threadString = Object_toString(currentThread.asObject);
+    printf("Request body arrived on %s\n", String_cStringView(threadString));
+    fwrite(UInt8List_list(requestBytes), sizeof(unsigned char), UInt8List_length(requestBytes), stdout);
+    printf("\n");
+    printf("Body ^\n");
+
+
 
     HttpResponse_setStatusCode(response, Integer$box_l(202));
     HttpResponse_setStatusReason(response, StringRef$wrap("Accepted!").asString);
@@ -245,22 +247,34 @@ IMPLEMENT_LAMBDA(PostOnBodyReady, CAPTURE_REQUEST_AND_RESPONSE, NO_OWNED_CAPTURE
     HttpHeaders_add(HttpResponse_headers(response), StringRef$wrap("Content-type").asString, StringRef$wrap("application/json").asString);
     HttpResponse_send(response);
 
-    Thread thread = Thread_spawnSync(Lambda_PostRequestThread$make_new(ByteBuffer_releaseToBytes(resBytes)).asFunction ,CRASH_ON_EXCEPTION);
-
     Sink_add(HttpResponse_as_Sink(response), content.asObject);
     // TODO: onComplete
     /*Future onComplete = */Sink_close(HttpResponse_as_Sink(response));
 
     Object_delete(response.asObject);
     Object_delete(request.asObject);
-
 }
+
+IMPLEMENT_LAMBDA(PostRequestThread, CAPTURE_REQUEST_AND_RESPONSE, NO_OWNED_CAPTURES, HttpRequest request, HttpResponse response) {
+    Lambda_PostRequestThread self = DOWNCAST(this, Lambda_PostRequestThread);
+    HttpRequest request = self.data->request;
+    HttpResponse response = self.data->response;
+    Thread currentThread = Thread_current();
+    autoclean (String) threadString = Object_toString(currentThread.asObject);
+
+    Future requestBytes = Stream_toList(HttpRequest_as_Stream(request));
+    Future_then(requestBytes, Lambda_PostRequestThreadBodyArrived$make_new(request, response).asFunction);
+
+    printf("%s is returing now!\n", String_cStringView(threadString));
+    return null;
+}
+
 
 Bool postRoot(HttpRequest request, HttpResponse response) {
-    Future requestBody = Stream_toList(HttpRequest_as_Stream(request));
-    Future_then(requestBody, Lambda_PostOnBodyReady$make_new(request, response).asFunction);
+    Thread thread = Thread_spawnSync(Lambda_PostRequestThread$make_new(request, response).asFunction, CRASH_ON_EXCEPTION);
     return True;
 }
+
 Bool currentDirectoryIndexRoute(HttpRequest request, HttpResponse response) {
     Directory directory = Directory_current();
     return _directoryIndexRoute(request, response, directory);
@@ -391,6 +405,8 @@ IMPLEMENT_LAMBDA(OnDone, ENUMERATE_CAPTURES, NO_OWNED_CAPTURES, Completer comple
 
 
 Object Main(List arguments, THROWS) {
+    Thread currentThread = Thread_current();
+    autoclean (String) threadString = Object_toString(currentThread.asObject);
     HttpServer server = HttpServer_bindSync(
             StringRef$wrap("0.0.0.0").asString,
             3001,
@@ -407,6 +423,6 @@ Object Main(List arguments, THROWS) {
             Lambda_OnDone$make_new(completer).asFunction,
             Bool$box(true)
     ).asObject;
-    printf("Listening on 127.0.0.1:3000...\n");
+    printf("Listening on 127.0.0.1:3000 on thread %s....\n", String_cStringView(threadString));
     return null;
 }

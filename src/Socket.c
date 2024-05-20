@@ -146,7 +146,8 @@ IMPLEMENT_OVERRIDE_METHOD(void, Sink, close) {
 IMPLEMENT_LAMBDA(OnCancel, CAPTURE_MYSELF, NO_OWNED_CAPTURES, Socket myself) {
     Lambda_OnCancel self = DOWNCAST(this, Lambda_OnCancel);
     Socket myself = self.data->myself;
-    Sink_close(Socket_as_IOSink(myself).asSink);
+    // TODO: Are there cases where this should happen?
+    //Sink_close(Socket_as_IOSink(myself).asSink);
     return null;
 }
 

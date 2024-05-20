@@ -9,6 +9,7 @@
 #include "IOException.h"
 #include "IOCoroutine.h"
 #include "Thread.h"
+#include "StreamSubscription.h"
 #include <assert.h>
 #include <threads.h>
 #include <unistd.h>
@@ -22,7 +23,8 @@ ENUMERATE_EVENT_LOOP_METHODS(IMPLEMENT_SELF_VIRTUAL_METHOD)
 IMPLEMENT_SELF_DOWNCASTS(ENUMERATE_THROWABLE_PARENTS)
 
 IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
-    // todo
+    printf("Deleting event loop!\n");
+    fflush(stdout);
 }
 
 IMPLEMENT_SELF_METHOD(void, notifyWakeup) {
@@ -99,7 +101,7 @@ IMPLEMENT_SELF_METHOD(void, drain) {
 #define Self EventLoop
 IMPLEMENT_SELF_METHOD(void, runUntilCompletion, Function onUnhandledAsyncException, THROWS) {
     Thread thread = Thread_current();
-    if (EventLoop_empty(this) && !Thread_hasChildren(thread) && !EventLoop_hasCoroutines(this)) {
+    if (EventLoop_empty(this) && !Thread_hasChildren(thread) && !EventLoop_hasCoroutines(this) && !EventLoop_hasActiveSubscriptions(this)) {
         return;
     }
 
@@ -112,7 +114,7 @@ IMPLEMENT_SELF_METHOD(void, runUntilCompletion, Function onUnhandledAsyncExcepti
         assert(EventLoop_empty(this));
 
         // If there arent any possibilities that the event loop will have new events added, exit
-        if (!Thread_hasChildren(thread) && !EventLoop_hasCoroutines(this)) {
+        if (!Thread_hasChildren(thread) && !EventLoop_hasCoroutines(this) && !EventLoop_hasActiveSubscriptions(this)) {
             return;
         }
 
@@ -187,12 +189,29 @@ IMPLEMENT_SELF_METHOD(void, removeWatchedFd, int fd) {
 }
 
 IMPLEMENT_SELF_METHOD(void, addCoroutine, IOCoroutine coroutine) {
+    mtx_lock(&this.data->ioCoroutinesMutex);
     List_add(this.data->ioCoroutines, coroutine.asObject, CRASH_ON_EXCEPTION);
+    mtx_unlock(&this.data->ioCoroutinesMutex);
 }
 
 IMPLEMENT_SELF_METHOD(void, removeCoroutine, IOCoroutine coroutine) {
-    List_remove(this.data->ioCoroutines, coroutine.asObject, CRASH_ON_EXCEPTION);
+    mtx_lock(&this.data->ioCoroutinesMutex);
+    List_remove(this.data->ioCoroutines, coroutine.asObject, CRASH_ON_EXCEPTION);;
+    mtx_unlock(&this.data->ioCoroutinesMutex);
 }
+
+IMPLEMENT_SELF_METHOD(void, addSubscription, StreamSubscription subscription) {
+    mtx_lock(&this.data->subscriptionsMutex);
+    List_add(this.data->activeSubscriptions, subscription.asObject, CRASH_ON_EXCEPTION);
+    mtx_unlock(&this.data->subscriptionsMutex);
+}
+
+IMPLEMENT_SELF_METHOD(void, removeSubscription, StreamSubscription subscription) {
+    mtx_lock(&this.data->subscriptionsMutex);
+    List_remove(this.data->activeSubscriptions, subscription.asObject, CRASH_ON_EXCEPTION);;
+    mtx_unlock(&this.data->subscriptionsMutex);
+}
+
 
 // Beautiful piece of code!
 IMPLEMENT_SELF_METHOD(void, watchFd, int fd, short events) {
@@ -238,6 +257,8 @@ IMPLEMENT_SELF_VTABLE() {
     vtable->removeWatchedFd = _EventLoop_removeWatchedFd_impl;
     vtable->addCoroutine = _EventLoop_addCoroutine_impl;
     vtable->removeCoroutine = _EventLoop_removeCoroutine_impl;
+    vtable->addSubscription = _EventLoop_addSubscription_impl;
+    vtable->removeSubscription = _EventLoop_removeSubscription_impl;
     // Object
     Object_vtable_t *object_vtable = (Object_vtable_t*)vtable;
     object_vtable->delete = _EventLoop_delete_impl;
@@ -252,6 +273,7 @@ IMPLEMENT_CONSTRUCTOR(new) {
     mtx_init(&this.data->queueMutex, mtx_plain);
     mtx_init(&this.data->ioCoroutinesMutex, mtx_plain);
     mtx_init(&this.data->watchedFdsMutex, mtx_plain);
+    mtx_init(&this.data->subscriptionsMutex, mtx_plain);
     int fds[2] = {0};
     int res = pipe(fds);
     if (res < 0) {
@@ -266,6 +288,7 @@ IMPLEMENT_CONSTRUCTOR(new) {
     this.data->watched_fds = NULL;
     this.data->watched_fds_capacity = 0;
     this.data->watched_fds_length = 0;
+    this.data->activeSubscriptions = List_new();
 
     this.data->notified = false;
     this.data->needToBeNotified = false;
@@ -280,6 +303,14 @@ IMPLEMENT_SELF_GETTER(bool, hasCoroutines) {
     mtx_t *mtx = &this.data->ioCoroutinesMutex;
     mtx_lock(mtx);
     bool has = List_length(this.data->ioCoroutines) != 0;
+    mtx_unlock(mtx);
+    return has;
+}
+
+IMPLEMENT_SELF_GETTER(bool, hasActiveSubscriptions) {
+    mtx_t *mtx = &this.data->subscriptionsMutex;
+    mtx_lock(mtx);
+    bool has = List_length(this.data->activeSubscriptions) != 0;
     mtx_unlock(mtx);
     return has;
 }

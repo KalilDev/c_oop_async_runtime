@@ -206,7 +206,9 @@ IMPLEMENT_LAMBDA(HttpRequestOnError, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpRequ
         }
         default: {
             Completer completer = myself.data->onReady;
-            Completer_completeException(completer, error);
+            // TODO: enable again!!!!
+
+            //Completer_completeException(completer, error);
         }
     }
     return null;

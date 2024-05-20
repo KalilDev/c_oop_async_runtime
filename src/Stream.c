@@ -39,7 +39,7 @@ IMPLEMENT_LAMBDA(ToListOnError, TO_LIST_CAPTURES, NO_OWNED_CAPTURES, List out, C
     Throwable error = va_arg(args, Throwable);
     *subs = DOWNCAST(null, StreamSubscription);
     Object_delete(subs->asObject);
-    Completer_completeException(completer, error);
+    // TODO: ENABLE Completer_completeException(completer, error);
 }
 
 IMPLEMENT_LAMBDA(ToListOnDone, TO_LIST_CAPTURES, NO_OWNED_CAPTURES, List out, Completer completer, StreamSubscription* subs) {

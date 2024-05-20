@@ -52,6 +52,25 @@ IMPLEMENT_SELF_METHOD(void, remove) {
 #define CAPTURE_MYSELF(CAPTURE) \
     CAPTURE(IOCoroutine, myself)
 
+IMPLEMENT_LAMBDA(OnStep, CAPTURE_MYSELF, NO_OWNED_CAPTURES, IOCoroutine myself) {
+    Lambda_OnStep self = DOWNCAST(this, Lambda_OnStep);
+    IOCoroutine myself = self.data->myself;
+    THROWS = va_arg(args, Throwable*);
+    IOCoroutineState *state = &myself.data->state;
+    switch (*state) {
+        case IOCoroutineState$pending: {
+            assert(!"The IOCoroutine could not have ran if it was pending");
+            break;
+        }
+        case IOCoroutineState$enabled: {
+            return Function_call(myself.data->step, 1, EXCEPTION);
+        }
+        case IOCoroutineState$disabled:
+        case IOCoroutineState$removed:
+            // okie, it was removed between the step being scheduled and now
+            return null;
+    }
+}
 IMPLEMENT_LAMBDA(OnFinishStep, CAPTURE_MYSELF, NO_OWNED_CAPTURES, IOCoroutine myself) {
     Lambda_OnFinishStep self = DOWNCAST(this, Lambda_OnFinishStep);
     IOCoroutine myself = self.data->myself;
@@ -91,15 +110,14 @@ IMPLEMENT_SELF_METHOD(void, scheduleStep) {
         }
         case IOCoroutineState$enabled: {
         // todo: deal with exception?
-            Future_then(Future_computation(this.data->step), Lambda_OnFinishStep$make_new(this).asFunction);
+            Future_then(Future_computation(Lambda_OnStep$make_new(this).asFunction), Lambda_OnFinishStep$make_new(this).asFunction);
             return;
         }
         case IOCoroutineState$disabled: {
             return;
         }
         case IOCoroutineState$removed: {
-            assert(!"The IOCoroutine cannot run a step after being removed!");
-            break;
+            return;
         }
     }
 }

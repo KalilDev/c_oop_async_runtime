@@ -63,43 +63,43 @@ IMPLEMENT_LAMBDA(CompleteOnDoneOnNextMicrotask, ENUMERATE_CONONM_CAPTURES, NO_OW
     return res;
 }
 
+#define CAPTURE_MYSELF(CAPTURE) \
+    CAPTURE(StreamSubscription, myself)
+
+IMPLEMENT_LAMBDA(CancelSelfOnNextMicrotask, CAPTURE_MYSELF, NO_OWNED_CAPTURES, StreamSubscription myself) {
+    Lambda_CancelSelfOnNextMicrotask self = DOWNCAST(this, Lambda_CancelSelfOnNextMicrotask);
+    StreamSubscription myself = self.data->myself;
+    THROWS = va_arg(args, Throwable*);
+    return StreamSubscription_cancel(myself).asObject;
+}
+
 IMPLEMENT_SELF_METHOD(Future, handleData, Object data) {
-    if (this.data->cancelled) {
-        // todo: free error
-        return Future$make__();
-    }
+    assert(!Object_isNull(this.data->attachedLoop.asObject));
     Function computation = Lambda_CompleteOnDataOnNextMicrotask$make_new(data, this.data->onData).asFunction;
-    return Future_computationAt(computation, this.data->listenerLoop);
+    return Future_computationAt(computation, this.data->attachedLoop);
 }
 
 IMPLEMENT_SELF_METHOD(Future, handleError, Throwable error) {
-    if (this.data->cancelled) {
-        // todo: free error
-        return Future$make__();
-    }
-    if (this.data->cancelOnError) {
-        StreamSubscription_cancel(this);
-    }
+    assert(!Object_isNull(this.data->attachedLoop.asObject));
     Function computation = Lambda_CompleteOnErrorOnNextMicrotask$make_new(error, this.data->onError).asFunction;
-    return Future_computationAt(computation, this.data->listenerLoop);
+    Future res = Future_computationAt(computation, this.data->attachedLoop);
+    if (this.data->cancelOnError) {
+        Future_computationAt(Lambda_CancelSelfOnNextMicrotask$make_new(this).asFunction, this.data->attachedLoop);
+    }
+    return res;
 }
 
 IMPLEMENT_SELF_METHOD(Future, handleDone) {
-    if (this.data->cancelled) {
-        // todo: free error
-        return Future$make__();
-    }
+    assert(!Object_isNull(this.data->attachedLoop.asObject));
     Function computation = Lambda_CompleteOnDoneOnNextMicrotask$make_new(this.data->onDone).asFunction;
-    return Future_computationAt(computation, this.data->listenerLoop);
+    return Future_computationAt(computation, this.data->attachedLoop);
 }
 
 IMPLEMENT_SELF_METHOD(Future, cancel) {
-    if (this.data->cancelled) {
-        // todo: free error
-        return Future$make__();
-    }
-    this.data->cancelled = true;
+    assert(!Object_isNull(this.data->attachedLoop.asObject));
     Object res = Function_call(this.data->onCancel, 0);
+    EventLoop_removeSubscription(this.data->attachedLoop, this);
+    this.data->attachedLoop = DOWNCAST(null, EventLoop);
     return Future$$fromObject(res);
 }
 
@@ -125,7 +125,10 @@ IMPLEMENT_CONSTRUCTOR(new, Function onData, Function onError, Function onDone, F
     this.data->onCancel = onCancel;
     this.data->cancelOnError = Object_isNull(cancelOnError.asObject) ? false : cancelOnError.unwrap;
     this.data->cancelled = false;
-    this.data->listenerLoop = EventLoop_current();
+    this.data->attachedLoop = EventLoop_current();
+    assert(!Object_isNull(this.data->attachedLoop.asObject));
+    assert(this.data->attachedLoop.data != NULL);
+    EventLoop_addSubscription(this.data->attachedLoop, this);
 }
 
 IMPLEMENT_SELF_GETTER(bool, cancelOnError) {

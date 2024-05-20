@@ -34,7 +34,7 @@ FORWARD_DECL_CLASS(Bool)
     ATTRIBUTE(Function, onError)                                        \
     ATTRIBUTE(Function, onDone)                             \
     ATTRIBUTE(Function, onCancel)                           \
-    ATTRIBUTE(EventLoop, listenerLoop)    \
+    ATTRIBUTE(EventLoop, attachedLoop)    \
     ATTRIBUTE(bool, cancelOnError)    \
     ATTRIBUTE(bool, cancelled)
 

@@ -26,6 +26,7 @@ START_CLASS
 FORWARD_DECL_CLASS(Future)
 FORWARD_DECL_CLASS(Function)
 FORWARD_DECL_CLASS(IOCoroutine)
+FORWARD_DECL_CLASS(StreamSubscription)
 FORWARD_DECL_CLASS(Task)
 #define PARAMS_INVOCATION_EventLoop_pushTask task
 #define PARAMS_INVOCATION_EventLoop_invokeTask task
@@ -35,6 +36,8 @@ FORWARD_DECL_CLASS(Task)
 #define PARAMS_INVOCATION_EventLoop_watchFd fd, events
 #define PARAMS_INVOCATION_EventLoop_addCoroutine coroutine
 #define PARAMS_INVOCATION_EventLoop_removeCoroutine coroutine
+#define PARAMS_INVOCATION_EventLoop_addSubscription subscription
+#define PARAMS_INVOCATION_EventLoop_removeSubscription subscription
 #define ENUMERATE_EVENT_LOOP_METHODS(METHOD) \
     METHOD(Task, popTask) \
     METHOD(void, pushTask, Task task)        \
@@ -47,7 +50,9 @@ FORWARD_DECL_CLASS(Task)
     METHOD(void, removeWatchedFd, int fd)\
     METHOD(void, watchFd, int fd, short events) \
     METHOD(void, addCoroutine, IOCoroutine coroutine) \
-    METHOD(void, removeCoroutine, IOCoroutine coroutine)
+    METHOD(void, removeCoroutine, IOCoroutine coroutine) \
+    METHOD(void, addSubscription, StreamSubscription subscription) \
+    METHOD(void, removeSubscription, StreamSubscription subscription)
 
 #define ENUMERATE_EVENT_LOOP_CONSTRUCTORS(CONSTRUCTOR) \
     CONSTRUCTOR(new)
@@ -57,9 +62,11 @@ FORWARD_DECL_CLASS(Task)
     ATTRIBUTE(mtx_t, queueMutex)                   \
     ATTRIBUTE(mtx_t, ioCoroutinesMutex)            \
     ATTRIBUTE(mtx_t, watchedFdsMutex)                                                \
+    ATTRIBUTE(mtx_t, subscriptionsMutex)                                                \
     ATTRIBUTE(int, wakeupListenerFd)                          \
     ATTRIBUTE(int, wakeupFd) \
     ATTRIBUTE(List, ioCoroutines) \
+    ATTRIBUTE(List, activeSubscriptions) \
     ATTRIBUTE(struct pollfd *, watched_fds)    \
     ATTRIBUTE(nfds_t, watched_fds_length)      \
     ATTRIBUTE(nfds_t, watched_fds_capacity) \
@@ -70,7 +77,8 @@ FORWARD_DECL_CLASS(Task)
 
 #define ENUMERATE_EVENT_LOOP_GETTERS(GETTER) \
     GETTER(int, fd)                          \
-    GETTER(bool, hasCoroutines)
+    GETTER(bool, hasCoroutines) \
+    GETTER(bool, hasActiveSubscriptions)
 
 DEFINE_SELF_CLASS(
         ENUMERATE_EVENT_LOOP_PARENTS,
