@@ -29,6 +29,7 @@ IMPLEMENT_LAMBDA(ToListOnData, TO_LIST_CAPTURES, NO_OWNED_CAPTURES, List out, Co
     Object data = va_arg(args, Object);
 
     List_add(out, data, CRASH_ON_EXCEPTION);
+    return null;
 }
 
 IMPLEMENT_LAMBDA(ToListOnError, TO_LIST_CAPTURES, NO_OWNED_CAPTURES, List out, Completer completer, StreamSubscription* subs) {
@@ -40,6 +41,7 @@ IMPLEMENT_LAMBDA(ToListOnError, TO_LIST_CAPTURES, NO_OWNED_CAPTURES, List out, C
     *subs = DOWNCAST(null, StreamSubscription);
     Object_delete(subs->asObject);
     // TODO: ENABLE Completer_completeException(completer, error);
+    return null;
 }
 
 IMPLEMENT_LAMBDA(ToListOnDone, TO_LIST_CAPTURES, NO_OWNED_CAPTURES, List out, Completer completer, StreamSubscription* subs) {
@@ -50,6 +52,7 @@ IMPLEMENT_LAMBDA(ToListOnDone, TO_LIST_CAPTURES, NO_OWNED_CAPTURES, List out, Co
     *subs = DOWNCAST(null, StreamSubscription);
     Object_delete(subs->asObject);
     Completer_complete(completer, out.asObject);
+    return null;
 }
 
 IMPLEMENT_SELF_METHOD(Future, toList) {

@@ -43,6 +43,24 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
     Super()->delete(this);
 }
 
+IMPLEMENT_SELF_METHOD(void, unhandledAsyncException, Throwable error) {
+    String errorMessage = Object_toString(error.asObject);
+    const char* error_message;
+    if (Object_isNull(errorMessage.asObject)) {
+        error_message = "Unknown error";
+    } else {
+        error_message = String_cStringView(errorMessage);
+    }
+
+    String threadName = Object_toString(this.asObject);
+    const char* thread_name = String_cStringView(threadName);
+    fprintf(stderr, "UNHANDLED ASYNC EXCEPTION AT %s:\nAn error ocurred: %s\nStack trace:\n", thread_name, error_message);
+    Throwable_printStackTrace(error, stderr);
+    fflush(stderr);
+    Object_delete(errorMessage.asObject);
+    Object_delete(error.asObject);
+}
+
 IMPLEMENT_SELF_METHOD(Future, kill, KillUrgency urgency) {
     foreach(Thread, child, ThreadChildren_as_Iterable(this.data->children), {
         Thread_kill(child, urgency);
@@ -145,6 +163,7 @@ IMPLEMENT_SELF_VTABLE() {
     vtable->kill = _Thread_kill_impl;
     vtable->runInCurrentThread = _Thread_runInCurrentThread_impl;
     vtable->hasChildren = _Thread_hasChildren_impl;
+    vtable->unhandledAsyncException = _Thread_unhandledAsyncException_impl;
     // Object
     Object_vtable_t *object_vtable = (Object_vtable_t*)vtable;
     //object_vtable->delete = _List_delete_impl;
@@ -165,6 +184,7 @@ IMPLEMENT_CONSTRUCTOR(main, Function entry) {
     this.data->children = ThreadChildren$make_new();
     this.data->siblings = DOWNCAST(null, ThreadChildren);
     this.data->thread = thrd_current();
+    _Thread_current = this;
 }
 
 IMPLEMENT_CONSTRUCTOR(new, Function main) {

@@ -30,10 +30,12 @@ START_CLASS
 FORWARD_DECL_CLASS(String)
 FORWARD_DECL_THROWABLE
 #define PARAMS_INVOCATION_Thread_kill urgency
+#define PARAMS_INVOCATION_Thread_unhandledAsyncException exception
 #define ENUMERATE_THREAD_METHODS(METHOD) \
     METHOD(Future, kill, KillUrgency urgency) \
     METHOD(int, runInCurrentThread)      \
-    METHOD(bool, hasChildren)
+    METHOD(bool, hasChildren)                     \
+    METHOD(void, unhandledAsyncException, Throwable exception)
 
 #define PARAMS_INVOCATION_Thread$new main
 #define PARAMS_INVOCATION_Thread$main entry

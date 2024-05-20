@@ -5,6 +5,7 @@
 #include "any.h"
 #include "oop.h"
 #include "Iterable.h"
+#include "EventLoop.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -27,11 +28,13 @@ START_CLASS
 #define PARAMS_INVOCATION_Future_onThen then
 #define PARAMS_INVOCATION_Future_catch catch
 #define PARAMS_INVOCATION_Future_onCatch catch
+#define PARAMS_INVOCATION_Future_handle then, catch
+#define PARAMS_INVOCATION_Future_setCallbacks then, catch
 #define ENUMERATE_FUTURE_METHODS(METHOD) \
     METHOD(Future, then, Function then) \
-    METHOD(void, onThen, Function then) \
     METHOD(Future, catch, Function catch)\
-    METHOD(void, onCatch, Function catch)\
+    METHOD(Future, handle, Function then, Function catch) \
+    METHOD(void, setCallbacks, Function then, Function catch)\
     METHOD(void, _onComplete)            \
     METHOD(void, _onCompleteWithError)
 
@@ -59,7 +62,8 @@ typedef enum FutureState {
     ATTRIBUTE(Throwable, exception)            \
     ATTRIBUTE(FutureState, state) \
     ATTRIBUTE(Function, then)                  \
-    ATTRIBUTE(Function, catch)
+    ATTRIBUTE(Function, catch) \
+    ATTRIBUTE(EventLoop, attachedLoop)
 
 DEFINE_SELF_CLASS(
         ENUMERATE_FUTURE_PARENTS,

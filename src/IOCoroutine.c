@@ -70,6 +70,7 @@ IMPLEMENT_LAMBDA(OnStep, CAPTURE_MYSELF, NO_OWNED_CAPTURES, IOCoroutine myself) 
             // okie, it was removed between the step being scheduled and now
             return null;
     }
+    return null;
 }
 IMPLEMENT_LAMBDA(OnFinishStep, CAPTURE_MYSELF, NO_OWNED_CAPTURES, IOCoroutine myself) {
     Lambda_OnFinishStep self = DOWNCAST(this, Lambda_OnFinishStep);
@@ -100,6 +101,7 @@ IMPLEMENT_LAMBDA(OnFinishStep, CAPTURE_MYSELF, NO_OWNED_CAPTURES, IOCoroutine my
             return null;
         }
     }
+    return null;
 }
 
 IMPLEMENT_SELF_METHOD(void, scheduleStep) {

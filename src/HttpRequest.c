@@ -387,6 +387,7 @@ IMPLEMENT_LAMBDA(OnListen, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpRequest myself
     HttpRequest myself = self.data->myself;
     // do nothing
     fprintf(stderr, "Started reading the body\n");
+    return null;
 }
 
 IMPLEMENT_LAMBDA(OnCancelSubscription, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpRequest myself) {
@@ -394,6 +395,7 @@ IMPLEMENT_LAMBDA(OnCancelSubscription, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpRe
     HttpRequest myself = self.data->myself;
     StreamSubscription socketSubscription = myself.data->socketSubscription;
     StreamSubscription_cancel(socketSubscription);
+    return null;
 }
 
 IMPLEMENT_CONSTRUCTOR(fromTcp, Socket socket) {

@@ -101,7 +101,7 @@ IMPLEMENT_SELF_METHOD(void, drain) {
 #define Self EventLoop
 IMPLEMENT_SELF_METHOD(void, runUntilCompletion, Function onUnhandledAsyncException, THROWS) {
     Thread thread = Thread_current();
-    if (EventLoop_empty(this) && !Thread_hasChildren(thread) && !EventLoop_hasCoroutines(this) && !EventLoop_hasActiveSubscriptions(this)) {
+    if (EventLoop_isFinished(this, thread)) {
         return;
     }
 
@@ -114,7 +114,7 @@ IMPLEMENT_SELF_METHOD(void, runUntilCompletion, Function onUnhandledAsyncExcepti
         assert(EventLoop_empty(this));
 
         // If there arent any possibilities that the event loop will have new events added, exit
-        if (!Thread_hasChildren(thread) && !EventLoop_hasCoroutines(this) && !EventLoop_hasActiveSubscriptions(this)) {
+        if (EventLoop_isFinished(this, thread)) {
             return;
         }
 
@@ -213,6 +213,19 @@ IMPLEMENT_SELF_METHOD(void, removeSubscription, StreamSubscription subscription)
 }
 
 
+IMPLEMENT_SELF_METHOD(void, addFuture, Future future) {
+    mtx_lock(&this.data->futuresMutex);
+    List_add(this.data->waitingFutures, future.asObject, CRASH_ON_EXCEPTION);
+    mtx_unlock(&this.data->futuresMutex);
+}
+
+IMPLEMENT_SELF_METHOD(void, removeFuture, Future future) {
+    mtx_lock(&this.data->futuresMutex);
+    List_remove(this.data->waitingFutures, future.asObject, CRASH_ON_EXCEPTION);;
+    mtx_unlock(&this.data->futuresMutex);
+}
+
+
 // Beautiful piece of code!
 IMPLEMENT_SELF_METHOD(void, watchFd, int fd, short events) {
     struct pollfd **wfds = &this.data->watched_fds;
@@ -259,6 +272,8 @@ IMPLEMENT_SELF_VTABLE() {
     vtable->removeCoroutine = _EventLoop_removeCoroutine_impl;
     vtable->addSubscription = _EventLoop_addSubscription_impl;
     vtable->removeSubscription = _EventLoop_removeSubscription_impl;
+    vtable->addFuture = _EventLoop_addFuture_impl;
+    vtable->removeFuture = _EventLoop_removeFuture_impl;
     // Object
     Object_vtable_t *object_vtable = (Object_vtable_t*)vtable;
     object_vtable->delete = _EventLoop_delete_impl;
@@ -289,6 +304,7 @@ IMPLEMENT_CONSTRUCTOR(new) {
     this.data->watched_fds_capacity = 0;
     this.data->watched_fds_length = 0;
     this.data->activeSubscriptions = List_new();
+    this.data->waitingFutures = List_new();
 
     this.data->notified = false;
     this.data->needToBeNotified = false;
@@ -313,6 +329,40 @@ IMPLEMENT_SELF_GETTER(bool, hasActiveSubscriptions) {
     bool has = List_length(this.data->activeSubscriptions) != 0;
     mtx_unlock(mtx);
     return has;
+}
+
+
+IMPLEMENT_SELF_GETTER(bool, hasWaitingFutures) {
+    mtx_t *mtx = &this.data->futuresMutex;
+    mtx_lock(mtx);
+    bool has = List_length(this.data->waitingFutures) != 0;
+    mtx_unlock(mtx);
+    return has;
+}
+
+IMPLEMENT_STATIC_METHOD(bool, isFinished, EventLoop this, Thread loopThread) {
+    mtx_t *queueMutex = &this.data->queueMutex;
+    mtx_t *ioCoroutinesMutex = &this.data->ioCoroutinesMutex;
+    mtx_t *subscriptionsMutex = &this.data->subscriptionsMutex;
+    mtx_t *futuresMutex = &this.data->futuresMutex;
+
+    mtx_lock(queueMutex);
+    mtx_lock(ioCoroutinesMutex);
+    mtx_lock(subscriptionsMutex);
+    mtx_lock(futuresMutex);
+
+    bool finished = true;
+    finished &= !Thread_hasChildren(loopThread);
+    finished &= List_length(this.data->enqueuedTasks) == 0;
+    finished &= List_length(this.data->ioCoroutines) == 0;
+    finished &= List_length(this.data->activeSubscriptions) == 0;
+    finished &= List_length(this.data->waitingFutures) == 0;
+
+    mtx_unlock(futuresMutex);
+    mtx_unlock(subscriptionsMutex);
+    mtx_unlock(ioCoroutinesMutex);
+    mtx_unlock(queueMutex);
+    return finished;
 }
 
 #undef Super

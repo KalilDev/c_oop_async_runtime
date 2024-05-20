@@ -36,7 +36,7 @@ FORWARD_DECL_CLASS(Bool)
     ATTRIBUTE(Function, onCancel)                           \
     ATTRIBUTE(EventLoop, attachedLoop)    \
     ATTRIBUTE(bool, cancelOnError)    \
-    ATTRIBUTE(bool, cancelled)
+    ATTRIBUTE(bool, cancelScheduled)
 
 #define PARAMS_INVOCATION_StreamSubscription$new onData, onError, onDone, onCancel, cancelOnError
 #define ENUMERATE_STREAM_SUBSCRIPTION_CONSTRUCTORS(CONSTRUCTOR) \

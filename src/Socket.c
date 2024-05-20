@@ -93,6 +93,7 @@ IMPLEMENT_LAMBDA(OnAddedStreamData, CAPTURE_MYSELF_AND_COMPLETER, NO_OWNED_CAPTU
     Object data = va_arg(args, Object);
     Socket myself = self.data->myself;
     Sink_add(Socket_as_IOSink(myself).asSink, data);
+    return null;
 }
 
 IMPLEMENT_LAMBDA(OnAddedStreamError, CAPTURE_MYSELF_AND_COMPLETER, NO_OWNED_CAPTURES, Socket myself, Completer completer) {
@@ -101,6 +102,7 @@ IMPLEMENT_LAMBDA(OnAddedStreamError, CAPTURE_MYSELF_AND_COMPLETER, NO_OWNED_CAPT
     Socket myself = self.data->myself;
     Completer completer = self.data->completer;
     Completer_completeException(completer, error);
+    return null;
 }
 
 IMPLEMENT_LAMBDA(OnAddedStreamDone, CAPTURE_MYSELF_AND_COMPLETER, NO_OWNED_CAPTURES, Socket myself, Completer completer) {
@@ -109,6 +111,7 @@ IMPLEMENT_LAMBDA(OnAddedStreamDone, CAPTURE_MYSELF_AND_COMPLETER, NO_OWNED_CAPTU
     Completer completer = self.data->completer;
 
     Completer_complete(completer, null);
+    return null;
 }
 
 IMPLEMENT_OVERRIDE_METHOD(Future, IOSink, addStream, Stream stream) {
@@ -133,6 +136,7 @@ IMPLEMENT_OVERRIDE_METHOD(void, Sink, close) {
     if (res < 0) {
         THROW(IOException$make_fromErrno())
     }
+    self.data->askedToClose = true;
     IOCoroutine coroutine = self.data->coroutine;
     if (Object_isNull(coroutine.asObject)){
         return;
@@ -178,6 +182,10 @@ IMPLEMENT_LAMBDA(Step, ENUMERATE_LOOPER_CAPTURES, NO_OWNED_CAPTURES, Socket myse
                 Object_delete(buffer.asObject);
                 goto loop;
             }
+            // This SHOULD mean that the socket is closed. If so, just exit
+            if (errno == EBADFD && myself.data->askedToClose) {
+                goto exit;
+            }
             *EXCEPTION = IOException$make_fromErrno().asThrowable;
             APPEND_STACK(error);
             Object_delete(buffer.asObject);
@@ -217,6 +225,9 @@ IMPLEMENT_LAMBDA(Step, ENUMERATE_LOOPER_CAPTURES, NO_OWNED_CAPTURES, Socket myse
 
     StreamController_close(controller);
     return False.asObject;
+
+    exit:
+    return False.asObject;
 }
 
 IMPLEMENT_LAMBDA(OnListen, CAPTURE_MYSELF, NO_OWNED_CAPTURES, Socket myself) {
@@ -244,6 +255,7 @@ IMPLEMENT_OVERRIDE_METHOD(StreamSubscription, Stream, listen, Function onData, F
     Self self = Stream_as_Socket(this);
     return Stream_listen(StreamController_as_Stream(self.data->streamController), onData, onError, onDone, cancelOnError);
 }
+
 IMPLEMENT_OVERRIDE_METHOD(void, Sink, add, Object value) {
     Socket self = IOSink_as_Socket(DOWNCAST(this, IOSink));
     if (IS_OBJECT_ASSIGNABLE(value, String)) {
@@ -315,6 +327,7 @@ IMPLEMENT_CONSTRUCTOR(new, int sockfd, const struct sockaddr* addr, socklen_t ad
         Lambda_OnCancel$make_new(this).asFunction
     );
     this.data->addedStreamSubs = DOWNCAST(null, StreamSubscription);
+    this.data->askedToClose = false;
 }
 
 IMPLEMENT_STATIC_METHOD(Socket, connectSync, int domain, const struct sockaddr* addr, socklen_t addrlen, THROWS) {

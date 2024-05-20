@@ -130,6 +130,7 @@ IMPLEMENT_LAMBDA(OnFinishSendingSuccess, CAPTURE_REQUEST_AND_RESPONSE, NO_OWNED_
 
     Object_delete(response.asObject);
     Object_delete(request.asObject);
+    return null;
 }
 
 IMPLEMENT_LAMBDA(OnFinishSendingError, CAPTURE_REQUEST_AND_RESPONSE, NO_OWNED_CAPTURES, HttpRequest request, HttpResponse response) {
@@ -156,6 +157,7 @@ IMPLEMENT_LAMBDA(OnFinishSendingError, CAPTURE_REQUEST_AND_RESPONSE, NO_OWNED_CA
 
     Object_delete(response.asObject);
     Object_delete(request.asObject);
+    return null;
 }
 
 Bool _directoryIndexRoute(HttpRequest request, HttpResponse response, Directory directory) {
@@ -253,6 +255,7 @@ IMPLEMENT_LAMBDA(PostRequestThreadBodyArrived, CAPTURE_REQUEST_AND_RESPONSE, NO_
 
     Object_delete(response.asObject);
     Object_delete(request.asObject);
+    return null;
 }
 
 IMPLEMENT_LAMBDA(PostRequestThread, CAPTURE_REQUEST_AND_RESPONSE, NO_OWNED_CAPTURES, HttpRequest request, HttpResponse response) {

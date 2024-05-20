@@ -142,7 +142,7 @@ IMPLEMENT_LAMBDA(OnListen, CAPTURE_MYSELF, NO_OWNED_CAPTURES, FileReadStream mys
     }
     myself.data->fd = fd;
     Function stepper = Lambda_Step$make_new(myself, controller).asFunction;
-    IOCoroutine coro = IOCoroutine$make_new(stepper, fd, -1);
+    IOCoroutine coro = IOCoroutine$make_new(stepper, fd, POLLIN | POLLHUP | POLLERR);
     myself.data->coroutine = coro;
     return null;
 }

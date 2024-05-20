@@ -7,6 +7,7 @@
 #include "primitive/StringRef.h"
 #include "primitive/Bool.h"
 #include "Socket.h"
+#include "Thread.h"
 
 #define Super() Object_vtable()
 #define Self StreamSubscription
@@ -74,16 +75,23 @@ IMPLEMENT_LAMBDA(CancelSelfOnNextMicrotask, CAPTURE_MYSELF, NO_OWNED_CAPTURES, S
 }
 
 IMPLEMENT_SELF_METHOD(Future, handleData, Object data) {
+    assert(!IS_OBJECT_ASSIGNABLE(data, Future));
     assert(!Object_isNull(this.data->attachedLoop.asObject));
     Function computation = Lambda_CompleteOnDataOnNextMicrotask$make_new(data, this.data->onData).asFunction;
     return Future_computationAt(computation, this.data->attachedLoop);
 }
 
 IMPLEMENT_SELF_METHOD(Future, handleError, Throwable error) {
+    assert(!IS_OBJECT_ASSIGNABLE(error.asObject, Future));
+    if (Object_isNull(this.data->attachedLoop.asObject)) {
+        Thread thread = Thread_current();
+        Thread_unhandledAsyncException(thread, error);
+        return Future$make_value(null);
+    }
     assert(!Object_isNull(this.data->attachedLoop.asObject));
     Function computation = Lambda_CompleteOnErrorOnNextMicrotask$make_new(error, this.data->onError).asFunction;
     Future res = Future_computationAt(computation, this.data->attachedLoop);
-    if (this.data->cancelOnError) {
+    if (this.data->cancelOnError && !this.data->cancelScheduled) {
         Future_computationAt(Lambda_CancelSelfOnNextMicrotask$make_new(this).asFunction, this.data->attachedLoop);
     }
     return res;
@@ -96,10 +104,16 @@ IMPLEMENT_SELF_METHOD(Future, handleDone) {
 }
 
 IMPLEMENT_SELF_METHOD(Future, cancel) {
+    if (this.data->cancelScheduled) {
+        // TODO: are there cases when this is an error, or every case is expected?
+        return Future$make_value(null);
+    }
+    this.data->cancelScheduled = true;
     assert(!Object_isNull(this.data->attachedLoop.asObject));
     Object res = Function_call(this.data->onCancel, 0);
-    EventLoop_removeSubscription(this.data->attachedLoop, this);
+    EventLoop loop = this.data->attachedLoop;
     this.data->attachedLoop = DOWNCAST(null, EventLoop);
+    EventLoop_removeSubscription(loop, this);
     return Future$$fromObject(res);
 }
 
@@ -124,7 +138,7 @@ IMPLEMENT_CONSTRUCTOR(new, Function onData, Function onError, Function onDone, F
     this.data->onDone = onDone;
     this.data->onCancel = onCancel;
     this.data->cancelOnError = Object_isNull(cancelOnError.asObject) ? false : cancelOnError.unwrap;
-    this.data->cancelled = false;
+    this.data->cancelScheduled = false;
     this.data->attachedLoop = EventLoop_current();
     assert(!Object_isNull(this.data->attachedLoop.asObject));
     assert(this.data->attachedLoop.data != NULL);

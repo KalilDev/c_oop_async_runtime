@@ -47,8 +47,8 @@ FORWARD_DECL_THROWABLE
     ATTRIBUTE(ByteBuffer, queued)              \
     ATTRIBUTE(StreamController, streamController)                 \
     ATTRIBUTE(IOCoroutine, coroutine) \
-    ATTRIBUTE(StreamSubscription, addedStreamSubs)
-
+    ATTRIBUTE(StreamSubscription, addedStreamSubs)                \
+    ATTRIBUTE(bool, askedToClose)
 
 DEFINE_SELF_CLASS(
         ENUMERATE_SOCKET_PARENTS,

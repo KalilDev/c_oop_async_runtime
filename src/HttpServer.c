@@ -62,6 +62,7 @@ IMPLEMENT_LAMBDA(OnHttpRequestReady, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpServ
     HttpRequest request = va_arg(args, HttpRequest);
     StreamController requestsController = myself.data->requestsController;
     StreamController_add(requestsController, request.asObject);
+    return null;
 }
 
 IMPLEMENT_LAMBDA(OnHttpRequestError, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpServer myself) {
@@ -71,6 +72,7 @@ IMPLEMENT_LAMBDA(OnHttpRequestError, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpServ
     APPEND_STACK(error);
     StreamController requestsController = myself.data->requestsController;
     StreamController_addError(requestsController, error);
+    return null;
 }
 
 IMPLEMENT_LAMBDA(OnTcpConnectionReceived, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpServer myself) {
@@ -116,6 +118,7 @@ IMPLEMENT_LAMBDA(OnListen, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpServer myself)
             Lambda_OnTcpConnectionDone$make_new(myself).asFunction,
             Bool$box(StreamSubscription_cancelOnError(subs))
     );
+    return null;
 }
 
 IMPLEMENT_LAMBDA(OnCancelSubscription, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpServer myself) {
@@ -123,6 +126,7 @@ IMPLEMENT_LAMBDA(OnCancelSubscription, CAPTURE_MYSELF, NO_OWNED_CAPTURES, HttpSe
     HttpServer myself = self.data->myself;
     StreamSubscription serverSubscription = myself.data->serverSubscription;
     StreamSubscription_cancel(serverSubscription);
+    return null;
 }
 
 IMPLEMENT_OVERRIDE_METHOD(StreamSubscription, Stream, listen, Function onData, Function onError, Function onDone, Bool cancelOnError) {

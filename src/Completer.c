@@ -19,6 +19,10 @@ IMPLEMENT_OVERRIDE_METHOD(void, Object, delete) {
 }
 
 IMPLEMENT_SELF_METHOD(void, complete, Object value) {
+    // TODO: Remove
+    if (IS_OBJECT_ASSIGNABLE(value, Future)) {
+        return Completer_follow(this, Future$$fromObject(value));
+    }
     Future fut = this.data->future;
     assert(fut.data->state == FutureState$pending);
     fut.data->value = value;
@@ -26,6 +30,8 @@ IMPLEMENT_SELF_METHOD(void, complete, Object value) {
 }
 
 IMPLEMENT_SELF_METHOD(void, completeException, Throwable exception) {
+    assert(!IS_OBJECT_ASSIGNABLE(exception.asObject, Future));
+    assert(!Object_isNull(exception.asObject));
     Future fut = this.data->future;
     assert(fut.data->state == FutureState$pending);
     fut.data->exception = exception;
@@ -61,8 +67,7 @@ IMPLEMENT_LAMBDA(CompleteCatch, ENUMERATE_COMPLETE_THEN_CAPTURES, ENUMERATE_COMP
 IMPLEMENT_SELF_METHOD(void, follow, Future future) {
     Lambda_CompleteThen then = Lambda_CompleteThen$make_new(this);
     Lambda_CompleteCatch catch = Lambda_CompleteCatch$make_new(this);
-    Future_onThen(future, then.asFunction);
-    Future_onCatch(future, catch.asFunction);
+    Future_setCallbacks(future, then.asFunction, catch.asFunction);
 }
 
 IMPLEMENT_SELF_VTABLE() {
