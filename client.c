@@ -1,30 +1,15 @@
-#include "Object.h"
-#include "primitive/Integer.h"
-#include "primitive/OutOfMemoryException.h"
 #include <stdio.h>
-#include "foreach.h"
-#include "downcast.h"
-#include "autoclean.h"
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "primitive/Double.h"
-#include "File.h"
-#include "RandomAccessFile.h"
-#include "primitive/Bool.h"
-#include "Directory.h"
-#include "src/oop.h"
-#include "EventLoop.h"
-#include "Future.h"
-#include "Error.h"
-#include "TypeError.h"
-#include "ServerSocket.h"
-#include "Completer.h"
-#include "Socket.h"
 #include <assert.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <string.h>
+#include <libgen.h>
+
+#include <oop.h>
+
 #define WITH_OOP_MAIN
-#include "main.h"
+#include <main.h>
+#include "bits/primitive/Bool.h"
 
 
 #define ENUMERATE_CAPTURES(CAPTURE) \

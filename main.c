@@ -1,34 +1,15 @@
-#include "Object.h"
-#include "primitive/Integer.h"
+
 #include <stdio.h>
-#include "foreach.h"
-#include "downcast.h"
-#include "autoclean.h"
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "primitive/Double.h"
-#include "primitive/Bool.h"
-#include "src/oop.h"
-#include "EventLoop.h"
-#include "Future.h"
-#include "ServerSocket.h"
-#include "Completer.h"
 #include <assert.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <libgen.h>
 
-#define WITH_OOP_MAIN
-#include "main.h"
-#include "Socket.h"
-#include "HttpRequest.h"
-#include "HttpServer.h"
-#include "UInt8List.h"
-#include "StringBuffer.h"
-#include "File.h"
-#include "Directory.h"
+#include <oop.h>
 
+#define WITH_OOP_MAIN
+#include <main.h>
 
 #define ENUMERATE_CAPTURES(CAPTURE) \
     CAPTURE(Completer, completer)
@@ -412,7 +393,7 @@ Object Main(List arguments, THROWS) {
     autoclean (String) threadString = Object_toString(currentThread.asObject);
     HttpServer server = HttpServer_bindSync(
             StringRef$wrap("0.0.0.0").asString,
-            3001,
+            3000,
             EXCEPTION
     );
     if (HAS_EXCEPTION) {

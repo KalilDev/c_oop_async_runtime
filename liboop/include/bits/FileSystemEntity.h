@@ -9,7 +9,7 @@
 #define WITH_RTTI
 #include "rtti.h"
 
-#include <String.h>
+#include "String.h"
 
 #define Super Object
 #define Self FileSystemEntity

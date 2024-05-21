@@ -132,16 +132,18 @@ IMPLEMENT_OVERRIDE_METHOD(void, Sink, close) {
     Socket self = IOSink_as_Socket(DOWNCAST(this, IOSink));
     _Socket_flush_impl(DOWNCAST(this, IOSink));
     THROWS = CRASH_ON_EXCEPTION;
+    mtx_t *mutex = &self.data->sockMtx;
+    mtx_lock(mutex);
+    IOCoroutine coroutine = self.data->coroutine;
+    assert(!Object_isNull(coroutine.asObject));
+    self.data->askedToClose = true;
+    IOCoroutine_remove(coroutine);
     int res = close(self.data->sockfd);
     if (res < 0) {
+        mtx_unlock(mutex);
         THROW(IOException$make_fromErrno())
     }
-    self.data->askedToClose = true;
-    IOCoroutine coroutine = self.data->coroutine;
-    if (Object_isNull(coroutine.asObject)){
-        return;
-    }
-    IOCoroutine_remove(coroutine);
+    mtx_unlock(mutex);
 }
 
 #define CAPTURE_MYSELF(CAPTURE) \
@@ -233,6 +235,9 @@ IMPLEMENT_LAMBDA(Step, ENUMERATE_LOOPER_CAPTURES, NO_OWNED_CAPTURES, Socket myse
 IMPLEMENT_LAMBDA(OnListen, CAPTURE_MYSELF, NO_OWNED_CAPTURES, Socket myself) {
     Lambda_OnListen self = DOWNCAST(this, Lambda_OnListen);
     Socket myself = self.data->myself;
+    mtx_t *mutex = &myself.data->sockMtx;
+    mtx_lock(mutex);
+    assert(Object_isNull(myself.data->coroutine.asObject));
     int sockfd = myself.data->sockfd;
     THROWS = CRASH_ON_EXCEPTION;
     StreamController controller = va_arg(args, StreamController);
@@ -240,14 +245,17 @@ IMPLEMENT_LAMBDA(OnListen, CAPTURE_MYSELF, NO_OWNED_CAPTURES, Socket myself) {
 
     int flags = fcntl(sockfd, F_GETFL, 0);
     if (flags == -1) {
+        mtx_unlock(mutex);
         THROW(IOException$make_fromErrno(), null)
     }
     if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) != 0) {
+        mtx_unlock(mutex);
         THROW(IOException$make_fromErrno(), null)
     }
     Function stepper = Lambda_Step$make_new(myself, controller).asFunction;
     IOCoroutine coro = IOCoroutine$make_new(stepper, sockfd, -1);
     myself.data->coroutine = coro;
+    mtx_unlock(mutex);
     return null;
 }
 
@@ -316,6 +324,7 @@ OBJECT_CAST_IMPL(IOSink, Socket)
 INTERFACE_CAST_IMPL(Socket, IOSink, Object)
 
 IMPLEMENT_CONSTRUCTOR(new, int sockfd, const struct sockaddr* addr, socklen_t addrlen) {
+    mtx_init(&this.data->sockMtx, mtx_plain);
     this.data->sockfd = sockfd;
     this.data->addr = malloc(addrlen);
     memcpy((struct sockaddr*)this.data->addr, addr, addrlen);

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef Bool
+#define Bool Bool
+
 #include "oop.h"
 #include <stdlib.h>
 
@@ -39,3 +41,4 @@ END_CLASS
 #undef Super
 #undef Self
 
+#endif

@@ -48,7 +48,8 @@ FORWARD_DECL_THROWABLE
     ATTRIBUTE(StreamController, streamController)                 \
     ATTRIBUTE(IOCoroutine, coroutine) \
     ATTRIBUTE(StreamSubscription, addedStreamSubs)                \
-    ATTRIBUTE(bool, askedToClose)
+    ATTRIBUTE(bool, askedToClose)              \
+    ATTRIBUTE(mtx_t, sockMtx)
 
 DEFINE_SELF_CLASS(
         ENUMERATE_SOCKET_PARENTS,
