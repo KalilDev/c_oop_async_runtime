@@ -1,11 +1,11 @@
 #pragma once
-#include "Object.h"
-#include "oop.h"
-#include "Comparable.h"
+#include "bits/Object.h"
+#include "bits/oop.h"
+#include "bits/Comparable.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #define WITH_RTTI
-#include "rtti.h"
+#include "bits/rtti.h"
 
 #define Super Object
 #define Self Number

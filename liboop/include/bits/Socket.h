@@ -1,13 +1,13 @@
 #ifndef Socket
 #define Socket Socket
 
-#include "Object.h"
-#include "oop.h"
-#include "Stream.h"
-#include "StreamController.h"
-#include "ByteBuffer.h"
-#include "IOCoroutine.h"
-#include "IOSink.h"
+#include "bits/Object.h"
+#include "bits/oop.h"
+#include "bits/Stream.h"
+#include "bits/StreamController.h"
+#include "bits/ByteBuffer.h"
+#include "bits/IOCoroutine.h"
+#include "bits/IOSink.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -15,7 +15,7 @@
 
 #define WITH_RTTI
 
-#include "rtti.h"
+#include "bits/rtti.h"
 
 #define Super Object
 #define Self Socket

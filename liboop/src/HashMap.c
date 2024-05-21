@@ -1,15 +1,5 @@
-#include "Object.h"
-#include "Map.h"
-#include "HashMap.h"
-#include "oop.h"
-#include "stddef.h"
-#include "oop.h"
+#include "liboop.h"
 #include <assert.h>
-#include "String.h"
-#include "Throwable.h"
-#include "primitive/StringRef.h"
-#include "HashMapBucket.h"
-#include "foreach.h"
 #define Super() List_vtable()
 #define Self HashMap
 IMPLEMENT_OPERATOR_NEW()

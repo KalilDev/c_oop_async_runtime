@@ -1,11 +1,4 @@
-#include "Object.h"
-#include "String.h"
-#include "Exception.h"
-#include "primitive/StringRef.h"
-#include "primitive/OutOfMemoryException.h"
-#include "../oop.h"
-#include "stddef.h"
-#include "../oop.h"
+#include "liboop.h"
 
 #define Self OutOfMemoryException
 #define Super() Exception_vtable()

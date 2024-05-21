@@ -1,10 +1,10 @@
 #pragma once
-#include "oop.h"
+#include "bits/oop.h"
 #include <stdlib.h>
-#include "Interface.h"
-#include "Object.h"
-#include "Stream.h"
-#include "Sink.h"
+#include "bits/Interface.h"
+#include "bits/Object.h"
+#include "bits/Stream.h"
+#include "bits/Sink.h"
 
 #define Self IOSink
 

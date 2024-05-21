@@ -1,11 +1,4 @@
-#include "Object.h"
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "primitive/Integer.h"
-#include "primitive/Double.h"
-#include "../oop.h"
-#include "stddef.h"
-#include "../oop.h"
+#include "liboop.h"
 #include <assert.h>
 #include <stdio.h>
 

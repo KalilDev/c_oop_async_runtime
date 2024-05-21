@@ -1,12 +1,5 @@
-#include "Stream.h"
-#include "StreamSubscription.h"
-#include "Function.h"
-#include "Future.h"
-#include "primitive/Bool.h"
-#include "oop.h"
-#include "Completer.h"
 #include <assert.h>
-
+#include "liboop.h"
 
 #define Self Stream
 

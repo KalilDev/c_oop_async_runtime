@@ -2,11 +2,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <stdio.h>
-#include "Object.h"
-#include "String.h"
-#include "oop.h"
-#include "primitive/StringRef.h"
-#include "primitive/Integer.h"
+#include "liboop.h"
 
 #define Self Object
 

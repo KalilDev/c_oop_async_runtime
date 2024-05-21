@@ -1,9 +1,9 @@
 #pragma once
-#include "oop.h"
-#include "Iterator.h"
-#include "String.h"
+#include "bits/oop.h"
+#include "bits/Iterator.h"
+#include "bits/String.h"
 #include <stdlib.h>
-#include "any.h"
+#include "bits/any.h"
 
 #define Super Iterator
 #define Self StringIterator

@@ -1,9 +1,6 @@
-#include "Object.h"
-#include "StringIterator.h"
-#include "oop.h"
-#include "primitive/Integer.h"
-#include "stdbool.h"
 #include <assert.h>
+#include "liboop.h"
+
 #define Self StringIterator
 #define Super() Object_vtable()
 IMPLEMENT_OPERATOR_NEW()

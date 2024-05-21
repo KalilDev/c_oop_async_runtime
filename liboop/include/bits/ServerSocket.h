@@ -1,13 +1,13 @@
 #ifndef ServerSocket
 #define ServerSocket ServerSocket
 
-#include "Object.h"
-#include "oop.h"
-#include "Stream.h"
-#include "Thread.h"
-#include "StreamSubscription.h"
-#include "StreamController.h"
-#include "IOCoroutine.h"
+#include "bits/Object.h"
+#include "bits/oop.h"
+#include "bits/Stream.h"
+#include "bits/Thread.h"
+#include "bits/StreamSubscription.h"
+#include "bits/StreamController.h"
+#include "bits/IOCoroutine.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -16,7 +16,7 @@
 
 #define WITH_RTTI
 
-#include "rtti.h"
+#include "bits/rtti.h"
 
 #define Super Object
 #define Self ServerSocket

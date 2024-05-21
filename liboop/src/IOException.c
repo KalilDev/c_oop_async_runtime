@@ -1,12 +1,7 @@
-#include "Object.h"
-#include "Throwable.h"
-#include "oop.h"
-#include "Exception.h"
-#include "IOException.h"
+#include "liboop.h"
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
-#include "primitive/StringRef.h"
 
 #define Super() Exception_vtable()
 #define Self IOException

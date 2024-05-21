@@ -1,17 +1,17 @@
 #ifndef HttpResponse
 #define HttpResponse HttpResponse
 
-#include "Object.h"
-#include "oop.h"
-#include "Socket.h"
-#include "String.h"
-#include "primitive/Integer.h"
-#include "Sink.h"
-#include "Function.h"
-#include "StreamController.h"
-#include "ServerSocket.h"
-#include "HttpHeaders.h"
-#include "StreamSubscription.h"
+#include "bits/Object.h"
+#include "bits/oop.h"
+#include "bits/Socket.h"
+#include "bits/String.h"
+#include "bits/Integer.h"
+#include "bits/Sink.h"
+#include "bits/Function.h"
+#include "bits/StreamController.h"
+#include "bits/ServerSocket.h"
+#include "bits/HttpHeaders.h"
+#include "bits/StreamSubscription.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -20,8 +20,8 @@
 
 #define WITH_RTTI
 
-#include "rtti.h"
-#include "IOSink.h"
+#include "bits/rtti.h"
+#include "bits/IOSink.h"
 
 #define Super Object
 #define Self HttpResponse

@@ -1,15 +1,5 @@
-#include "Object.h"
-#include "String.h"
-#include "primitive/Integer.h"
-#include "oop.h"
-#include "stddef.h"
-#include "oop.h"
-#include "string.h"
-#include "Iterator.h"
-#include "StringIterator.h"
-#include "StringBuffer.h"
-#include "primitive/StringRef.h"
 #include <assert.h>
+#include "liboop.h"
 
 #define Super() Object_vtable()
 #define Self String

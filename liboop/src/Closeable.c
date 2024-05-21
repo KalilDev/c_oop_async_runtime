@@ -1,5 +1,4 @@
-#include "Closeable.h"
-#include "oop.h"
+#include "liboop.h"
 #include <assert.h>
 
 #define Self Closeable

@@ -1,18 +1,6 @@
-#include "Object.h"
-#include "List.h"
-#include "ListIterator.h"
-#include "oop.h"
-#include "stddef.h"
-#include "oop.h"
-#include "string.h"
-#include "StringBuffer.h"
 #include <strings.h>
 #include <assert.h>
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "foreach.h"
-#include "GrowableList.h"
-#include "Throwable.h"
+#include "liboop.h"
 
 #define Super() Object_vtable()
 #define Self List

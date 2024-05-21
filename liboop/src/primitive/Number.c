@@ -1,8 +1,4 @@
-#include "../oop.h"
-#include "primitive/Number.h"
-#include "primitive/Double.h"
-#include "primitive/Integer.h"
-#include "Object.h"
+#include "liboop.h"
 #include <assert.h>
 #include <stddef.h>
 

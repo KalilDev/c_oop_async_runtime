@@ -59,4 +59,4 @@ add_library(oop STATIC
         src/HashMapBucket.c
 )
 target_link_libraries(oop PRIVATE m)
-target_include_directories(oop PRIVATE PRIVATE include/bits)
+target_include_directories(oop PRIVATE PRIVATE include)

@@ -1,12 +1,10 @@
 #define WITH_RTTI
-
+#include "liboop.h"
 #include <stdarg.h>
 #include <stddef.h>
 #include <assert.h>
 #include <string.h>
 #include <malloc.h>
-#include "rtti.h"
-#include "Object.h"
 #include <math.h>
 
 #ifdef WITH_RTTI

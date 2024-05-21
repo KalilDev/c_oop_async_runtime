@@ -1,14 +1,14 @@
 #ifndef HttpServer
 #define HttpServer HttpServer
 
-#include "Object.h"
-#include "oop.h"
-#include "Stream.h"
-#include "Sink.h"
-#include "Function.h"
-#include "StreamController.h"
-#include "ServerSocket.h"
-#include "StreamSubscription.h"
+#include "bits/Object.h"
+#include "bits/oop.h"
+#include "bits/Stream.h"
+#include "bits/Sink.h"
+#include "bits/Function.h"
+#include "bits/StreamController.h"
+#include "bits/ServerSocket.h"
+#include "bits/StreamSubscription.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -18,7 +18,7 @@
 
 #define WITH_RTTI
 
-#include "rtti.h"
+#include "bits/rtti.h"
 
 #define Super Object
 #define Self HttpServer

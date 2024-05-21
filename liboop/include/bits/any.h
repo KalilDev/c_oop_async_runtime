@@ -1,6 +1,6 @@
 #pragma once
 #include <stddef.h>
-#include "rtti.h"
+#include "bits/rtti.h"
 
 typedef union object_or_interface_vtable {
     size_t tag;

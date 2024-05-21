@@ -1,15 +1,6 @@
-#include "Object.h"
-#include "Throwable.h"
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "oop.h"
-#include "foreach.h"
-#include "Task.h"
-#include "ThreadChildren.h"
-#include "IOException.h"
-#include "Thread.h"
 #include <assert.h>
 #include <threads.h>
+#include "liboop.h"
 
 #define Super() Object_vtable()
 #define Self ThreadChildren

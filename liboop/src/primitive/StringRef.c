@@ -1,13 +1,7 @@
-#include "Object.h"
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "primitive/Integer.h"
-#include "../oop.h"
-#include "stddef.h"
-#include "../oop.h"
-#include "string.h"
+#include "liboop.h"
 #include <strings.h>
 #include <assert.h>
+#include <string.h>
 #define Self StringRef
 #define Super() String_vtable()
 

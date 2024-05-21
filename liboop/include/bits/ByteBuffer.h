@@ -1,10 +1,10 @@
 #pragma once
-#include "oop.h"
+#include "bits/oop.h"
 #include <stdlib.h>
-#include "Object.h"
-#include "Iterable.h"
-#include "Interface.h"
-#include "any.h"
+#include "bits/Object.h"
+#include "bits/Iterable.h"
+#include "bits/Interface.h"
+#include "bits/any.h"
 
 #define Super Object
 #define Self ByteBuffer

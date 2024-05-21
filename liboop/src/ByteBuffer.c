@@ -1,22 +1,7 @@
-#include "Object.h"
-#include "ByteBuffer.h"
-#include "UInt8List.h"
-#include "String.h"
-#include "List.h"
-#include "oop.h"
-#include "stddef.h"
-#include "oop.h"
-#include "string.h"
-#include "primitive/Bool.h"
-#include "primitive/Number.h"
-#include "primitive/Integer.h"
-#include "primitive/StringRef.h"
-#include "foreach.h"
+#include "liboop.h"
 #include <strings.h>
 #include <assert.h>
-#include "Throwable.h"
-#include "TypeError.h"
-#include "primitive/OutOfMemoryException.h"
+#include <string.h>
 
 #define Super() Object_vtable()
 #define Self ByteBuffer

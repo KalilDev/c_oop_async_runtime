@@ -1,13 +1,5 @@
-#include "StreamSubscription.h"
-#include "Function.h"
-#include "Future.h"
-#include "Throwable.h"
-#include "oop.h"
 #include <assert.h>
-#include "primitive/StringRef.h"
-#include "primitive/Bool.h"
-#include "Socket.h"
-#include "Thread.h"
+#include "liboop.h"
 
 #define Super() Object_vtable()
 #define Self StreamSubscription

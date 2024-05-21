@@ -1,24 +1,6 @@
-#include "Object.h"
-#include "primitive/Integer.h"
-#include "Thread.h"
-#include "oop.h"
-#include "stddef.h"
-#include "oop.h"
-#include "StringBuffer.h"
 #include <assert.h>
-#include "primitive/StringRef.h"
-#include "foreach.h"
-#include "GrowableList.h"
-#include "Throwable.h"
-#include "Future.h"
-#include "Function.h"
-#include "StreamSubscription.h"
-#include "Completer.h"
-#include "Error.h"
-#include "IOCoroutine.h"
-#include "poll.h"
 #include <string.h>
-#include "IOException.h"
+#include "liboop.h"
 #include <threads.h>
 
 #define Super() Object_vtable()

@@ -1,17 +1,17 @@
 #ifndef UInt8List
 #define UInt8List UInt8List
 
-#include "Object.h"
-#include "any.h"
-#include "oop.h"
-#include "Iterable.h"
+#include "bits/Object.h"
+#include "bits/any.h"
+#include "bits/oop.h"
+#include "bits/Iterable.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "List.h"
-#include "TypedList.h"
+#include "bits/List.h"
+#include "bits/TypedList.h"
 #define WITH_RTTI
-#include "rtti.h"
+#include "bits/rtti.h"
 
 #define Super TypedList
 #define Self UInt8List

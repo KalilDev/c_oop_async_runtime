@@ -1,19 +1,19 @@
 #ifndef Future
 #define Future Future
 
-#include "Object.h"
-#include "any.h"
-#include "oop.h"
-#include "Iterable.h"
-#include "EventLoop.h"
+#include "bits/Object.h"
+#include "bits/any.h"
+#include "bits/oop.h"
+#include "bits/Iterable.h"
+#include "bits/EventLoop.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "List.h"
-#include "Function.h"
-#include "Throwable.h"
+#include "bits/List.h"
+#include "bits/Function.h"
+#include "bits/Throwable.h"
 #define WITH_RTTI
-#include "rtti.h"
+#include "bits/rtti.h"
 
 #define Super Object
 #define Self Future

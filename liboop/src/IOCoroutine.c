@@ -1,12 +1,4 @@
-#include "Object.h"
-#include "Task.h"
-#include "String.h"
-#include "Thread.h"
-#include "IOCoroutine.h"
-#include "primitive/StringRef.h"
-#include "oop.h"
-#include "foreach.h"
-#include "primitive/Bool.h"
+#include "liboop.h"
 #include <assert.h>
 
 #define Super() Object_vtable()

@@ -1,31 +1,9 @@
-#include "Object.h"
-#include "Socket.h"
-#include "oop.h"
-#include "stddef.h"
-#include "oop.h"
-#include "string.h"
-#include "Stream.h"
-#include "Completer.h"
-#include "Stream.h"
-#include "StringBuffer.h"
 #include <strings.h>
 #include <assert.h>
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "foreach.h"
-#include "GrowableList.h"
-#include "Throwable.h"
-#include "Future.h"
-#include "IOException.h"
-#include "Function.h"
-#include "autoclean.h"
-#include "primitive/Bool.h"
-#include "StreamSubscription.h"
-#include "UInt8List.h"
-#include "IOCoroutine.h"
+#include "liboop.h"
 
 #define Super() Object_vtable()
 #define Self Socket

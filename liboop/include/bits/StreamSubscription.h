@@ -1,12 +1,12 @@
 #pragma once
-#include "Object.h"
-#include "Function.h"
-#include "EventLoop.h"
-#include "oop.h"
+#include "bits/Object.h"
+#include "bits/Function.h"
+#include "bits/EventLoop.h"
+#include "bits/oop.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #define WITH_RTTI
-#include "rtti.h"
+#include "bits/rtti.h"
 
 #define Super Object
 #define Self StreamSubscription

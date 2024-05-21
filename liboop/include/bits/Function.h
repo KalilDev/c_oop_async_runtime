@@ -1,11 +1,11 @@
 #ifndef Function
 #define Function Function
 
-#include "Object.h"
-#include "oop.h"
+#include "bits/Object.h"
+#include "bits/oop.h"
 #include <stdarg.h>
 #define WITH_RTTI
-#include "rtti.h"
+#include "bits/rtti.h"
 
 #define Super Object
 #define Self Function

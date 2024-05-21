@@ -1,17 +1,5 @@
-#include "Object.h"
-#include "oop.h"
 #include <assert.h>
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "Throwable.h"
-#include "Future.h"
-#include "Function.h"
-#include "StreamSubscription.h"
-#include "StreamController.h"
-#include "primitive/Bool.h"
-#include "AsyncEvent.h"
-#include "foreach.h"
-
+#include "liboop.h"
 
 #define Super() Object_vtable()
 #define Self StreamController

@@ -1,10 +1,10 @@
 #pragma once
-#include "oop.h"
+#include "bits/oop.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #define WITH_RTTI
-#include "rtti.h"
-#include "any.h"
+#include "bits/rtti.h"
+#include "bits/any.h"
 
 #define Self Object
 

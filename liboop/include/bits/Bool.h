@@ -1,7 +1,8 @@
 #ifndef Bool
 #define Bool Bool
 
-#include "oop.h"
+#include "bits/oop.h"
+#include "bits/Object.h"
 #include <stdlib.h>
 
 #define Super Object

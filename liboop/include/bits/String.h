@@ -1,10 +1,10 @@
 #pragma once
-#include "oop.h"
-#include "any.h"
+#include "bits/oop.h"
+#include "bits/any.h"
 #include <stdlib.h>
-#include "Object.h"
-#include "Iterable.h"
-#include "Interface.h"
+#include "bits/Object.h"
+#include "bits/Iterable.h"
+#include "bits/Interface.h"
 
 #define Super Object
 #define Self String

@@ -1,8 +1,8 @@
 #pragma once
-#include "oop.h"
+#include "bits/oop.h"
 #include <stdlib.h>
-#include "Interface.h"
-#include "Object.h"
+#include "bits/Interface.h"
+#include "bits/Object.h"
 
 #define Self Sink
 

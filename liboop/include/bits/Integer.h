@@ -1,11 +1,11 @@
 #pragma once
-#include "../oop.h"
+#include "bits/oop.h"
 #include <stdlib.h>
-#include "../Object.h"
-#include "Number.h"
+#include "bits/Object.h"
+#include "bits/Number.h"
 
 #pragma once
-#include "oop.h"
+#include "bits/oop.h"
 #include <stdlib.h>
 
 #define Super Number

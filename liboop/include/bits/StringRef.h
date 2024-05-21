@@ -1,6 +1,6 @@
 #pragma once
-#include "oop.h"
-#include "../String.h"
+#include "bits/oop.h"
+#include "bits/String.h"
 #include <stdlib.h>
 
 #define Super String

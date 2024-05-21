@@ -1,10 +1,6 @@
-#include "Object.h"
-#include "List.h"
-#include "ListIterator.h"
-#include "oop.h"
-#include "string.h"
-#include "stdbool.h"
+#include "liboop.h"
 #include <assert.h>
+
 #define Self ListIterator
 #define Super() Object_vtable()
 IMPLEMENT_OPERATOR_NEW()

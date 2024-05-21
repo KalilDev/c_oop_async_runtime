@@ -1,12 +1,12 @@
 #ifndef LIBOOP_H
 #define LIBOOP_H
 
-#include "bits/primitive/Bool.h"
-#include "bits/primitive/Double.h"
-#include "bits/primitive/Integer.h"
-#include "bits/primitive/Number.h"
-#include "bits/primitive/OutOfMemoryException.h"
-#include "bits/primitive/StringRef.h"
+#include "bits/Bool.h"
+#include "bits/Double.h"
+#include "bits/Integer.h"
+#include "bits/Number.h"
+#include "bits/OutOfMemoryException.h"
+#include "bits/StringRef.h"
 #include "bits/any.h"
 #include "bits/AsyncEvent.h"
 #include "bits/ByteBuffer.h"

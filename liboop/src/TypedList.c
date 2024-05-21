@@ -1,10 +1,5 @@
-#include "Object.h"
-#include "primitive/StringRef.h"
-#include "oop.h"
 #include <assert.h>
-#include "Exception.h"
-#include "TypedList.h"
-#include "UInt8List.h"
+#include "liboop.h"
 
 #define Super() List_vtable()
 #define Self TypedList

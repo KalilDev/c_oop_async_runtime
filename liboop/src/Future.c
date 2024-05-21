@@ -1,13 +1,5 @@
-#include "Object.h"
-#include "Future.h"
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "oop.h"
-#include "foreach.h"
+#include "liboop.h"
 #include <assert.h>
-#include "Task.h"
-#include "Thread.h"
-#include "EventLoop.h"
 #define Super() Object_vtable()
 #define Self Future
 IMPLEMENT_OPERATOR_NEW()

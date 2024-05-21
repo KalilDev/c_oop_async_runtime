@@ -1,15 +1,15 @@
 #ifndef IOCoroutine
 #define IOCoroutine IOCoroutine
 
-#include "Object.h"
-#include "any.h"
-#include "oop.h"
+#include "bits/Object.h"
+#include "bits/any.h"
+#include "bits/oop.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "Function.h"
+#include "bits/Function.h"
 #define WITH_RTTI
-#include "rtti.h"
+#include "bits/rtti.h"
 
 #define Super Object
 #define Self IOCoroutine

@@ -1,15 +1,5 @@
-#include "Object.h"
-#include "List.h"
-#include "ListIterator.h"
-#include "oop.h"
-#include "stddef.h"
-#include "oop.h"
+#include "liboop.h"
 #include <assert.h>
-#include "String.h"
-#include "GrowableList.h"
-#include "Throwable.h"
-#include "primitive/StringRef.h"
-#include "Exception.h"
 #include <string.h>
 #define Super() List_vtable()
 #define Self GrowableList

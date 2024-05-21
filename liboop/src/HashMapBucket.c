@@ -1,17 +1,5 @@
-#include "Object.h"
-#include "Map.h"
-#include "oop.h"
-#include "stddef.h"
-#include "oop.h"
+#include "liboop.h"
 #include <assert.h>
-#include "String.h"
-#include "Throwable.h"
-#include "primitive/StringRef.h"
-#include "Exception.h"
-#include "HashMapBucket.h"
-#include "foreach.h"
-#include "primitive/OutOfMemoryException.h"
-#include "Error.h"
 #include <string.h>
 #define Super() Object_vtable()
 #define Self HashMapBucket

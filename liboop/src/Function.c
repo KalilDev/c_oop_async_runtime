@@ -1,9 +1,4 @@
-#include "Object.h"
-#include "Function.h"
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "oop.h"
-#include "foreach.h"
+#include "liboop.h"
 #include <assert.h>
 
 #define Super() Object_vtable()

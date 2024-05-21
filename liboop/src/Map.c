@@ -1,15 +1,5 @@
-#include "Object.h"
-#include "Map.h"
-#include "oop.h"
-#include "stddef.h"
-#include "oop.h"
-#include "StringBuffer.h"
 #include <assert.h>
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "foreach.h"
-#include "HashMap.h"
-#include "Throwable.h"
+#include "liboop.h"
 
 #define Super() Object_vtable()
 #define Self Map

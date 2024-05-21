@@ -1,11 +1,5 @@
-#include "Object.h"
-#include "Task.h"
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "oop.h"
-#include "foreach.h"
-#include "EventLoop.h"
 #include <assert.h>
+#include "liboop.h"
 
 #define Super() Object_vtable()
 #define Self Task

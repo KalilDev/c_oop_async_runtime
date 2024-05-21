@@ -1,18 +1,7 @@
-#include "Object.h"
-#include "Socket.h"
-#include "oop.h"
-#include "stddef.h"
-#include "oop.h"
-#include "StringBuffer.h"
+#include "liboop.h"
 #include <assert.h>
 #include <strings.h>
 #include <string.h>
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "primitive/Integer.h"
-#include "foreach.h"
-#include "GrowableList.h"
-#include "HttpHeaders.h"
 
 #define Super() Object_vtable()
 #define Self HttpHeaders

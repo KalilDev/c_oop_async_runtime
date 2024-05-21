@@ -1,13 +1,13 @@
 #pragma once
-#include "Object.h"
-#include "oop.h"
-#include "Iterable.h"
+#include "bits/Object.h"
+#include "bits/oop.h"
+#include "bits/Iterable.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include "List.h"
+#include "bits/List.h"
 #define WITH_RTTI
-#include "rtti.h"
+#include "bits/rtti.h"
 
 #define Super Object
 #define Self HashMapBucket

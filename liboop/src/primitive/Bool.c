@@ -1,10 +1,5 @@
-#include "Object.h"
-#include "String.h"
-#include "primitive/StringRef.h"
-#include "primitive/Bool.h"
-#include "../oop.h"
-#include "stddef.h"
-#include "../oop.h"
+#include "liboop.h"
+#include "bits/oop.h"
 
 #define Self Bool
 #define Super() Object_vtable()

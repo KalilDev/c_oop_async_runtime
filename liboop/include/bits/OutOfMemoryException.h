@@ -1,6 +1,6 @@
 #pragma once
-#include "Exception.h"
-#include "oop.h"
+#include "bits/Exception.h"
+#include "bits/oop.h"
 #include <stdlib.h>
 
 #define Super Exception

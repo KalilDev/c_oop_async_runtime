@@ -1,7 +1,7 @@
 #ifndef TypedList
 #define TypedList TypedList
 
-#include "List.h"
+#include "bits/List.h"
 
 #define Super List
 #define Self TypedList

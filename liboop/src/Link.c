@@ -1,11 +1,5 @@
-#include "Iterator.h"
-#include "oop.h"
-#include "FileSystemEntity.h"
-#include "Link.h"
-#include "List.h"
 #include <assert.h>
-#include "primitive/StringRef.h"
-#include "String.h"
+#include "liboop.h"
 
 #include <string.h>
 

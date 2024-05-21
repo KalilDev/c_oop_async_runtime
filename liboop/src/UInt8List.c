@@ -1,11 +1,6 @@
-#include "UInt8List.h"
-#include "oop.h"
-#include "stddef.h"
-#include "oop.h"
+#include "liboop.h"
+#include <stddef.h>
 #include <assert.h>
-#include "String.h"
-#include "primitive/Number.h"
-#include "primitive/Integer.h"
 
 #define Super() TypedList_vtable()
 #define Self UInt8List

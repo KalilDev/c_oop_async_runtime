@@ -1,11 +1,6 @@
-#include "Object.h"
-#include "Throwable.h"
-#include "oop.h"
-#include "Error.h"
-#include "TypeError.h"
+#include "liboop.h"
 #include <assert.h>
 #include <string.h>
-#include "primitive/StringRef.h"
 
 #define Super() Error_vtable()
 #define Self TypeError

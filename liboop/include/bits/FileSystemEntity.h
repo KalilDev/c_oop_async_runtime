@@ -1,15 +1,15 @@
 #pragma once
-#include "Object.h"
-#include "oop.h"
-#include "Closeable.h"
+#include "bits/Object.h"
+#include "bits/oop.h"
+#include "bits/Closeable.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #define WITH_RTTI
-#include "rtti.h"
+#include "bits/rtti.h"
 
-#include "String.h"
+#include "bits/String.h"
 
 #define Super Object
 #define Self FileSystemEntity

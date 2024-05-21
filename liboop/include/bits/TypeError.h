@@ -1,16 +1,16 @@
 #pragma once
-#include "Object.h"
-#include "any.h"
-#include "oop.h"
-#include "String.h"
+#include "bits/Object.h"
+#include "bits/any.h"
+#include "bits/oop.h"
+#include "bits/String.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "List.h"
-#include "Throwable.h"
-#include "Error.h"
+#include "bits/List.h"
+#include "bits/Throwable.h"
+#include "bits/Error.h"
 #define WITH_RTTI
-#include "rtti.h"
+#include "bits/rtti.h"
 
 #define Super Error
 #define Self TypeError

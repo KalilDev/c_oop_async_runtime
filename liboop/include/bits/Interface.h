@@ -1,7 +1,7 @@
 #pragma once
 #include <stdlib.h>
-#include "oop.h"
-#include "Object.h"
+#include "bits/oop.h"
+#include "bits/Object.h"
 
 #define Self Interface
 START_CLASS

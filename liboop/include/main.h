@@ -1,8 +1,8 @@
 #ifdef WITH_OOP_MAIN
-#include "oop.h"
-#include "Object.h"
-#include "List.h"
-#include "Throwable.h"
+#include "bits/oop.h"
+#include "bits/Object.h"
+#include "bits/List.h"
+#include "bits/Throwable.h"
 
 Object Main(List arguments, THROWS);
 
@@ -14,11 +14,11 @@ Object Main(List arguments, THROWS);
 
 #ifndef _OOP_MAIN_IMPLEMENTATION
 #define _OOP_MAIN_IMPLEMENTATION
-#include "Thread.h"
-#include "Throwable.h"
-#include "oop_impl.h"
-#include "primitive/StringRef.h"
-#include "primitive/OutOfMemoryException.h"
+#include "bits/Thread.h"
+#include "bits/Throwable.h"
+#include "bits/oop_impl.h"
+#include "bits/StringRef.h"
+#include "bits/OutOfMemoryException.h"
 #include <assert.h>
 
 #define ENUMERATE_IMWA_CAPTURES(CAPTURE) \

@@ -1,8 +1,4 @@
-#include "Object.h"
-#include "Throwable.h"
-#include "primitive/StringRef.h"
-#include "oop.h"
-#include "Exception.h"
+#include "liboop.h"
 #include <assert.h>
 
 #define Super() Throwable_vtable()
